@@ -1,0 +1,71 @@
+{
+  "name": "neobuni",
+  "private": true,
+  "workspaces": {
+    "packages": [
+      "apps/*",
+      "packages/*"
+    ],
+    "catalog": {
+      "zod": "^4.5.4",
+      "vite": "npm:@voidzero-dev/vite-plus-core@1.1.0",
+      "typescript": "^6.0.3",
+      "@types/bun": "^1.4.2",
+      "varlock": "1.18.0",
+      "libsql": "0.5.29",
+      "@orpc/server": "^1.15.6",
+      "@orpc/openapi": "^1.15.6",
+      "@orpc/zod": "^1.15.6",
+      "better-auth": "1.7.7",
+      "next-themes": "^0.4.6",
+      "sonner": "^2.0.8",
+      "@orpc/client": "^1.15.6",
+      "tailwindcss": "^4.3.3",
+      "drizzle-orm": "1.0.0-rc.4"
+    }
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "vp run -r dev",
+    "build": "vp run -r build",
+    "check-types": "vp run -r check-types",
+    "check": "vp check && vp run -r check-types",
+    "lint": "vp lint",
+    "format": "vp fmt",
+    "staged": "vp staged",
+    "dev:web": "vp run --filter web dev",
+    "dev:server": "vp run --filter server dev",
+    "db:push": "vp run --filter @neobuni/db db:push",
+    "db:studio": "vp run --filter @neobuni/db db:studio",
+    "db:generate": "vp run --filter @neobuni/db db:generate",
+    "db:migrate": "vp run --filter @neobuni/db db:migrate",
+    "db:local": "vp run --filter @neobuni/db db:local",
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up -d --build",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
+    "env:generate": "varlock codegen --path ./apps/web/ && varlock codegen --path ./apps/server/ && varlock codegen --path ./packages/db/",
+    "postinstall": "varlock codegen --path ./apps/web/ && varlock codegen --path ./apps/server/ && varlock codegen --path ./packages/db/",
+    "auth:generate": "cd apps/server && bun run auth:generate",
+    "fix": "ultracite fix"
+  },
+  "dependencies": {
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.15",
+    "@neobuni/config": "workspace:*",
+    "@types/bun": "catalog:",
+    "lefthook": "latest",
+    "rolldown": "1.2.13",
+    "typescript": "catalog:",
+    "ultracite": "8.0.0",
+    "varlock": "catalog:",
+    "vite": "catalog:",
+    "vite-plus": "1.1.0"
+  },
+  "overrides": {
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.1.0"
+  },
+  "packageManager": "bun@1.4.3"
+}

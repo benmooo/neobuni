@@ -1,0 +1,3 @@
+{
+  "extends": "@neobuni/config/tsconfig.base.json"
+}
