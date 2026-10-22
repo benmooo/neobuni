@@ -1,3 +1,6 @@
+import { mkdirSync } from "node:fs";
+import { dirname } from "node:path";
+
 import { type Client, createClient } from "@libsql/client";
 import { drizzle } from "drizzle-orm/libsql";
 import { Effect, Schema } from "effect";
@@ -41,37 +44,69 @@ const resolveDefaultUrl = () => {
 	return `file:${process.cwd()}/.data/neobuni.db`;
 };
 
-let activeConfig: DatabaseConfig = { url: resolveDefaultUrl() };
-let activeClient = createClient(activeConfig);
-let activeDb = drizzle({ client: activeClient, relations });
+const createDrizzle = (client: Client) => drizzle({ client, relations });
+
+export type Database = ReturnType<typeof createDrizzle>;
+
+type DatabaseState = {
+	config: DatabaseConfig;
+	client: Client;
+	db: Database;
+};
+
+const ensureDirectory = (url: string) => {
+	if (!url.startsWith("file:")) {
+		return;
+	}
+
+	const path = url.slice("file:".length);
+
+	if (path === ":memory:" || path.startsWith(":memory:")) {
+		return;
+	}
+
+	mkdirSync(dirname(path), { recursive: true });
+};
+
+const openDatabase = (config: DatabaseConfig): DatabaseState => {
+	ensureDirectory(config.url);
+	const client = createClient(config);
+	return { config, client, db: createDrizzle(client) };
+};
+
+let state: DatabaseState | null = null;
+
+const ensureState = (): DatabaseState => {
+	if (!state) {
+		state = openDatabase({ url: resolveDefaultUrl() });
+	}
+
+	return state;
+};
 
 export const configureDatabase = (config: DatabaseConfig) => {
 	if (
-		config.url === activeConfig.url &&
-		config.authToken === activeConfig.authToken
+		state &&
+		state.config.url === config.url &&
+		state.config.authToken === config.authToken
 	) {
-		return activeDb;
+		return state.db;
 	}
 
-	activeConfig = config;
-	activeClient = createClient(config);
-	activeDb = drizzle({ client: activeClient, relations });
-
-	return activeDb;
+	state = openDatabase(config);
+	return state.db;
 };
 
-export type Database = typeof activeDb;
-
 /** Configured drizzle client. Use `configureDatabase` at process bootstrap. */
-export const db = new Proxy({} as typeof activeDb, {
+export const db = new Proxy({} as Database, {
 	get: (_target, property, receiver) =>
-		Reflect.get(activeDb, property, receiver),
+		Reflect.get(ensureState().db, property, receiver),
 });
 
-export const getClient = (): Client => activeClient;
+export const getClient = (): Client => ensureState().client;
 
 const ensureKnowledgeSchema = async () => {
-	await activeClient.execute(`
+	await getClient().execute(`
     CREATE VIRTUAL TABLE IF NOT EXISTS fts_knowledge_chunks USING fts5(
       chunk_id UNINDEXED,
       content,
@@ -81,23 +116,23 @@ const ensureKnowledgeSchema = async () => {
 };
 
 const ensureVectorSchema = async () => {
-	await activeClient.execute(`
+	await getClient().execute(`
     CREATE TABLE IF NOT EXISTS vec_memories (
       memory_id TEXT PRIMARY KEY,
       embedding F32_BLOB(${MEMORY_EMBEDDING_DIMENSIONS})
     );
   `);
-	await activeClient.execute(`
+	await getClient().execute(`
     CREATE TABLE IF NOT EXISTS vec_knowledge_chunks (
       chunk_id TEXT PRIMARY KEY,
       embedding F32_BLOB(${MEMORY_EMBEDDING_DIMENSIONS})
     );
   `);
-	await activeClient.execute(`
+	await getClient().execute(`
     CREATE INDEX IF NOT EXISTS vec_memories_idx
       ON vec_memories (libsql_vector_idx(embedding));
   `);
-	await activeClient.execute(`
+	await getClient().execute(`
     CREATE INDEX IF NOT EXISTS vec_knowledge_chunks_idx
       ON vec_knowledge_chunks (libsql_vector_idx(embedding));
   `);
@@ -117,7 +152,7 @@ export const ensureSchemaEffect = fromPromise("ensureSchema", ensureSchema);
 export const getDatabaseRuntimeStatus = () => ({
 	ready: true,
 	engine: "libsql",
-	url: activeConfig.url,
+	url: state?.config.url ?? resolveDefaultUrl(),
 	vectorDimensions: MEMORY_EMBEDDING_DIMENSIONS,
 });
 

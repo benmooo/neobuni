@@ -68,7 +68,10 @@
     "vitest": "5.0.3"
   },
   "overrides": {
-    "vite": "npm:@voidzero-dev/vite-plus-core@1.1.0"
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.1.0",
+    "@tanstack/ai": "0.22.0",
+    "@tanstack/ai-event-client": "0.3.11",
+    "@tanstack/openai-base": "0.4.0"
   },
   "packageManager": "bun@1.4.3"
 }

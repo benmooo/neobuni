@@ -12,7 +12,7 @@
     "check-types": "tsc -b"
   },
   "dependencies": {
-    "@tanstack/ai": "^0.22.0",
+    "@tanstack/ai": "0.22.0",
     "zod": "catalog:"
   },
   "devDependencies": {

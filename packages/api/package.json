@@ -11,14 +11,14 @@
   },
   "dependencies": {
     "@neobuni/auth": "workspace:*",
+    "@neobuni/contracts": "workspace:*",
     "@neobuni/db": "workspace:*",
     "@orpc/client": "catalog:",
     "@orpc/openapi": "catalog:",
     "@orpc/server": "catalog:",
     "@orpc/zod": "catalog:",
-    "zod": "catalog:",
-    "@neobuni/contracts": "workspace:*",
-    "effect": "4.0.5"
+    "effect": "4.0.5",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@neobuni/config": "workspace:*",

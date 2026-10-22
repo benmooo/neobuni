@@ -73,10 +73,10 @@
         "@orpc/openapi": "catalog:",
         "@orpc/server": "catalog:",
         "@orpc/zod": "catalog:",
-        "@tanstack/ai": "^0.22.0",
-        "@tanstack/ai-anthropic": "^0.11.0",
-        "@tanstack/ai-openai": "^0.10.1",
-        "@tanstack/ai-openrouter": "^0.9.8",
+        "@tanstack/ai": "0.22.0",
+        "@tanstack/ai-anthropic": "0.11.0",
+        "@tanstack/ai-openai": "0.10.1",
+        "@tanstack/ai-openrouter": "0.9.8",
         "better-auth": "catalog:",
         "chrono-node": "^2.9.0",
         "croner": "^10.0.1",
@@ -176,7 +176,7 @@
       "name": "@neobuni/contracts",
       "version": "0.0.0",
       "dependencies": {
-        "@tanstack/ai": "^0.22.0",
+        "@tanstack/ai": "0.22.0",
         "zod": "catalog:",
       },
       "devDependencies": {
@@ -240,6 +240,9 @@
     },
   },
   "overrides": {
+    "@tanstack/ai": "0.22.0",
+    "@tanstack/ai-event-client": "0.3.11",
+    "@tanstack/openai-base": "0.4.0",
     "vite": "npm:@voidzero-dev/vite-plus-core@1.1.0",
   },
   "catalog": {
@@ -864,15 +867,15 @@
 
     "@tailwindcss/vite": ["@tailwindcss/vite@4.3.3", "https://registry.npmmirror.com/@tailwindcss/vite/-/vite-4.3.3.tgz", { "dependencies": { "@tailwindcss/node": "4.3.3", "@tailwindcss/oxide": "4.3.3", "tailwindcss": "4.3.3" }, "peerDependencies": { "vite": "^5.2.0 || ^6 || ^7 || ^8" } }, "sha512-yYU8cogLeSh/ms2jh8Fj7jaba/EWa7Ja6GoUqYZaraEuCI5YS6ms6ObZgjjedm+jm6XZjdNRWBpPP6Z86oOxcw=="],
 
-    "@tanstack/ai": ["@tanstack/ai@0.22.1", "https://registry.npmmirror.com/@tanstack/ai/-/ai-0.22.1.tgz", { "dependencies": { "@ag-ui/core": "^0.0.52", "@standard-schema/spec": "^1.1.0", "@tanstack/ai-event-client": "0.4.0", "partial-json": "^0.1.7" }, "peerDependencies": { "@opentelemetry/api": ">=1.9.0" }, "optionalPeers": ["@opentelemetry/api"] }, "sha512-rO1YwZYr1r/DcDzj74RlPcsslT6LpNmEhXqwwQHwE15xwY3g+wAw55t0BRBnEIYAwbEb31eApR0dtgyIQCqoxQ=="],
+    "@tanstack/ai": ["@tanstack/ai@0.22.0", "https://registry.npmmirror.com/@tanstack/ai/-/ai-0.22.0.tgz", { "dependencies": { "@ag-ui/core": "^0.0.52", "@standard-schema/spec": "^1.1.0", "@tanstack/ai-event-client": "0.3.11", "partial-json": "^0.1.7" }, "peerDependencies": { "@opentelemetry/api": ">=1.9.0" }, "optionalPeers": ["@opentelemetry/api"] }, "sha512-cV5XGDScrzVBdJZqUQVu7jx3DI7BjlbJ8KXzj1/oM62bK0Rf+DZIw0Ho2W3W5x86jV2vJuSFsWaBFzpMn1twfw=="],
 
-    "@tanstack/ai-anthropic": ["@tanstack/ai-anthropic@0.11.2", "https://registry.npmmirror.com/@tanstack/ai-anthropic/-/ai-anthropic-0.11.2.tgz", { "dependencies": { "@anthropic-ai/sdk": "^0.97.1", "@tanstack/ai-utils": "0.2.1" }, "peerDependencies": { "@tanstack/ai": "^0.23.0", "zod": "^4.0.0" } }, "sha512-Q+a1VtUYCl6YWaOpAY7cXlhpRo0c1fLgNboxN3vqLCl59qBdjbBQ0cQRAp1A6lCtbwWDrLBoc7JmV1imQizxlg=="],
+    "@tanstack/ai-anthropic": ["@tanstack/ai-anthropic@0.11.0", "https://registry.npmmirror.com/@tanstack/ai-anthropic/-/ai-anthropic-0.11.0.tgz", { "dependencies": { "@anthropic-ai/sdk": "^0.97.1", "@tanstack/ai-utils": "0.2.1" }, "peerDependencies": { "@tanstack/ai": "^0.22.0", "zod": "^4.0.0" } }, "sha512-8vLpmn52meJpdwtg9vN9GfbOOaI9tl5NuYkP2D8i1YVRFEDWVYC0XKlR4un948sR8iegoE4UlpkebcWE1qHAGA=="],
 
     "@tanstack/ai-client": ["@tanstack/ai-client@0.15.2", "https://registry.npmmirror.com/@tanstack/ai-client/-/ai-client-0.15.2.tgz", { "dependencies": { "@tanstack/ai": "0.26.0", "@tanstack/ai-event-client": "0.5.1" } }, "sha512-ED7Ciq084v56yZUXQqOjye1RMEdkxIYsDSv8mm8v8nbwTtv0pw/GpEcC5qCudrq4r4YkjQtxIy1aJ3sQ31ichA=="],
 
-    "@tanstack/ai-event-client": ["@tanstack/ai-event-client@0.4.0", "https://registry.npmmirror.com/@tanstack/ai-event-client/-/ai-event-client-0.4.0.tgz", { "dependencies": { "@tanstack/devtools-event-client": "^0.4.1" }, "peerDependencies": { "@tanstack/ai": "0.22.1" } }, "sha512-m04PUYbpjF56UWjFGJ+kL+ULHn6bUTzbqcF/a5GP8rULCTYp+MrCEY5RzQUbLUEjovz3SvCDf4V4K7acJToweg=="],
+    "@tanstack/ai-event-client": ["@tanstack/ai-event-client@0.3.11", "https://registry.npmmirror.com/@tanstack/ai-event-client/-/ai-event-client-0.3.11.tgz", { "dependencies": { "@tanstack/devtools-event-client": "^0.4.1" }, "peerDependencies": { "@tanstack/ai": "0.22.0" } }, "sha512-LywHUkj4TV5D/31fiL4stjXdO6UE48ZTcmK36QnGBQEPedFSweCBeiSuCcH63n0uJP7J117F6TtZmwdava55Kg=="],
 
-    "@tanstack/ai-openai": ["@tanstack/ai-openai@0.10.5", "https://registry.npmmirror.com/@tanstack/ai-openai/-/ai-openai-0.10.5.tgz", { "dependencies": { "@tanstack/ai-utils": "0.2.1", "@tanstack/openai-base": "0.5.0", "openai": "^6.9.1" }, "peerDependencies": { "@tanstack/ai": "^0.24.0", "@tanstack/ai-client": "^0.15.0", "zod": "^4.0.0" } }, "sha512-3+DZadx6NcnDH5Bsx3wgatH+w5Ox2YWPHf2JdQDckGoXUhNIUV93N8OEF91qebFIEl6COZZ77+IG2RczoGvZOw=="],
+    "@tanstack/ai-openai": ["@tanstack/ai-openai@0.10.1", "https://registry.npmmirror.com/@tanstack/ai-openai/-/ai-openai-0.10.1.tgz", { "dependencies": { "@tanstack/ai-utils": "0.2.1", "@tanstack/openai-base": "0.4.0", "openai": "^6.9.1" }, "peerDependencies": { "@tanstack/ai": "^0.22.0", "@tanstack/ai-client": "^0.11.8", "zod": "^4.0.0" } }, "sha512-wf/WrwgEquDwD7TIh8YQ8lMhqvc5ipTWwNTvm4h9JQJdtHNGUpTnS3F273thcZmAIw6g11DmEXDDKZXMAA0hiA=="],
 
     "@tanstack/ai-openrouter": ["@tanstack/ai-openrouter@0.9.8", "https://registry.npmmirror.com/@tanstack/ai-openrouter/-/ai-openrouter-0.9.8.tgz", { "dependencies": { "@openrouter/sdk": "0.12.35", "@tanstack/ai-utils": "0.2.1" }, "peerDependencies": { "@tanstack/ai": "^0.22.0" } }, "sha512-QKXY9kVkgOsbhfRcfca0S8hDlIsSfQbJR/vLLIPTPFjxtwR7coQHTD1mvXG47JNJ8zQJsBgZMKKffFhitPQB4A=="],
 
@@ -886,7 +889,7 @@
 
     "@tanstack/match-sorter-utils": ["@tanstack/match-sorter-utils@9.2.6", "https://registry.npmmirror.com/@tanstack/match-sorter-utils/-/match-sorter-utils-9.2.6.tgz", { "dependencies": { "remove-accents": "0.5.0" } }, "sha512-DIpUSOhPfQ7u/qfUi/Wgm0wBO56MyBYXGvnlI0NcauDRPqdBUlAZZjW2Dxm92m+k1UWVhKw8YJ4f47+75Aujyw=="],
 
-    "@tanstack/openai-base": ["@tanstack/openai-base@0.5.0", "https://registry.npmmirror.com/@tanstack/openai-base/-/openai-base-0.5.0.tgz", { "dependencies": { "@tanstack/ai-utils": "0.2.1", "openai": "^6.9.1" }, "peerDependencies": { "@tanstack/ai": "^0.24.0" } }, "sha512-watRAXr7YpmuFuHC7o1dHnBgYlF63h9NG3WQJK2nkpDNX8GP5TTJWNlQlkAJULnDwaAF6w+p5hnLTF8Ci+UDuA=="],
+    "@tanstack/openai-base": ["@tanstack/openai-base@0.4.0", "https://registry.npmmirror.com/@tanstack/openai-base/-/openai-base-0.4.0.tgz", { "dependencies": { "@tanstack/ai-utils": "0.2.1", "openai": "^6.9.1" }, "peerDependencies": { "@tanstack/ai": "^0.22.0" } }, "sha512-Jyg34C2RHBqZ3ds2M1dinORTrBRhlPPeeGu+qvchPvYalr5XD/DxGh6DTpCT6IP7AGR4yOOUvbgADqpNdlXzjg=="],
 
     "@tanstack/pacer-lite": ["@tanstack/pacer-lite@0.1.1", "https://registry.npmmirror.com/@tanstack/pacer-lite/-/pacer-lite-0.1.1.tgz", {}, "sha512-y/xtNPNt/YeyoVxE/JCx+T7yjEzpezmbb+toK8DDD1P4m7Kzs5YR956+7OKexG3f8aXgC3rLZl7b1V+yNUSy5w=="],
 
@@ -2281,10 +2284,6 @@
     "@tailwindcss/oxide-wasm32-wasi/@tybys/wasm-util": ["@tybys/wasm-util@0.10.4", "https://registry.npmmirror.com/@tybys/wasm-util/-/wasm-util-0.10.4.tgz", { "dependencies": { "tslib": "^2.4.0" }, "bundled": true }, "sha512-W3c4gRigFS0T/Ma4qIYF3GDAc5AQdHb1yL5znJT1Zv1YaD9Kitx656wBjvr19qbiosmZT8lWDM5BEMynUqX65A=="],
 
     "@tailwindcss/oxide-wasm32-wasi/tslib": ["tslib@2.8.1", "https://registry.npmmirror.com/tslib/-/tslib-2.8.1.tgz", { "bundled": true }, "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w=="],
-
-    "@tanstack/ai-client/@tanstack/ai": ["@tanstack/ai@0.26.0", "https://registry.npmmirror.com/@tanstack/ai/-/ai-0.26.0.tgz", { "dependencies": { "@ag-ui/core": "^0.0.52", "@standard-schema/spec": "^1.1.0", "@tanstack/ai-event-client": "0.5.1", "partial-json": "^0.1.7" }, "peerDependencies": { "@opentelemetry/api": ">=1.9.0" }, "optionalPeers": ["@opentelemetry/api"] }, "sha512-yNTGYLekEjEd4UTT7JMR8zWsFbwXSUM5iNDjTApmZi7dRAC9cggyn1+uNui3OzWLliTgKYLvnsQvrldbxbADaA=="],
-
-    "@tanstack/ai-client/@tanstack/ai-event-client": ["@tanstack/ai-event-client@0.5.1", "https://registry.npmmirror.com/@tanstack/ai-event-client/-/ai-event-client-0.5.1.tgz", { "dependencies": { "@tanstack/devtools-event-client": "^0.4.1" }, "peerDependencies": { "@tanstack/ai": "0.26.0" } }, "sha512-4/PD4ETHrfhaXo4ydLslEeYQ2M+JXfsBSVKm3t0CvQcNKdE+q11pi8OxHZnZCYzxI1EpbXLg4skENFMVsKp3ag=="],
 
     "@tanstack/router-core/seroval": ["seroval@1.7.0", "https://registry.npmmirror.com/seroval/-/seroval-1.7.0.tgz", {}, "sha512-FU+LUkmDzWNsJ6oubZFN3dGPKny53DRhPJG6nftEaXDL8MIn19+kEE1Gvc+63Go+qPOwVUlKIdKhsu2HN6tksw=="],
 

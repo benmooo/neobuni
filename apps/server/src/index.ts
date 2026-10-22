@@ -1,101 +1,60 @@
-import { appRouter } from "@neobuni/api/routers/index";
-import { OpenAPIHandler } from "@orpc/openapi/fetch";
-import { OpenAPIReferencePlugin } from "@orpc/openapi/plugins";
-import { onError } from "@orpc/server";
-import { RPCHandler } from "@orpc/server/fetch";
-import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
-import { initLogger } from "evlog";
-import {
-	type BetterAuthInstance,
-	createAuthMiddleware,
-} from "evlog/better-auth";
-import { createFsDrain } from "evlog/fs";
-import { type EvlogVariables, evlog } from "evlog/hono";
-import { Hono } from "hono";
-import { cors } from "hono/cors";
+import "varlock/auto-load";
 
-import { createContext } from "./context";
+import { cleanupRunningRuntimeTurns, ensureSchema } from "@neobuni/db";
+import { Effect, Fiber } from "effect";
+
+import { startActionRunWorker } from "./action-runs/worker";
+import { app } from "./app";
+import { startInitiativeWorker } from "./decision/initiative-worker";
 import { ENV } from "./env.server";
-import { auth } from "./services";
+import { startScheduleMaterializer } from "./schedules/materializer";
+import { startTaskRunWorker } from "./task-runs/worker";
 
-initLogger({
-	env: { service: "neobuni-server" },
-});
+await ensureSchema();
 
-const identifyUser = createAuthMiddleware(auth as BetterAuthInstance, {
-	exclude: ["/api/auth/**"],
-	maskEmail: true,
-});
-
-const app = new Hono<EvlogVariables>();
-
-app.use(
-	evlog({
-		drain: process.env.NODE_ENV === "production" ? undefined : createFsDrain(),
-	})
-);
-app.use("*", async (c, next) => {
-	await identifyUser(c.get("log"), c.req.raw.headers, c.req.path);
-	await next();
-});
-
-app.use(
-	"/*",
-	cors({
-		origin: ENV.CORS_ORIGIN,
-		allowMethods: ["GET", "POST", "OPTIONS"],
-		allowHeaders: ["Content-Type", "Authorization"],
-		credentials: true,
+const runtimeCleanup = await Effect.runPromise(
+	cleanupRunningRuntimeTurns({
+		status: "aborted",
+		reason: "server_startup_recovery",
 	})
 );
 
-app.on(["POST", "GET"], "/api/auth/*", async (c) => auth.handler(c.req.raw));
+if (runtimeCleanup.turnCount > 0) {
+	console.warn(
+		`[neobuni/server] recovered ${runtimeCleanup.turnCount} runtime turn(s) and ${runtimeCleanup.spanCount} span(s)`
+	);
+}
 
-export const apiHandler = new OpenAPIHandler(appRouter, {
-	plugins: [
-		new OpenAPIReferencePlugin({
-			schemaConverters: [new ZodToJsonSchemaConverter()],
-		}),
-	],
-	interceptors: [
-		onError((error) => {
-			console.error(error);
-		}),
-	],
+const fibers = [
+	Effect.runFork(startScheduleMaterializer()),
+	Effect.runFork(startTaskRunWorker()),
+	Effect.runFork(startActionRunWorker()),
+	Effect.runFork(startInitiativeWorker()),
+];
+
+const shutdown = async () => {
+	await Effect.runPromise(
+		Effect.forEach(fibers, (fiber) => Fiber.interrupt(fiber), {
+			concurrency: "unbounded",
+			discard: true,
+		})
+	);
+	process.exit(0);
+};
+
+process.on("SIGINT", () => {
+	void shutdown();
+});
+process.on("SIGTERM", () => {
+	void shutdown();
 });
 
-export const rpcHandler = new RPCHandler(appRouter, {
-	interceptors: [
-		onError((error) => {
-			console.error(error);
-		}),
-	],
+const port = ENV.PORT;
+
+console.log(`[neobuni/server] listening on http://localhost:${port}`);
+
+Bun.serve({
+	port,
+	fetch: app.fetch,
+	idleTimeout: 0,
 });
-
-app.use("/*", async (c, next) => {
-	const context = await createContext({ context: c });
-
-	const rpcResult = await rpcHandler.handle(c.req.raw, {
-		prefix: "/rpc",
-		context,
-	});
-
-	if (rpcResult.matched) {
-		return c.newResponse(rpcResult.response.body, rpcResult.response);
-	}
-
-	const apiResult = await apiHandler.handle(c.req.raw, {
-		prefix: "/api-reference",
-		context,
-	});
-
-	if (apiResult.matched) {
-		return c.newResponse(apiResult.response.body, apiResult.response);
-	}
-
-	await next();
-});
-
-app.get("/", (c) => c.text("OK"));
-
-export default app;

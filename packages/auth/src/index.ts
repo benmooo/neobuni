@@ -101,6 +101,11 @@ export function createAuth(
 			},
 		},
 		advanced: {
+			// better-auth's relational-v2 drizzle introspection cannot see the
+			// `verification` table through drizzle's relation-derived schema.
+			database: {
+				validateSchema: false,
+			},
 			defaultCookieAttributes: {
 				sameSite: "none",
 				secure: true,
