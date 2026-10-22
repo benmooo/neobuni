@@ -46,7 +46,12 @@ app.use(
   cors({
     origin: ENV.CORS_ORIGIN,
     allowMethods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
-    allowHeaders: ["Content-Type", "Authorization"],
+    allowHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Run-Id",
+      "Last-Event-ID",
+    ],
     credentials: true,
   })
 );

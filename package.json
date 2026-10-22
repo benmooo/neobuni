@@ -35,7 +35,7 @@
     "db:migrate": "vp run --filter @neobuni/db db:migrate",
     "db:push": "vp run --filter @neobuni/db db:push",
     "db:studio": "vp run --filter @neobuni/db db:studio",
-    "dev": "vp run -r dev",
+    "dev": "vp run -r --parallel dev",
     "dev:server": "vp run --filter @neobuni/server dev",
     "dev:web": "vp run --filter web dev",
     "docker:build": "docker compose build",

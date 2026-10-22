@@ -51,10 +51,15 @@ process.on("SIGTERM", () => {
 
 const port = ENV.PORT;
 
-console.log(`[neobuni/server] listening on http://localhost:${port}`);
-
-Bun.serve({
+const server = Bun.serve({
   port,
   fetch: app.fetch,
   idleTimeout: 0,
 });
+
+// varlock patches `console.log` to redact values that match sensitive config. The
+// local URL matches BETTER_AUTH_URL, so the address would be logged as `ht▒▒▒▒▒`.
+// Write directly to stdout so the actual address is visible during development.
+process.stdout.write(
+  `[neobuni/server] listening on http://localhost:${server.port}\n`
+);

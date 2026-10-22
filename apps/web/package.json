@@ -12,7 +12,7 @@
     "start": "vp dev"
   },
   "dependencies": {
-    "@assistant-ui/react": "^0.14.8",
+    "@assistant-ui/react": "^0.15.30",
     "@neobuni/api": "workspace:*",
     "@neobuni/contracts": "workspace:*",
     "@neobuni/server": "workspace:*",
