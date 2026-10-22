@@ -30,7 +30,6 @@
         "@fumadocs/base-ui": "16.17.7",
         "@openrouter/ai-sdk-provider": "^3.0.0",
         "ai": "^7.0.0",
-        "class-variance-authority": "^0.7.1",
         "cn": "^0.5.0",
         "flexsearch": "^0.8.212",
         "fumadocs-core": "16.17.7",

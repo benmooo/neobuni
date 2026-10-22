@@ -9,8 +9,8 @@
 {
   "$schema": "https://r2.better-t-stack.dev/schema.json",
   "version": "3.47.0",
-  "createdAt": "2026-10-22T15:37:41.207Z",
-  "reproducibleCommand": "bun create better-t-stack@latest neobuni --frontend tanstack-router --backend hono --runtime bun --database sqlite --orm drizzle --api orpc --auth better-auth --payments none --addons vite-plus biome oxlint ultracite lefthook fumadocs evlog skills mcp --examples none --db-setup none --web-deploy docker --server-deploy docker --git --package-manager bun --install",
+  "createdAt": "2026-10-22T15:51:20.541Z",
+  "reproducibleCommand": "bun create better-t-stack@latest . --frontend tanstack-router --backend hono --runtime bun --database sqlite --orm drizzle --api orpc --auth better-auth --payments none --addons vite-plus biome oxlint ultracite lefthook fumadocs evlog skills --examples none --db-setup none --web-deploy docker --server-deploy docker --git --package-manager bun --install",
   "database": "sqlite",
   "orm": "drizzle",
   "backend": "hono",
@@ -25,7 +25,6 @@
     "fumadocs",
     "evlog",
     "skills",
-    "mcp",
   ],
   "examples": [],
   "auth": "better-auth",
