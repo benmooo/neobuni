@@ -26,7 +26,14 @@
     "zod": "catalog:",
     "@neobuni/contracts": "workspace:*",
     "@neobuni/core": "workspace:*",
-    "effect": "4.0.5"
+    "effect": "4.0.5",
+    "@tanstack/ai": "^0.22.0",
+    "@tanstack/ai-anthropic": "^0.11.0",
+    "@tanstack/ai-openai": "^0.10.1",
+    "@tanstack/ai-openrouter": "^0.9.8",
+    "chrono-node": "^2.9.0",
+    "croner": "^10.0.1",
+    "resend": "^6.12.2"
   },
   "devDependencies": {
     "@neobuni/config": "workspace:*",

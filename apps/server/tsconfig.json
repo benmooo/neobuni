@@ -1,10 +1,28 @@
 {
   "extends": "@neobuni/config/tsconfig.base.json",
-  "references": [{ "path": "../../packages/api" }],
+  "references": [
+    {
+      "path": "../../packages/api"
+    },
+    {
+      "path": "../../packages/auth"
+    },
+    {
+      "path": "../../packages/db"
+    },
+    {
+      "path": "../../packages/contracts"
+    },
+    {
+      "path": "../../packages/core"
+    }
+  ],
   "compilerOptions": {
     "noEmit": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": [
+        "./src/*"
+      ]
     },
     "jsx": "react-jsx",
     "jsxImportSource": "hono/jsx"

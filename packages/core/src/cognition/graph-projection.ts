@@ -1,56 +1,51 @@
 import { extractMemoryKeywords } from "./memory-gate";
 
 type GraphProjectableMemory = {
-  id: string;
-  content: string;
-  type: "event" | "thought" | "preference" | "fact" | "task";
-  keywords: string[];
+	id: string;
+	content: string;
+	type: "event" | "thought" | "preference" | "fact" | "task";
+	keywords: string[];
 };
 
 const unique = <T>(values: T[]) => Array.from(new Set(values));
 
 const inferPrimaryNodeKind = (
-  type: GraphProjectableMemory["type"],
+	type: GraphProjectableMemory["type"]
 ): "topic" | "event" | "task" => {
-  if (type === "task") {
-    return "task";
-  }
+	if (type === "task") {
+		return "task";
+	}
 
-  if (type === "event") {
-    return "event";
-  }
+	if (type === "event") {
+		return "event";
+	}
 
-  return "topic";
+	return "topic";
 };
 
-const inferPrimaryRelationType = (
-  type: GraphProjectableMemory["type"],
-) => {
-  if (type === "preference") {
-    return "prefers";
-  }
+const inferPrimaryRelationType = (type: GraphProjectableMemory["type"]) => {
+	if (type === "preference") {
+		return "prefers";
+	}
 
-  if (type === "fact") {
-    return "states";
-  }
+	if (type === "fact") {
+		return "states";
+	}
 
-  return "about";
+	return "about";
 };
 
 const buildGraphProjectionTerms = (memory: GraphProjectableMemory) =>
-  unique([
-    ...memory.keywords.map((keyword) => keyword.trim().toLowerCase()),
-    ...extractMemoryKeywords(memory.content),
-  ])
-    .filter((term) => term.length > 1)
-    .slice(0, 6);
+	unique([
+		...memory.keywords.map((keyword) => keyword.trim().toLowerCase()),
+		...extractMemoryKeywords(memory.content),
+	])
+		.filter((term) => term.length > 1)
+		.slice(0, 6);
 
+export type { GraphProjectableMemory };
 export {
-  buildGraphProjectionTerms,
-  inferPrimaryNodeKind,
-  inferPrimaryRelationType,
-};
-
-export type {
-  GraphProjectableMemory,
+	buildGraphProjectionTerms,
+	inferPrimaryNodeKind,
+	inferPrimaryRelationType,
 };

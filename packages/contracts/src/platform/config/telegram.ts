@@ -1,9 +1,9 @@
-import { z } from "zod";
+import type { z } from "zod";
 
 import {
-  discordMessagingConfigInputSchema,
-  discordMessagingConfigSchema,
-  discordMessagingTargetInputSchema,
+	discordMessagingConfigInputSchema,
+	discordMessagingConfigSchema,
+	discordMessagingTargetInputSchema,
 } from "./discord";
 
 const telegramMessagingTargetInputSchema = discordMessagingTargetInputSchema;
@@ -11,17 +11,17 @@ const telegramMessagingConfigInputSchema = discordMessagingConfigInputSchema;
 const telegramMessagingConfigSchema = discordMessagingConfigSchema;
 
 export {
-  telegramMessagingConfigInputSchema,
-  telegramMessagingConfigSchema,
-  telegramMessagingTargetInputSchema,
+	telegramMessagingConfigInputSchema,
+	telegramMessagingConfigSchema,
+	telegramMessagingTargetInputSchema,
 };
 
 export type TelegramMessagingConfig = z.infer<
-  typeof telegramMessagingConfigSchema
+	typeof telegramMessagingConfigSchema
 >;
 export type TelegramMessagingConfigInput = z.infer<
-  typeof telegramMessagingConfigInputSchema
+	typeof telegramMessagingConfigInputSchema
 >;
 export type TelegramMessagingTargetInput = z.infer<
-  typeof telegramMessagingTargetInputSchema
+	typeof telegramMessagingTargetInputSchema
 >;

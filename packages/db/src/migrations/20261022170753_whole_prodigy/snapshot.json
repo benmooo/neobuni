@@ -2,9 +2,7 @@
   "version": "7",
   "dialect": "sqlite",
   "id": "b665ed6b-1d0a-4977-8b2d-b9609931b63c",
-  "prevIds": [
-    "00000000-0000-0000-0000-000000000000"
-  ],
+  "prevIds": ["00000000-0000-0000-0000-000000000000"],
   "ddl": [
     {
       "name": "account",
@@ -4175,13 +4173,9 @@
       "table": "verification"
     },
     {
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4190,13 +4184,9 @@
       "table": "account"
     },
     {
-      "columns": [
-        "proposal_id"
-      ],
+      "columns": ["proposal_id"],
       "tableTo": "action_proposals",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4205,13 +4195,9 @@
       "table": "action_authorizations"
     },
     {
-      "columns": [
-        "profile_id"
-      ],
+      "columns": ["profile_id"],
       "tableTo": "profiles",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4220,13 +4206,9 @@
       "table": "action_authorizations"
     },
     {
-      "columns": [
-        "profile_id"
-      ],
+      "columns": ["profile_id"],
       "tableTo": "profiles",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4235,13 +4217,9 @@
       "table": "action_proposals"
     },
     {
-      "columns": [
-        "goal_id"
-      ],
+      "columns": ["goal_id"],
       "tableTo": "goals",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "nameExplicit": false,
@@ -4250,13 +4228,9 @@
       "table": "action_proposals"
     },
     {
-      "columns": [
-        "decision_id"
-      ],
+      "columns": ["decision_id"],
       "tableTo": "decisions",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4265,13 +4239,9 @@
       "table": "action_proposals"
     },
     {
-      "columns": [
-        "profile_id"
-      ],
+      "columns": ["profile_id"],
       "tableTo": "profiles",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4280,13 +4250,9 @@
       "table": "action_runs"
     },
     {
-      "columns": [
-        "proposal_id"
-      ],
+      "columns": ["proposal_id"],
       "tableTo": "action_proposals",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4295,13 +4261,9 @@
       "table": "action_runs"
     },
     {
-      "columns": [
-        "authorization_id"
-      ],
+      "columns": ["authorization_id"],
       "tableTo": "action_authorizations",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4310,13 +4272,9 @@
       "table": "action_runs"
     },
     {
-      "columns": [
-        "profile_id"
-      ],
+      "columns": ["profile_id"],
       "tableTo": "profiles",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4325,13 +4283,9 @@
       "table": "agent_configs"
     },
     {
-      "columns": [
-        "soul_config_id"
-      ],
+      "columns": ["soul_config_id"],
       "tableTo": "soul_configs",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "nameExplicit": false,
@@ -4340,13 +4294,9 @@
       "table": "agent_configs"
     },
     {
-      "columns": [
-        "profile_id"
-      ],
+      "columns": ["profile_id"],
       "tableTo": "profiles",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4355,13 +4305,9 @@
       "table": "commitments"
     },
     {
-      "columns": [
-        "goal_id"
-      ],
+      "columns": ["goal_id"],
       "tableTo": "goals",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "nameExplicit": false,
@@ -4370,13 +4316,9 @@
       "table": "commitments"
     },
     {
-      "columns": [
-        "profile_id"
-      ],
+      "columns": ["profile_id"],
       "tableTo": "profiles",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4385,13 +4327,9 @@
       "table": "conversations"
     },
     {
-      "columns": [
-        "decision_id"
-      ],
+      "columns": ["decision_id"],
       "tableTo": "decisions",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4400,13 +4338,9 @@
       "table": "decision_candidates"
     },
     {
-      "columns": [
-        "decision_id"
-      ],
+      "columns": ["decision_id"],
       "tableTo": "decisions",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4415,13 +4349,9 @@
       "table": "decision_feedback"
     },
     {
-      "columns": [
-        "profile_id"
-      ],
+      "columns": ["profile_id"],
       "tableTo": "profiles",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4430,13 +4360,9 @@
       "table": "decision_feedback"
     },
     {
-      "columns": [
-        "decision_id"
-      ],
+      "columns": ["decision_id"],
       "tableTo": "decisions",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4445,13 +4371,9 @@
       "table": "decision_judgments"
     },
     {
-      "columns": [
-        "profile_id"
-      ],
+      "columns": ["profile_id"],
       "tableTo": "profiles",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4460,13 +4382,9 @@
       "table": "decisions"
     },
     {
-      "columns": [
-        "goal_id"
-      ],
+      "columns": ["goal_id"],
       "tableTo": "goals",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "nameExplicit": false,
@@ -4475,13 +4393,9 @@
       "table": "decisions"
     },
     {
-      "columns": [
-        "profile_id"
-      ],
+      "columns": ["profile_id"],
       "tableTo": "profiles",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4490,13 +4404,9 @@
       "table": "digest_anchors"
     },
     {
-      "columns": [
-        "conversation_id"
-      ],
+      "columns": ["conversation_id"],
       "tableTo": "conversations",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4505,13 +4415,9 @@
       "table": "digest_anchors"
     },
     {
-      "columns": [
-        "last_message_id"
-      ],
+      "columns": ["last_message_id"],
       "tableTo": "messages",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4520,13 +4426,9 @@
       "table": "digest_anchors"
     },
     {
-      "columns": [
-        "profile_id"
-      ],
+      "columns": ["profile_id"],
       "tableTo": "profiles",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4535,13 +4437,9 @@
       "table": "events"
     },
     {
-      "columns": [
-        "profile_id"
-      ],
+      "columns": ["profile_id"],
       "tableTo": "profiles",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4550,13 +4448,9 @@
       "table": "external_conversation_bindings"
     },
     {
-      "columns": [
-        "conversation_id"
-      ],
+      "columns": ["conversation_id"],
       "tableTo": "conversations",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4565,13 +4459,9 @@
       "table": "external_conversation_bindings"
     },
     {
-      "columns": [
-        "profile_id"
-      ],
+      "columns": ["profile_id"],
       "tableTo": "profiles",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4580,13 +4470,9 @@
       "table": "external_event_receipts"
     },
     {
-      "columns": [
-        "profile_id"
-      ],
+      "columns": ["profile_id"],
       "tableTo": "profiles",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4595,13 +4481,9 @@
       "table": "goals"
     },
     {
-      "columns": [
-        "document_id"
-      ],
+      "columns": ["document_id"],
       "tableTo": "knowledge_documents",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4610,13 +4492,9 @@
       "table": "knowledge_chunks"
     },
     {
-      "columns": [
-        "profile_id"
-      ],
+      "columns": ["profile_id"],
       "tableTo": "profiles",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4625,13 +4503,9 @@
       "table": "knowledge_documents"
     },
     {
-      "columns": [
-        "document_id"
-      ],
+      "columns": ["document_id"],
       "tableTo": "knowledge_documents",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4640,13 +4514,9 @@
       "table": "knowledge_facts"
     },
     {
-      "columns": [
-        "chunk_id"
-      ],
+      "columns": ["chunk_id"],
       "tableTo": "knowledge_chunks",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "nameExplicit": false,
@@ -4655,13 +4525,9 @@
       "table": "knowledge_facts"
     },
     {
-      "columns": [
-        "profile_id"
-      ],
+      "columns": ["profile_id"],
       "tableTo": "profiles",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4670,13 +4536,9 @@
       "table": "memories"
     },
     {
-      "columns": [
-        "conversation_id"
-      ],
+      "columns": ["conversation_id"],
       "tableTo": "conversations",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "nameExplicit": false,
@@ -4685,13 +4547,9 @@
       "table": "memories"
     },
     {
-      "columns": [
-        "profile_id"
-      ],
+      "columns": ["profile_id"],
       "tableTo": "profiles",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4700,13 +4558,9 @@
       "table": "memory_conflicts"
     },
     {
-      "columns": [
-        "conversation_id"
-      ],
+      "columns": ["conversation_id"],
       "tableTo": "conversations",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "nameExplicit": false,
@@ -4715,13 +4569,9 @@
       "table": "memory_conflicts"
     },
     {
-      "columns": [
-        "existing_memory_id"
-      ],
+      "columns": ["existing_memory_id"],
       "tableTo": "memories",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4730,13 +4580,9 @@
       "table": "memory_conflicts"
     },
     {
-      "columns": [
-        "subject_memory_id"
-      ],
+      "columns": ["subject_memory_id"],
       "tableTo": "memories",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "nameExplicit": false,
@@ -4745,13 +4591,9 @@
       "table": "memory_conflicts"
     },
     {
-      "columns": [
-        "profile_id"
-      ],
+      "columns": ["profile_id"],
       "tableTo": "profiles",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4760,13 +4602,9 @@
       "table": "memory_graph_edges"
     },
     {
-      "columns": [
-        "from_node_id"
-      ],
+      "columns": ["from_node_id"],
       "tableTo": "memory_graph_nodes",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4775,13 +4613,9 @@
       "table": "memory_graph_edges"
     },
     {
-      "columns": [
-        "to_node_id"
-      ],
+      "columns": ["to_node_id"],
       "tableTo": "memory_graph_nodes",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4790,13 +4624,9 @@
       "table": "memory_graph_edges"
     },
     {
-      "columns": [
-        "profile_id"
-      ],
+      "columns": ["profile_id"],
       "tableTo": "profiles",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4805,13 +4635,9 @@
       "table": "memory_graph_nodes"
     },
     {
-      "columns": [
-        "profile_id"
-      ],
+      "columns": ["profile_id"],
       "tableTo": "profiles",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4820,13 +4646,9 @@
       "table": "memory_graph_sources"
     },
     {
-      "columns": [
-        "conversation_id"
-      ],
+      "columns": ["conversation_id"],
       "tableTo": "conversations",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4835,13 +4657,9 @@
       "table": "messages"
     },
     {
-      "columns": [
-        "turn_id"
-      ],
+      "columns": ["turn_id"],
       "tableTo": "runtime_turns",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "nameExplicit": false,
@@ -4850,13 +4668,9 @@
       "table": "messages"
     },
     {
-      "columns": [
-        "profile_id"
-      ],
+      "columns": ["profile_id"],
       "tableTo": "profiles",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4865,13 +4679,9 @@
       "table": "messaging_integrations"
     },
     {
-      "columns": [
-        "profile_id"
-      ],
+      "columns": ["profile_id"],
       "tableTo": "profiles",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4880,13 +4690,9 @@
       "table": "messaging_targets"
     },
     {
-      "columns": [
-        "owner_user_id"
-      ],
+      "columns": ["owner_user_id"],
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4895,13 +4701,9 @@
       "table": "profiles"
     },
     {
-      "columns": [
-        "profile_id"
-      ],
+      "columns": ["profile_id"],
       "tableTo": "profiles",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4910,13 +4712,9 @@
       "table": "provider_configs"
     },
     {
-      "columns": [
-        "turn_id"
-      ],
+      "columns": ["turn_id"],
       "tableTo": "runtime_turns",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4925,13 +4723,9 @@
       "table": "runtime_spans"
     },
     {
-      "columns": [
-        "conversation_id"
-      ],
+      "columns": ["conversation_id"],
       "tableTo": "conversations",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4940,13 +4734,9 @@
       "table": "runtime_spans"
     },
     {
-      "columns": [
-        "profile_id"
-      ],
+      "columns": ["profile_id"],
       "tableTo": "profiles",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4955,13 +4745,9 @@
       "table": "runtime_turns"
     },
     {
-      "columns": [
-        "conversation_id"
-      ],
+      "columns": ["conversation_id"],
       "tableTo": "conversations",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -4970,13 +4756,9 @@
       "table": "runtime_turns"
     },
     {
-      "columns": [
-        "task_run_id"
-      ],
+      "columns": ["task_run_id"],
       "tableTo": "task_runs",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "SET NULL",
       "nameExplicit": false,
@@ -4985,13 +4767,9 @@
       "table": "runtime_turns"
     },
     {
-      "columns": [
-        "profile_id"
-      ],
+      "columns": ["profile_id"],
       "tableTo": "profiles",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -5000,13 +4778,9 @@
       "table": "schedules"
     },
     {
-      "columns": [
-        "user_id"
-      ],
+      "columns": ["user_id"],
       "tableTo": "user",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -5015,13 +4789,9 @@
       "table": "session"
     },
     {
-      "columns": [
-        "profile_id"
-      ],
+      "columns": ["profile_id"],
       "tableTo": "profiles",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -5030,13 +4800,9 @@
       "table": "soul_configs"
     },
     {
-      "columns": [
-        "profile_id"
-      ],
+      "columns": ["profile_id"],
       "tableTo": "profiles",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -5045,13 +4811,9 @@
       "table": "task_runs"
     },
     {
-      "columns": [
-        "schedule_id"
-      ],
+      "columns": ["schedule_id"],
       "tableTo": "schedules",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "CASCADE",
       "onDelete": "CASCADE",
       "nameExplicit": false,
@@ -5060,333 +4822,259 @@
       "table": "task_runs"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "account_pk",
       "table": "account",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "action_authorizations_pk",
       "table": "action_authorizations",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "action_proposals_pk",
       "table": "action_proposals",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "action_runs_pk",
       "table": "action_runs",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "agent_configs_pk",
       "table": "agent_configs",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "commitments_pk",
       "table": "commitments",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "conversations_pk",
       "table": "conversations",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "decision_candidates_pk",
       "table": "decision_candidates",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "decision_feedback_pk",
       "table": "decision_feedback",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "decision_judgments_pk",
       "table": "decision_judgments",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "decisions_pk",
       "table": "decisions",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "digest_anchors_pk",
       "table": "digest_anchors",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "events_pk",
       "table": "events",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "external_conversation_bindings_pk",
       "table": "external_conversation_bindings",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "external_event_receipts_pk",
       "table": "external_event_receipts",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "goals_pk",
       "table": "goals",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "knowledge_chunks_pk",
       "table": "knowledge_chunks",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "knowledge_documents_pk",
       "table": "knowledge_documents",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "knowledge_facts_pk",
       "table": "knowledge_facts",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "memories_pk",
       "table": "memories",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "memory_conflicts_pk",
       "table": "memory_conflicts",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "memory_graph_edges_pk",
       "table": "memory_graph_edges",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "memory_graph_nodes_pk",
       "table": "memory_graph_nodes",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "memory_graph_sources_pk",
       "table": "memory_graph_sources",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "messages_pk",
       "table": "messages",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "messaging_integrations_pk",
       "table": "messaging_integrations",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "messaging_targets_pk",
       "table": "messaging_targets",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "profiles_pk",
       "table": "profiles",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "provider_configs_pk",
       "table": "provider_configs",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "runtime_spans_pk",
       "table": "runtime_spans",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "runtime_turns_pk",
       "table": "runtime_turns",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "schedules_pk",
       "table": "schedules",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "session_pk",
       "table": "session",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "soul_configs_pk",
       "table": "soul_configs",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "task_runs_pk",
       "table": "task_runs",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "user_pk",
       "table": "user",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "nameExplicit": false,
       "name": "verification_pk",
       "table": "verification",
@@ -5931,27 +5619,21 @@
       "table": "verification"
     },
     {
-      "columns": [
-        "conversation_id"
-      ],
+      "columns": ["conversation_id"],
       "nameExplicit": false,
       "name": "digest_anchors_conversation_id_unique",
       "entityType": "uniques",
       "table": "digest_anchors"
     },
     {
-      "columns": [
-        "token"
-      ],
+      "columns": ["token"],
       "nameExplicit": false,
       "name": "session_token_unique",
       "entityType": "uniques",
       "table": "session"
     },
     {
-      "columns": [
-        "email"
-      ],
+      "columns": ["email"],
       "nameExplicit": false,
       "name": "user_email_unique",
       "entityType": "uniques",
