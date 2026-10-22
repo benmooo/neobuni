@@ -1,0 +1,66 @@
+{
+  "generatedAt": "2026-10-22T05:10:40.544Z",
+  "providerId": "jev",
+  "includedReviewStatuses": ["reviewed"],
+  "items": [
+    {
+      "fixtureId": "retrieval-temporal-positive-zh-v1",
+      "familyId": "retrieval.temporal_activation.v1",
+      "language": "zh",
+      "reviewStatus": "reviewed",
+      "expectedValue": "retrieve_now",
+      "providerValue": "retrieve_now",
+      "matchedExpected": true,
+      "providerVersion": "typesafe/jev-1.14-20261014",
+      "latencyMs": 719
+    },
+    {
+      "fixtureId": "retrieval-temporal-negative-en-v1",
+      "familyId": "retrieval.temporal_activation.v1",
+      "language": "en",
+      "reviewStatus": "reviewed",
+      "expectedValue": "skip",
+      "providerValue": "skip",
+      "matchedExpected": true,
+      "providerVersion": "typesafe/jev-1.14-20261014",
+      "latencyMs": 744
+    },
+    {
+      "fixtureId": "retrieval-graph-ambiguous-mixed-v1",
+      "familyId": "retrieval.graph_activation.v1",
+      "language": "mixed",
+      "reviewStatus": "reviewed",
+      "expectedValue": false,
+      "providerValue": true,
+      "matchedExpected": false,
+      "providerVersion": "typesafe/jev-1.14-20261014",
+      "latencyMs": 748
+    },
+    {
+      "fixtureId": "retrieval-knowledge-injection-zh-v1",
+      "familyId": "retrieval.knowledge_activation.v1",
+      "language": "zh",
+      "reviewStatus": "reviewed",
+      "expectedValue": false,
+      "providerValue": false,
+      "matchedExpected": true,
+      "providerVersion": "typesafe/jev-1.14-20261014",
+      "latencyMs": 733
+    },
+    {
+      "fixtureId": "initiative-best-candidate-zh-v1",
+      "familyId": "initiative.best_candidate.v1",
+      "language": "zh",
+      "reviewStatus": "reviewed",
+      "expectedValue": "commitment:blocked",
+      "providerValue": "commitment:blocked",
+      "matchedExpected": true,
+      "providerVersion": "typesafe/jev-1.14-20261014",
+      "latencyMs": 675
+    }
+  ],
+  "reviewedItemCount": 5,
+  "reviewedMatchRate": 0.8,
+  "draftItemCount": 0,
+  "draftMatchRate": null
+}

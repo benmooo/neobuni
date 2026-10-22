@@ -1,0 +1,99 @@
+{
+  "generatedAt": "2026-10-22T05:12:40.020Z",
+  "providerId": "jev",
+  "includedReviewStatuses": ["reviewed", "draft"],
+  "items": [
+    {
+      "fixtureId": "retrieval-temporal-positive-zh-v1",
+      "familyId": "retrieval.temporal_activation.v1",
+      "language": "zh",
+      "reviewStatus": "reviewed",
+      "expectedValue": "retrieve_now",
+      "providerValue": "retrieve_now",
+      "matchedExpected": true,
+      "providerVersion": "typesafe/jev-1.14-20261014",
+      "latencyMs": 626
+    },
+    {
+      "fixtureId": "retrieval-temporal-negative-en-v1",
+      "familyId": "retrieval.temporal_activation.v1",
+      "language": "en",
+      "reviewStatus": "reviewed",
+      "expectedValue": "skip",
+      "providerValue": "skip",
+      "matchedExpected": true,
+      "providerVersion": "typesafe/jev-1.14-20261014",
+      "latencyMs": 644
+    },
+    {
+      "fixtureId": "retrieval-graph-ambiguous-mixed-v1",
+      "familyId": "retrieval.graph_activation.v1",
+      "language": "mixed",
+      "reviewStatus": "reviewed",
+      "expectedValue": false,
+      "providerValue": true,
+      "matchedExpected": false,
+      "providerVersion": "typesafe/jev-1.14-20261014",
+      "latencyMs": 617
+    },
+    {
+      "fixtureId": "retrieval-graph-current-relationship-en-v2",
+      "familyId": "retrieval.graph_activation.v2",
+      "language": "en",
+      "reviewStatus": "draft",
+      "expectedValue": true,
+      "providerValue": true,
+      "matchedExpected": true,
+      "providerVersion": "typesafe/jev-1.14-20261014",
+      "latencyMs": 674
+    },
+    {
+      "fixtureId": "retrieval-graph-ambiguous-unknown-zh-v2",
+      "familyId": "retrieval.graph_activation.v2",
+      "language": "zh",
+      "reviewStatus": "draft",
+      "expectedValue": false,
+      "providerValue": false,
+      "matchedExpected": true,
+      "providerVersion": "typesafe/jev-1.14-20261014",
+      "latencyMs": 666
+    },
+    {
+      "fixtureId": "retrieval-graph-stale-mixed-v2",
+      "familyId": "retrieval.graph_activation.v2",
+      "language": "mixed",
+      "reviewStatus": "draft",
+      "expectedValue": false,
+      "providerValue": false,
+      "matchedExpected": true,
+      "providerVersion": "typesafe/jev-1.14-20261014",
+      "latencyMs": 648
+    },
+    {
+      "fixtureId": "retrieval-knowledge-injection-zh-v1",
+      "familyId": "retrieval.knowledge_activation.v1",
+      "language": "zh",
+      "reviewStatus": "reviewed",
+      "expectedValue": false,
+      "providerValue": false,
+      "matchedExpected": true,
+      "providerVersion": "typesafe/jev-1.14-20261014",
+      "latencyMs": 640
+    },
+    {
+      "fixtureId": "initiative-best-candidate-zh-v1",
+      "familyId": "initiative.best_candidate.v1",
+      "language": "zh",
+      "reviewStatus": "reviewed",
+      "expectedValue": "commitment:blocked",
+      "providerValue": "commitment:blocked",
+      "matchedExpected": true,
+      "providerVersion": "typesafe/jev-1.14-20261014",
+      "latencyMs": 640
+    }
+  ],
+  "reviewedItemCount": 5,
+  "reviewedMatchRate": 0.8,
+  "draftItemCount": 3,
+  "draftMatchRate": 1
+}
