@@ -1,44 +1,48 @@
 {
-  "name": "server",
+  "name": "@neobuni/server",
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
+    "auth:generate": "varlock run -- bun x auth@latest generate --config src/services.ts --output ../../packages/db/src/schema/auth.ts --yes",
     "build": "tsc -b ../../packages/api && tsdown",
     "check-types": "tsc -b ../../packages/api && tsc --noEmit",
     "compile": "bun build --compile --no-compile-autoload-dotenv --minify --sourcemap --bytecode ./src/index.ts --outfile server",
     "dev": "bun run --hot src/index.ts",
-    "start": "bun run dist/index.mjs",
     "env:generate": "varlock codegen",
-    "auth:generate": "varlock run -- bun x auth@latest generate --config src/services.ts --output ../../packages/db/src/schema/auth.ts --yes"
+    "start": "bun run dist/index.mjs"
   },
   "dependencies": {
     "@neobuni/api": "workspace:*",
     "@neobuni/auth": "workspace:*",
+    "@neobuni/contracts": "workspace:*",
+    "@neobuni/core": "workspace:*",
     "@neobuni/db": "workspace:*",
     "@orpc/openapi": "catalog:",
     "@orpc/server": "catalog:",
     "@orpc/zod": "catalog:",
+    "@tanstack/ai": "latest",
+    "@tanstack/ai-anthropic": "latest",
+    "@tanstack/ai-openai": "latest",
+    "@tanstack/ai-openrouter": "latest",
     "better-auth": "catalog:",
+    "chrono-node": "^2.9.0",
+    "croner": "^10.0.1",
+    "effect": "4.0.5",
     "evlog": "^2.30.1",
     "hono": "^4.13.7",
     "libsql": "catalog:",
+    "resend": "^6.12.2",
     "varlock": "catalog:",
-    "zod": "catalog:",
-    "@neobuni/contracts": "workspace:*",
-    "@neobuni/core": "workspace:*",
-    "effect": "4.0.5",
-    "@tanstack/ai": "0.22.0",
-    "@tanstack/ai-anthropic": "0.11.0",
-    "@tanstack/ai-openai": "0.10.1",
-    "@tanstack/ai-openrouter": "0.9.8",
-    "chrono-node": "^2.9.0",
-    "croner": "^10.0.1",
-    "resend": "^6.12.2"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@neobuni/config": "workspace:*",
     "@types/bun": "catalog:",
     "tsdown": "^0.23.0",
     "typescript": "catalog:"
+  },
+  "exports": {
+    ".": "./src/router.ts",
+    "./router": "./src/router.ts"
   }
 }

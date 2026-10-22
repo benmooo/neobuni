@@ -1,66 +1,31 @@
-import type { AppRouterClient } from "@neobuni/api/routers/index";
 import { Toaster } from "@neobuni/ui/components/sonner";
-import { createORPCClient } from "@orpc/client";
-import { createTanstackQueryUtils } from "@orpc/tanstack-query";
-import type { QueryClient } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { HeadContent, Outlet, createRootRouteWithContext } from "@tanstack/react-router";
-import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
-import { useState } from "react";
+import { ThemeProvider } from "@neobuni/ui/components/theme-provider";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { createRootRoute, Outlet } from "@tanstack/react-router";
+// import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 
-import Header from "@/components/header";
-import { ThemeProvider } from "@/components/theme-provider";
-import { link, orpc } from "@/utils/orpc";
+import { ChatDisplayPreferencesProvider } from "@/components/chat/chat-display-preferences";
 
 import "../index.css";
 
-export interface RouterAppContext {
-  orpc: typeof orpc;
-  queryClient: QueryClient;
-}
-
-export const Route = createRootRouteWithContext<RouterAppContext>()({
-  component: RootComponent,
-  head: () => ({
-    meta: [
-      {
-        title: "neobuni",
-      },
-      {
-        name: "description",
-        content: "neobuni is a web application",
-      },
-    ],
-    links: [
-      {
-        rel: "icon",
-        href: "/favicon.ico",
-      },
-    ],
-  }),
+const queryClient = new QueryClient({
+	defaultOptions: {
+		queries: {
+			refetchOnWindowFocus: false,
+		},
+	},
 });
 
-function RootComponent() {
-  const [client] = useState<AppRouterClient>(() => createORPCClient(link));
-  const [orpcUtils] = useState(() => createTanstackQueryUtils(client));
-
-  return (
-    <>
-      <HeadContent />
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="dark"
-        disableTransitionOnChange
-        storageKey="vite-ui-theme"
-      >
-        <div className="grid grid-rows-[auto_1fr] h-svh">
-          <Header />
-          <Outlet />
-        </div>
-        <Toaster richColors />
-      </ThemeProvider>
-      <TanStackRouterDevtools position="bottom-left" />
-      <ReactQueryDevtools position="bottom" buttonPosition="bottom-right" />
-    </>
-  );
-}
+export const Route = createRootRoute({
+	component: () => (
+		<ThemeProvider>
+			<ChatDisplayPreferencesProvider>
+				<QueryClientProvider client={queryClient}>
+					<Outlet />
+				</QueryClientProvider>
+			</ChatDisplayPreferencesProvider>
+			<Toaster position="top-center" />
+			{/*<TanStackRouterDevtools position="top-right"  />*/}
+		</ThemeProvider>
+	),
+});

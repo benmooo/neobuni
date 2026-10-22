@@ -99,12 +99,14 @@ const runAgentTurn = async (
 	let providerTurnMessages: ReadonlyArray<ModelMessage> = [];
 	let assistantText = "";
 
+	const threadId =
+		input.threadId ?? input.conversationId ?? crypto.randomUUID();
+
 	const providerStream = deps.chat(
 		buildProviderChatOptions({
 			providerConfig: input.providerConfig,
 			abortController: input.abortController,
-			conversationId: input.conversationId ?? null,
-			threadId: input.threadId ?? null,
+			threadId,
 			promptPacket: input.promptPacket,
 			persistedMessages: input.persistedMessages,
 			tools: input.tools,

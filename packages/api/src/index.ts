@@ -24,3 +24,5 @@ const requireActiveProfile = o.middleware(async ({ context, next }) => {
 });
 
 export const protectedProcedure = publicProcedure.use(requireActiveProfile);
+
+export { run, toORPCError } from "./run";

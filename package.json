@@ -1,6 +1,7 @@
 {
   "name": "neobuni",
   "private": true,
+  "type": "module",
   "workspaces": {
     "packages": [
       "apps/*",
@@ -24,30 +25,32 @@
       "drizzle-orm": "1.0.0-rc.4"
     }
   },
-  "type": "module",
   "scripts": {
-    "dev": "vp run -r dev",
+    "auth:generate": "cd apps/server && bun run auth:generate",
     "build": "vp run -r build",
-    "check-types": "vp run -r check-types",
     "check": "vp check && vp run -r check-types",
-    "lint": "vp lint",
-    "format": "vp fmt",
-    "staged": "vp staged",
-    "dev:web": "vp run --filter web dev",
-    "dev:server": "vp run --filter server dev",
+    "check-types": "vp run -r check-types",
+    "db:generate": "vp run --filter @neobuni/db db:generate",
+    "db:local": "vp run --filter @neobuni/db db:local",
+    "db:migrate": "vp run --filter @neobuni/db db:migrate",
     "db:push": "vp run --filter @neobuni/db db:push",
     "db:studio": "vp run --filter @neobuni/db db:studio",
-    "db:generate": "vp run --filter @neobuni/db db:generate",
-    "db:migrate": "vp run --filter @neobuni/db db:migrate",
-    "db:local": "vp run --filter @neobuni/db db:local",
+    "dev": "vp run -r dev",
+    "dev:server": "vp run --filter @neobuni/server dev",
+    "dev:web": "vp run --filter web dev",
     "docker:build": "docker compose build",
-    "docker:up": "docker compose up -d --build",
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f",
+    "docker:up": "docker compose up -d --build",
     "env:generate": "varlock codegen --path ./apps/web/ && varlock codegen --path ./apps/server/ && varlock codegen --path ./packages/db/",
+    "fix": "ultracite fix",
+    "format": "vp fmt",
     "postinstall": "varlock codegen --path ./apps/web/ && varlock codegen --path ./apps/server/ && varlock codegen --path ./packages/db/",
-    "auth:generate": "cd apps/server && bun run auth:generate",
-    "fix": "ultracite fix"
+    "lint": "vp lint",
+    "staged": "vp staged"
+  },
+  "overrides": {
+    "vite": "npm:@voidzero-dev/vite-plus-core@1.1.0"
   },
   "dependencies": {
     "zod": "catalog:"
@@ -66,12 +69,6 @@
     "vite": "catalog:",
     "vite-plus": "1.1.0",
     "vitest": "5.0.3"
-  },
-  "overrides": {
-    "vite": "npm:@voidzero-dev/vite-plus-core@1.1.0",
-    "@tanstack/ai": "0.22.0",
-    "@tanstack/ai-event-client": "0.3.11",
-    "@tanstack/openai-base": "0.4.0"
   },
   "packageManager": "bun@1.4.3"
 }

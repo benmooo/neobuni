@@ -1,1 +1,7 @@
+@import "katex/dist/katex.min.css";
+@import "streamdown/styles.css";
 @import "@neobuni/ui/globals.css";
+
+@source "../../../node_modules/streamdown/dist/*.js";
+@source "../../../node_modules/@streamdown/math/dist/*.js";
+@source "../../../node_modules/@streamdown/mermaid/dist/*.js";

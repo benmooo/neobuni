@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type {
 	Commitment,
 	DecisionCandidate,
@@ -10,6 +11,7 @@ import {
 	selectHeuristicNextAction,
 } from "@neobuni/core";
 import { recordDecisionTrace } from "@neobuni/db";
+
 import { Effect, tryPromise } from "../effect";
 import {
 	getConfiguredJevProvider,
@@ -17,10 +19,7 @@ import {
 } from "./jev-provider-config";
 
 const hashState = (value: unknown) =>
-	new Bun.CryptoHasher("sha256")
-		.update(JSON.stringify(value))
-		.digest("hex")
-		.slice(0, 32);
+	createHash("sha256").update(JSON.stringify(value)).digest("hex").slice(0, 32);
 
 const recordNextActionEvaluation = Effect.fnUntraced(function* (input: {
 	profileId: string;

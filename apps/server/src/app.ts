@@ -1,4 +1,3 @@
-import { appRouter } from "@neobuni/api/routers/index";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import { OpenAPIReferencePlugin } from "@orpc/openapi/plugins";
 import { onError } from "@orpc/server";
@@ -13,9 +12,9 @@ import { createFsDrain } from "evlog/fs";
 import { type EvlogVariables, evlog } from "evlog/hono";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-
 import { createContext } from "./context";
 import { ENV } from "./env.server";
+import { router } from "./router";
 import { chatRoutes } from "./routes/chat";
 import { discordIntegrationRoutes } from "./routes/integrations-discord";
 import { telegramIntegrationRoutes } from "./routes/integrations-telegram";
@@ -54,7 +53,7 @@ app.use(
 
 app.on(["POST", "GET"], "/api/auth/*", async (c) => auth.handler(c.req.raw));
 
-export const apiHandler = new OpenAPIHandler(appRouter, {
+export const apiHandler = new OpenAPIHandler(router, {
 	plugins: [
 		new OpenAPIReferencePlugin({
 			schemaConverters: [new ZodToJsonSchemaConverter()],
@@ -67,7 +66,7 @@ export const apiHandler = new OpenAPIHandler(appRouter, {
 	],
 });
 
-export const rpcHandler = new RPCHandler(appRouter, {
+export const rpcHandler = new RPCHandler(router, {
 	interceptors: [
 		onError((error) => {
 			console.error(error);

@@ -539,7 +539,7 @@ const createChatTurnStream = async ({
 		effectiveSurfacePolicy
 	);
 
-	const tools = mergeAgentTools(serverTools, clientTools);
+	const tools = [...mergeAgentTools(serverTools, clientTools)];
 
 	const providerRequestInput = buildProviderRequestInput({
 		providerKey: loadedContext.providerConfig.provider,

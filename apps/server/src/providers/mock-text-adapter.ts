@@ -35,7 +35,7 @@ const createMockTextAdapter = (): TextAdapter<
 		options: TextOptions<Record<string, never>>
 	): AsyncIterable<StreamChunk> {
 		const runId = options.runId ?? createId("run");
-		const threadId = options.threadId ?? options.conversationId ?? runId;
+		const threadId = options.threadId ?? runId;
 		const messageId = createId("msg");
 		const content = buildReply(options);
 
@@ -44,7 +44,6 @@ const createMockTextAdapter = (): TextAdapter<
 			runId,
 			threadId,
 			...(options.parentRunId ? { parentRunId: options.parentRunId } : {}),
-			model,
 			timestamp: Date.now(),
 		};
 
@@ -52,7 +51,6 @@ const createMockTextAdapter = (): TextAdapter<
 			type: EventType.TEXT_MESSAGE_START,
 			messageId,
 			role: "assistant",
-			model,
 			timestamp: Date.now(),
 		};
 
@@ -64,8 +62,6 @@ const createMockTextAdapter = (): TextAdapter<
 				type: EventType.TEXT_MESSAGE_CONTENT,
 				messageId,
 				delta,
-				content: accumulated,
-				model,
 				timestamp: Date.now(),
 			};
 		}
@@ -73,7 +69,6 @@ const createMockTextAdapter = (): TextAdapter<
 		yield {
 			type: EventType.TEXT_MESSAGE_END,
 			messageId,
-			model,
 			timestamp: Date.now(),
 		};
 
@@ -81,9 +76,7 @@ const createMockTextAdapter = (): TextAdapter<
 			type: EventType.RUN_FINISHED,
 			runId,
 			threadId,
-			model,
 			timestamp: Date.now(),
-			finishReason: "stop",
 		};
 	};
 
