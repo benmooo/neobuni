@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "analyze-logs": {
+      "source": "evloghq/evlog",
+      "sourceType": "github",
+      "skillPath": "skills/analyze-logs/SKILL.md",
+      "computedHash": "f53f007fcba9a33d9c4a5391763ed01b79357cefb3edbaff561943088f6bd4e4"
+    },
     "better-auth-best-practices": {
       "source": "better-auth/skills",
       "sourceType": "github",
@@ -13,6 +19,18 @@
       "skillPath": "security/SKILL.md",
       "computedHash": "7a230edf3a24ce18162cb4379f59b6a19b8d24ca04db530609d0f15cede556dc"
     },
+    "build-audit-logs": {
+      "source": "evloghq/evlog",
+      "sourceType": "github",
+      "skillPath": "skills/build-audit-logs/SKILL.md",
+      "computedHash": "00ad2639d2da50af9922c0f61c2315564bbe6b29cb02d421f042db105fd11a03"
+    },
+    "effect-ts": {
+      "source": "Effect-TS/skills",
+      "sourceType": "github",
+      "skillPath": "skills/effect-ts/SKILL.md",
+      "computedHash": "cb225ba5dda169883dfee680fba6c570c89245ba19242a9bc5c3f2ac8218a55f"
+    },
     "email-and-password-best-practices": {
       "source": "better-auth/skills",
       "sourceType": "github",
@@ -24,6 +42,24 @@
       "sourceType": "github",
       "skillPath": "skills/hono/SKILL.md",
       "computedHash": "f469bac28a53d010bb47bd61109d0cfebe9a4f3fd407310746114549886b5870"
+    },
+    "review-logging-patterns": {
+      "source": "evloghq/evlog",
+      "sourceType": "github",
+      "skillPath": "skills/review-logging-patterns/SKILL.md",
+      "computedHash": "96858a9f88502382975c0b5e84f04561ddfaed29bc26ae27d03e6ff38440e246"
+    },
+    "shadcn": {
+      "source": "shadcn-ui/ui",
+      "sourceType": "github",
+      "skillPath": "skills/shadcn/SKILL.md",
+      "computedHash": "b864a958765563321f485a96f4d59c0bb6539f4286ab6d8b8b66895b7ebd302d"
+    },
+    "ultracite": {
+      "source": "haydenbleasel/ultracite",
+      "sourceType": "github",
+      "skillPath": "skills/ultracite/SKILL.md",
+      "computedHash": "786edd8e07ffab37d1d27c68a1a991b0fe4d0ba911fc97d4f93d232115f0485e"
     },
     "vercel-composition-patterns": {
       "source": "vercel-labs/agent-skills",
