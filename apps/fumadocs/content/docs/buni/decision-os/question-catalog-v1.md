@@ -127,17 +127,17 @@ A trace stores enough to reproduce the decision shape without copying private so
 
 ```ts
 type DecisionQuestionTrace = {
-  familyId: string
-  criteriaVersion: string
-  projectionFingerprint: string
-  evidenceIds: string[]
-  provider: "heuristic" | "jev" | "system_two"
-  providerVersion: string
-  answer: unknown
-  confidence: number | null
-  latencyMs: number | null
-  fallbackCause: string | null
-}
+  familyId: string;
+  criteriaVersion: string;
+  projectionFingerprint: string;
+  evidenceIds: string[];
+  provider: "heuristic" | "jev" | "system_two";
+  providerVersion: string;
+  answer: unknown;
+  confidence: number | null;
+  latencyMs: number | null;
+  fallbackCause: string | null;
+};
 ```
 
 The actual schema will remain Zod-first in `@buni/contracts`; this sketch names the non-negotiable information for the next expansion.

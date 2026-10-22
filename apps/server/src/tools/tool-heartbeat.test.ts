@@ -20,7 +20,7 @@ describe("runWithToolHeartbeat", () => {
       async () => {
         await new Promise((resolve) => setTimeout(resolve, 25));
         return "ok";
-      },
+      }
     );
 
     expect(result).toBe("ok");
@@ -31,7 +31,9 @@ describe("runWithToolHeartbeat", () => {
         tool: "test_tool",
       },
     });
-    expect(events.some((event) => event.value.phase === "heartbeat")).toBe(true);
+    expect(events.some((event) => event.value.phase === "heartbeat")).toBe(
+      true
+    );
     expect(events.at(-1)).toEqual({
       name: "tool.test.progress",
       value: {

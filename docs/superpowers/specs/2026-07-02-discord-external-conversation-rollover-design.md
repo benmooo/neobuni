@@ -7,6 +7,7 @@ title: "Discord External Conversation Rollover 设计稿"
 > 状态：implemented
 > 日期：2026-07-02
 > 相关文件：
+>
 > - [../../../apps/server/src/integrations/discord-inbound.ts](../../../apps/server/src/integrations/discord-inbound.ts)
 > - [../../../apps/server/src/routes/integrations-discord.ts](../../../apps/server/src/routes/integrations-discord.ts)
 > - [../../../apps/server/src/runtime/run-external-message-turn.ts](../../../apps/server/src/runtime/run-external-message-turn.ts)

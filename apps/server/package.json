@@ -1,6 +1,10 @@
 {
   "name": "@neobuni/server",
   "type": "module",
+  "exports": {
+    ".": "./src/router.ts",
+    "./router": "./src/router.ts"
+  },
   "main": "src/index.ts",
   "scripts": {
     "auth:generate": "varlock run -- bun x auth@latest generate --config src/services.ts --output ../../packages/db/src/schema/auth.ts --yes",
@@ -41,9 +45,5 @@
     "tsdown": "^0.23.0",
     "typescript": "catalog:",
     "vitest": "5.0.3"
-  },
-  "exports": {
-    ".": "./src/router.ts",
-    "./router": "./src/router.ts"
   }
 }

@@ -201,10 +201,7 @@ const getAssistantMarkdownRenderState = ({
   activeAssistantMessageId: string | null;
   isLoading: boolean;
 }): AssistantMarkdownRenderState => ({
-  mode:
-    isLoading && messageId === activeAssistantMessageId
-      ? "streaming"
-      : "static",
+  mode: isLoading && messageId === activeAssistantMessageId ? "streaming" : "static",
   isAnimating: isLoading && messageId === activeAssistantMessageId,
 });
 ```

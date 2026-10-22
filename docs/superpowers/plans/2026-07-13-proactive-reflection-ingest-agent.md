@@ -17,6 +17,7 @@ title: "Proactive Reflection Ingest Agent Implementation Plan"
 ### Task 1: Model local adaptive scheduling
 
 **Files:**
+
 - Create: `scripts/reflection-codex/agent-policy.ts`
 - Create: `scripts/reflection-codex/agent-policy.test.ts`
 
@@ -28,6 +29,7 @@ title: "Proactive Reflection Ingest Agent Implementation Plan"
 ### Task 2: Turn Codex sync and flush into agent-callable operations
 
 **Files:**
+
 - Modify: `scripts/reflection-codex/sync.ts`
 - Modify: `scripts/reflection-codex/flush.ts`
 - Create: `scripts/reflection-codex/agent-core.ts`
@@ -45,6 +47,7 @@ title: "Proactive Reflection Ingest Agent Implementation Plan"
 ### Task 3: Launch the agent with the local server
 
 **Files:**
+
 - Modify: `apps/server/src/index.ts`
 
 - [x] Start the agent after the existing local workers.
@@ -54,6 +57,7 @@ title: "Proactive Reflection Ingest Agent Implementation Plan"
 ### Task 4: Verify the integrated flow
 
 **Files:**
+
 - Modify: `scripts/reflection-codex/bridge.integration.test.ts`
 - Modify: `docs/perception-layer/reflection-source-codex-local-bridge-setup.md`
 

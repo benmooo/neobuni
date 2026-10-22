@@ -57,14 +57,22 @@ vi.mock("@neobuni/db", async () => {
     listCommitments: deferred(repoMocks.listCommitments),
     listUnresolvedMemories: deferred(repoMocks.listUnresolvedMemories),
     listRecentMemories: deferred(repoMocks.listRecentMemories),
-    getMemoryEmbeddingProviderConfig: deferred(repoMocks.getMemoryEmbeddingProviderConfig),
-    getMemoryReasoningProviderConfig: deferred(repoMocks.getMemoryReasoningProviderConfig),
-    listRuntimeTurnsByConversation: deferred(repoMocks.listRuntimeTurnsByConversation),
+    getMemoryEmbeddingProviderConfig: deferred(
+      repoMocks.getMemoryEmbeddingProviderConfig
+    ),
+    getMemoryReasoningProviderConfig: deferred(
+      repoMocks.getMemoryReasoningProviderConfig
+    ),
+    listRuntimeTurnsByConversation: deferred(
+      repoMocks.listRuntimeTurnsByConversation
+    ),
     updateProfile: () => Effect.succeed(null),
   };
 });
 
-const { TURN_CONTEXT_LIMITS, loadTurnContext } = await import("./load-turn-context");
+const { TURN_CONTEXT_LIMITS, loadTurnContext } = await import(
+  "./load-turn-context"
+);
 const { getSurfacePolicy } = await import("./surface-policy");
 
 describe("loadTurnContext", () => {
@@ -172,22 +180,24 @@ describe("loadTurnContext", () => {
     expect(repoMocks.listRecentMemories).toHaveBeenCalledTimes(1);
     expect(repoMocks.listUnresolvedMemories).toHaveBeenCalledWith(
       "profile-1",
-      TURN_CONTEXT_LIMITS.unresolvedMemoryCount,
+      TURN_CONTEXT_LIMITS.unresolvedMemoryCount
     );
     expect(repoMocks.listRecentMemories).toHaveBeenCalledWith(
       "profile-1",
       TURN_CONTEXT_LIMITS.recentMemoryWindowDays,
-      TURN_CONTEXT_LIMITS.recentMemoryCount,
+      TURN_CONTEXT_LIMITS.recentMemoryCount
     );
     expect(repoMocks.getRecentUserTexts).toHaveBeenCalledWith(
       [],
-      TURN_CONTEXT_LIMITS.recentUserTextCount,
+      TURN_CONTEXT_LIMITS.recentUserTextCount
     );
     expect(result.turnContext.signalContext.recentRuntimeTurns).toHaveLength(
-      TURN_CONTEXT_LIMITS.recentRuntimeTurnCount,
+      TURN_CONTEXT_LIMITS.recentRuntimeTurnCount
     );
     expect(
-      result.turnContext.signalContext.recentRuntimeTurns.map((turn: { id: string }) => turn.id),
+      result.turnContext.signalContext.recentRuntimeTurns.map(
+        (turn: { id: string }) => turn.id
+      )
     ).toEqual(["turn-1", "turn-2", "turn-3", "turn-4"]);
     expect(result.embeddingConfig).toEqual({
       apiKey: "embedding-key",
@@ -235,7 +245,9 @@ describe("loadTurnContext", () => {
           horizon: "project",
         },
       ],
-      openCommitments: [{ goalId: "goal-1", title: "Review", status: "open", dueAt: null }],
+      openCommitments: [
+        { goalId: "goal-1", title: "Review", status: "open", dueAt: null },
+      ],
     });
   });
 

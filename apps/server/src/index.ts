@@ -13,40 +13,40 @@ import { startTaskRunWorker } from "./task-runs/worker";
 await ensureSchema();
 
 const runtimeCleanup = await Effect.runPromise(
-	cleanupRunningRuntimeTurns({
-		status: "aborted",
-		reason: "server_startup_recovery",
-	})
+  cleanupRunningRuntimeTurns({
+    status: "aborted",
+    reason: "server_startup_recovery",
+  })
 );
 
 if (runtimeCleanup.turnCount > 0) {
-	console.warn(
-		`[neobuni/server] recovered ${runtimeCleanup.turnCount} runtime turn(s) and ${runtimeCleanup.spanCount} span(s)`
-	);
+  console.warn(
+    `[neobuni/server] recovered ${runtimeCleanup.turnCount} runtime turn(s) and ${runtimeCleanup.spanCount} span(s)`
+  );
 }
 
 const fibers = [
-	Effect.runFork(startScheduleMaterializer()),
-	Effect.runFork(startTaskRunWorker()),
-	Effect.runFork(startActionRunWorker()),
-	Effect.runFork(startInitiativeWorker()),
+  Effect.runFork(startScheduleMaterializer()),
+  Effect.runFork(startTaskRunWorker()),
+  Effect.runFork(startActionRunWorker()),
+  Effect.runFork(startInitiativeWorker()),
 ];
 
 const shutdown = async () => {
-	await Effect.runPromise(
-		Effect.forEach(fibers, (fiber) => Fiber.interrupt(fiber), {
-			concurrency: "unbounded",
-			discard: true,
-		})
-	);
-	process.exit(0);
+  await Effect.runPromise(
+    Effect.forEach(fibers, (fiber) => Fiber.interrupt(fiber), {
+      concurrency: "unbounded",
+      discard: true,
+    })
+  );
+  process.exit(0);
 };
 
 process.on("SIGINT", () => {
-	void shutdown();
+  void shutdown();
 });
 process.on("SIGTERM", () => {
-	void shutdown();
+  void shutdown();
 });
 
 const port = ENV.PORT;
@@ -54,7 +54,7 @@ const port = ENV.PORT;
 console.log(`[neobuni/server] listening on http://localhost:${port}`);
 
 Bun.serve({
-	port,
-	fetch: app.fetch,
-	idleTimeout: 0,
+  port,
+  fetch: app.fetch,
+  idleTimeout: 0,
 });

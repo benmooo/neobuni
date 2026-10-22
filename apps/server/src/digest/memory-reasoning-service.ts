@@ -1,20 +1,20 @@
 import {
-	createChatCompletion,
-	type OpenAICompatibleConfig,
+  createChatCompletion,
+  type OpenAICompatibleConfig,
 } from "../providers/openai-compatible-client";
 
-type ExtractedMemory = {
-	content: string;
-	type: "event" | "thought" | "preference" | "fact" | "task";
-	keywords: string[];
-	importance: number;
-	unresolved: boolean;
-};
+interface ExtractedMemory {
+  content: string;
+  importance: number;
+  keywords: string[];
+  type: "event" | "thought" | "preference" | "fact" | "task";
+  unresolved: boolean;
+}
 
-type InstantDigestResult = {
-	shouldRecall: boolean;
-	keywords: string[];
-};
+interface InstantDigestResult {
+  keywords: string[];
+  shouldRecall: boolean;
+}
 
 const EXTRACT_PROMPT = `You are a memory extraction assistant. Analyze the conversation below and extract important memories.
 
@@ -46,60 +46,60 @@ Say shouldRecall=false for:
 Return valid JSON only, with no markdown fences or extra prose.`;
 
 const parseJson = <T>(text: string, fallback: T): T => {
-	try {
-		return JSON.parse(text) as T;
-	} catch {
-		return fallback;
-	}
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    return fallback;
+  }
 };
 
 const extractMemories = async (
-	config: OpenAICompatibleConfig,
-	messagesText: string
+  config: OpenAICompatibleConfig,
+  messagesText: string
 ): Promise<ExtractedMemory[]> => {
-	const text = await createChatCompletion(config, [
-		{
-			role: "system",
-			content: EXTRACT_PROMPT,
-		},
-		{
-			role: "user",
-			content: messagesText,
-		},
-	]);
+  const text = await createChatCompletion(config, [
+    {
+      role: "system",
+      content: EXTRACT_PROMPT,
+    },
+    {
+      role: "user",
+      content: messagesText,
+    },
+  ]);
 
-	const parsed = parseJson<unknown>(text, []);
-	return Array.isArray(parsed) ? (parsed as ExtractedMemory[]) : [];
+  const parsed = parseJson<unknown>(text, []);
+  return Array.isArray(parsed) ? (parsed as ExtractedMemory[]) : [];
 };
 
 const runInstantDigestLLM = async (
-	config: OpenAICompatibleConfig,
-	userMessage: string
+  config: OpenAICompatibleConfig,
+  userMessage: string
 ): Promise<InstantDigestResult> => {
-	const text = await createChatCompletion(config, [
-		{
-			role: "system",
-			content: INSTANT_DIGEST_PROMPT,
-		},
-		{
-			role: "user",
-			content: userMessage,
-		},
-	]);
+  const text = await createChatCompletion(config, [
+    {
+      role: "system",
+      content: INSTANT_DIGEST_PROMPT,
+    },
+    {
+      role: "user",
+      content: userMessage,
+    },
+  ]);
 
-	const parsed = parseJson<{
-		shouldRecall?: unknown;
-		keywords?: unknown;
-	}>(text, {});
+  const parsed = parseJson<{
+    shouldRecall?: unknown;
+    keywords?: unknown;
+  }>(text, {});
 
-	return {
-		shouldRecall: Boolean(parsed.shouldRecall),
-		keywords: Array.isArray(parsed.keywords)
-			? parsed.keywords.filter(
-					(value): value is string => typeof value === "string"
-				)
-			: [],
-	};
+  return {
+    shouldRecall: Boolean(parsed.shouldRecall),
+    keywords: Array.isArray(parsed.keywords)
+      ? parsed.keywords.filter(
+          (value): value is string => typeof value === "string"
+        )
+      : [],
+  };
 };
 
 export type { ExtractedMemory, InstantDigestResult, OpenAICompatibleConfig };

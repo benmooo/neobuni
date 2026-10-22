@@ -34,6 +34,7 @@ title: "Discord Public-Safe Runtime Reply Implementation Plan"
 ## Task 1: Add Failing Runtime and Route Tests
 
 **Files:**
+
 - Create: `apps/server/src/runtime/run-external-message-turn.test.ts`
 - Modify: `apps/server/src/routes/integrations-discord.test.ts`
 
@@ -41,18 +42,22 @@ title: "Discord Public-Safe Runtime Reply Implementation Plan"
 
 ```ts
 test("runExternalMessageTurn consumes the chat stream with chat_public_safe", async () => {
-  const result = await runExternalMessageTurn({
-    profileId: "profile-1",
-    conversationId: "conversation-1",
-    latestUserText: "整理今天 AI 热点",
-    platform: "discord",
-    externalThreadId: "interaction-1",
-  }, {
-    createChatTurnStream: createChatTurnStreamMock,
-  });
+  const result = await runExternalMessageTurn(
+    {
+      profileId: "profile-1",
+      conversationId: "conversation-1",
+      latestUserText: "整理今天 AI 热点",
+      platform: "discord",
+      externalThreadId: "interaction-1",
+    },
+    {
+      createChatTurnStream: createChatTurnStreamMock,
+    },
+  );
 
-  expect(createChatTurnStreamMock.mock.calls[0]?.[0].surfacePolicy?.surface)
-    .toBe("chat_public_safe");
+  expect(createChatTurnStreamMock.mock.calls[0]?.[0].surfacePolicy?.surface).toBe(
+    "chat_public_safe",
+  );
   expect(result.assistantText).toBe("今天的 AI 热点如下");
 });
 ```
@@ -85,6 +90,7 @@ Expected: FAIL because `run-external-message-turn.ts` does not exist and the rou
 ## Task 2: Implement the Public-Safe External Turn Wrapper
 
 **Files:**
+
 - Create: `apps/server/src/runtime/run-external-message-turn.ts`
 - Create: `apps/server/src/runtime/run-external-message-turn.test.ts`
 - Modify: `apps/server/src/runtime/create-chat-turn-stream.ts`
@@ -150,6 +156,7 @@ Expected: PASS
 ## Task 3: Wire Discord Slash Commands to ScopeKey, Binding, Runtime, and Reply
 
 **Files:**
+
 - Modify: `apps/server/src/routes/integrations-discord.ts`
 - Modify: `apps/server/src/routes/integrations-discord.test.ts`
 - Modify: `packages/db/src/repos/messaging-config.ts`
@@ -165,14 +172,14 @@ const existingBinding = await deps.getExternalConversationBinding({
   scopeKey,
 });
 
-const conversationId = existingBinding?.conversationId
-  ?? (await deps.createConversation(
-    integration.profileId,
-    {
+const conversationId =
+  existingBinding?.conversationId ??
+  (
+    await deps.createConversation(integration.profileId, {
       title: `[discord] ${scopeKey}`,
       modelKey: "default",
-    },
-  )).id;
+    })
+  ).id;
 ```
 
 - [ ] **Step 2: Extract slash command text and execute the runtime**
@@ -191,12 +198,15 @@ const runtimeResult = await deps.runExternalMessageTurn({
 - [ ] **Step 3: Return the runtime text as the Discord interaction reply**
 
 ```ts
-return c.json({
-  type: 4,
-  data: {
-    content: runtimeResult.assistantText,
+return c.json(
+  {
+    type: 4,
+    data: {
+      content: runtimeResult.assistantText,
+    },
   },
-}, 200);
+  200,
+);
 ```
 
 - [ ] **Step 4: Run the Discord route test**
@@ -207,6 +217,7 @@ Expected: PASS
 ## Task 4: Verify the Tranche
 
 **Files:**
+
 - No new files
 
 - [ ] **Step 1: Run focused tests**

@@ -7,6 +7,7 @@ title: "Reflection Report Scheduler"
 > Status: Active design
 > Date: 2026-05-24
 > Companion docs:
+>
 > - [../../ARCHITECTURE.md](../../ARCHITECTURE.md)
 > - [./reflection-report-pipeline.md](./reflection-report-pipeline.md)
 > - [./reflection-pipeline-simplification.md](./reflection-pipeline-simplification.md)

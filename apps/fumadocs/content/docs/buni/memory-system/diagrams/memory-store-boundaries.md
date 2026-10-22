@@ -10,12 +10,12 @@ title: "Memory Store Boundaries — 三层记忆边界图"
 
 ## 图例 Legend
 
-| 形状 | 含义 | 用法 |
-|:----:|------|------|
+|  形状   | 含义                | 用法                                 |
+| :-----: | ------------------- | ------------------------------------ |
 | `[/ /]` | 外部输入 / 外部产物 | messages、documents、evidence output |
-| `[ ]` | 数据 / 中间契约 | `ProjectableMemory`、`GraphQuery` |
-| `[[ ]]` | 变换 / 提取函数 | digest、projection、ingest、search |
-| `[( )]` | Store / Index / DB | tables、vec、fts |
+|  `[ ]`  | 数据 / 中间契约     | `ProjectableMemory`、`GraphQuery`    |
+| `[[ ]]` | 变换 / 提取函数     | digest、projection、ingest、search   |
+| `[( )]` | Store / Index / DB  | tables、vec、fts                     |
 
 ---
 

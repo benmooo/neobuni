@@ -642,7 +642,7 @@ type TemporalRecalledMemory = {
 - 用下面这个 key 去重：
 
 ```ts
-`${item.store}:${item.provenance.sourceId}:${item.kind}:${item.content}`
+`${item.store}:${item.provenance.sourceId}:${item.kind}:${item.content}`;
 ```
 
 也就是说，当前 fusion 机制不是复杂推理器，而是：

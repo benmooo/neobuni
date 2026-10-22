@@ -4,17 +4,18 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vp dev",
     "build": "tsc -b ../../packages/api && vp build",
-    "serve": "vp preview",
-    "start": "vp dev",
     "check-types": "tsc -b ../../packages/api && vp build && tsc --noEmit",
-    "env:generate": "varlock codegen"
+    "dev": "vp dev",
+    "env:generate": "varlock codegen",
+    "serve": "vp preview",
+    "start": "vp dev"
   },
   "dependencies": {
     "@assistant-ui/react": "^0.14.8",
     "@neobuni/api": "workspace:*",
     "@neobuni/contracts": "workspace:*",
+    "@neobuni/server": "workspace:*",
     "@neobuni/ui": "workspace:*",
     "@orpc/client": "catalog:",
     "@orpc/server": "catalog:",
@@ -29,7 +30,9 @@
     "@tanstack/react-query": "^5.104.2",
     "@tanstack/react-router": "^1.170.44",
     "@varlock/vite-integration": "1.5.1",
+    "assistant-stream": "^0.3.53",
     "better-auth": "catalog:",
+    "clsx": "^2.1.1",
     "katex": "^0.16.45",
     "lucide-react": "^1.56.0",
     "next-themes": "catalog:",
@@ -37,12 +40,9 @@
     "react-dom": "^19.3.0",
     "sonner": "catalog:",
     "streamdown": "^2.5.0",
-    "varlock": "catalog:",
-    "zod": "catalog:",
-    "@neobuni/server": "workspace:*",
-    "clsx": "^2.1.1",
     "tailwind-merge": "^3.6.0",
-    "assistant-stream": "^0.3.53"
+    "varlock": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@neobuni/config": "workspace:*",
@@ -57,6 +57,7 @@
     "tailwindcss": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
+    "vite-plus": "1.1.0",
     "vitest": "5.0.3"
   }
 }

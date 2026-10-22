@@ -7,6 +7,7 @@ title: "Buni Web / Browser Tools V1 设计稿"
 > 状态：draft
 > 日期：2026-06-05
 > 相关文档：
+>
 > - [../../execution-layer/tool-runtime-v1.md](../../execution-layer/tool-runtime-v1.md)
 > - [../../execution-layer/news-tools-v1.md](../../execution-layer/news-tools-v1.md)
 > - [../../../apps/server/src/routes/knowledge.ts](../../../apps/server/src/routes/knowledge.ts)
@@ -670,4 +671,3 @@ webclaw-primary adapter
 3. `webclaw` adapter 与测试
 4. `tool-sets.ts` 注册
 5. `search_web` / `summarize_page`
-

@@ -28,7 +28,7 @@
   "scripts": {
     "auth:generate": "cd apps/server && bun run auth:generate",
     "build": "vp run -r build",
-    "check": "vp check && vp run -r check-types",
+    "check": "bunx ultracite check && vp run -r check-types",
     "check-types": "vp run -r check-types",
     "db:generate": "vp run --filter @neobuni/db db:generate",
     "db:local": "vp run --filter @neobuni/db db:local",
@@ -44,10 +44,10 @@
     "docker:up": "docker compose up -d --build",
     "env:generate": "varlock codegen --path ./apps/web/ && varlock codegen --path ./apps/server/ && varlock codegen --path ./packages/db/",
     "fix": "ultracite fix",
-    "format": "vp fmt",
+    "format": "bunx ultracite fix",
     "postinstall": "varlock codegen --path ./apps/web/ && varlock codegen --path ./apps/server/ && varlock codegen --path ./packages/db/",
-    "lint": "vp lint",
-    "staged": "vp staged"
+    "lint": "bunx ultracite check",
+    "staged": "bunx ultracite fix --staged"
   },
   "overrides": {
     "vite": "npm:@voidzero-dev/vite-plus-core@1.1.0"

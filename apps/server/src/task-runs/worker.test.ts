@@ -34,7 +34,7 @@ const makeTaskRun = (
     startedAt: string | null;
     finishedAt: string | null;
     updatedAt: string;
-  }> = {},
+  }> = {}
 ) => ({
   id: overrides.id ?? "task-run-1",
   profileId: overrides.profileId ?? "profile-1",
@@ -44,7 +44,7 @@ const makeTaskRun = (
   promptSnapshot: overrides.promptSnapshot ?? "Fetch data and send it.",
   toolPolicySnapshot: overrides.toolPolicySnapshot ?? {
     toolAllowlist: ["send_chat_message"],
-    timeoutMs: 120000,
+    timeoutMs: 120_000,
   },
   inputSnapshot: overrides.inputSnapshot ?? {
     deliveryIntent: {
@@ -76,11 +76,11 @@ describe("executeClaimedTaskRun", () => {
         workerId: "worker-1",
         config: {
           enabled: true,
-          tickMs: 15000,
+          tickMs: 15_000,
           limitPerProfile: 10,
-          leaseMs: 60000,
-          retryDelayMs: 60000,
-          timeoutMs: 120000,
+          leaseMs: 60_000,
+          retryDelayMs: 60_000,
+          timeoutMs: 120_000,
         },
         taskRun: makeTaskRun(),
         deps: {
@@ -116,7 +116,7 @@ describe("executeClaimedTaskRun", () => {
               return { id: "event-1" } as never;
             }),
         },
-      }),
+      })
     );
 
     expect(result).toEqual({
@@ -143,11 +143,11 @@ describe("executeClaimedTaskRun", () => {
         workerId: "worker-1",
         config: {
           enabled: true,
-          tickMs: 15000,
+          tickMs: 15_000,
           limitPerProfile: 10,
-          leaseMs: 60000,
-          retryDelayMs: 60000,
-          timeoutMs: 120000,
+          leaseMs: 60_000,
+          retryDelayMs: 60_000,
+          timeoutMs: 120_000,
         },
         taskRun: makeTaskRun(),
         deps: {
@@ -163,7 +163,10 @@ describe("executeClaimedTaskRun", () => {
           failTaskRun: () =>
             Effect.sync(() => {
               calls.push("fail");
-              return makeTaskRun({ status: "retry_scheduled", attempt: 1 }) as never;
+              return makeTaskRun({
+                status: "retry_scheduled",
+                attempt: 1,
+              }) as never;
             }),
           appendEvent: (_profileId, type) =>
             Effect.sync(() => {
@@ -171,7 +174,7 @@ describe("executeClaimedTaskRun", () => {
               return { id: "event-1" } as never;
             }),
         },
-      }),
+      })
     );
 
     expect(result).toEqual({
@@ -179,7 +182,12 @@ describe("executeClaimedTaskRun", () => {
       succeeded: false,
       failed: true,
     });
-    expect(calls).toEqual(["start", "event:task_run.started", "fail", "event:task_run.failed"]);
+    expect(calls).toEqual([
+      "start",
+      "event:task_run.started",
+      "fail",
+      "event:task_run.failed",
+    ]);
   });
 
   test("runs channel delivery schedules with a public-safe surface policy", async () => {
@@ -191,11 +199,11 @@ describe("executeClaimedTaskRun", () => {
         workerId: "worker-1",
         config: {
           enabled: true,
-          tickMs: 15000,
+          tickMs: 15_000,
           limitPerProfile: 10,
-          leaseMs: 60000,
-          retryDelayMs: 60000,
-          timeoutMs: 120000,
+          leaseMs: 60_000,
+          retryDelayMs: 60_000,
+          timeoutMs: 120_000,
         },
         taskRun: makeTaskRun({
           inputSnapshot: {
@@ -221,10 +229,12 @@ describe("executeClaimedTaskRun", () => {
                     },
                   },
                 },
-              }) as never,
+              }) as never
             ),
-          startTaskRun: () => Effect.succeed(makeTaskRun({ attempt: 1 }) as never),
-          attachTaskRunRuntimeTurn: () => Effect.succeed(makeTaskRun() as never),
+          startTaskRun: () =>
+            Effect.succeed(makeTaskRun({ attempt: 1 }) as never),
+          attachTaskRunRuntimeTurn: () =>
+            Effect.succeed(makeTaskRun() as never),
           runHeadlessTaskTurn: async (input) => {
             capturedSurface = input.surfacePolicy?.surface ?? null;
             await input.onTurnCreated?.("turn-1");
@@ -235,10 +245,11 @@ describe("executeClaimedTaskRun", () => {
               transcript: null,
             };
           },
-          completeTaskRun: () => Effect.succeed(makeTaskRun({ status: "succeeded" }) as never),
+          completeTaskRun: () =>
+            Effect.succeed(makeTaskRun({ status: "succeeded" }) as never),
           appendEvent: () => Effect.succeed({ id: "event-1" } as never),
         },
-      }),
+      })
     );
 
     expect(result).toEqual({

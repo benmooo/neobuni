@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest"
+import { describe, expect, test } from "vitest";
 
 import {
   getNewsBriefById,
@@ -6,7 +6,7 @@ import {
   listAllNewsSources,
   resolveNewsSourceQuery,
   searchNewsSources,
-} from "./newsnow-catalog"
+} from "./newsnow-catalog";
 
 describe("newsnow catalog", () => {
   test("lists the full enabled source catalog in the requested order", () => {
@@ -58,25 +58,22 @@ describe("newsnow catalog", () => {
       "fastbull-express",
       "fastbull-news",
       "jin10",
-    ])
-  })
+    ]);
+  });
 
   test("maps every source to one of the four requested catalog groups", () => {
-    const counts = listAllNewsSources().reduce<Record<string, number>>(
-      (result, source) => ({
-        ...result,
-        [source.category]: (result[source.category] ?? 0) + 1,
-      }),
-      {},
-    )
+    const counts: Record<string, number> = {};
+    for (const source of listAllNewsSources()) {
+      counts[source.category] = (counts[source.category] ?? 0) + 1;
+    }
 
     expect(counts).toEqual({
       technology: 12,
       domestic: 18,
       international: 5,
       finance: 12,
-    })
-  })
+    });
+  });
 
   test("preserves publisher variants as structured subtitles", () => {
     expect(getNewsSourceById("36kr-quick")).toMatchObject({
@@ -85,71 +82,71 @@ describe("newsnow catalog", () => {
       category: "technology",
       locale: "zh-CN",
       enabled: true,
-    })
+    });
     expect(getNewsSourceById("cls-telegraph")).toMatchObject({
       label: "财联社",
       subtitle: "电报",
       category: "finance",
       locale: "zh-CN",
       enabled: true,
-    })
-  })
+    });
+  });
 
   test("supports searching source labels, aliases, and catalog groups", () => {
     expect(
-      searchNewsSources({ query: "bilibili" }).map((item) => item.sourceId),
-    ).toEqual(["bilibili-hot-search"])
+      searchNewsSources({ query: "bilibili" }).map((item) => item.sourceId)
+    ).toEqual(["bilibili-hot-search"]);
     expect(
-      searchNewsSources({ query: "少数派" }).map((item) => item.sourceId),
-    ).toEqual(["sspai"])
+      searchNewsSources({ query: "少数派" }).map((item) => item.sourceId)
+    ).toEqual(["sspai"]);
     expect(
-      searchNewsSources({ query: "IT之家" }).map((item) => item.sourceId),
-    ).toEqual(["ithome"])
+      searchNewsSources({ query: "IT之家" }).map((item) => item.sourceId)
+    ).toEqual(["ithome"]);
     expect(
       searchNewsSources({ category: "international" }).map(
-        (item) => item.sourceId,
-      ),
-    ).toEqual(["zaobao", "sputniknewscn", "cankaoxiaoxi", "kaopu", "steam"])
-  })
+        (item) => item.sourceId
+      )
+    ).toEqual(["zaobao", "sputniknewscn", "cankaoxiaoxi", "kaopu", "steam"]);
+  });
 
   test("resolves a qualified source variant and makes publisher-only names ambiguous", () => {
     const resolved = resolveNewsSourceQuery({
       query: "36氪 快讯",
-    })
+    });
     const ambiguous = resolveNewsSourceQuery({
       query: "财联社",
-    })
+    });
     const exact = resolveNewsSourceQuery({
       query: "少数派",
-    })
+    });
 
-    expect(resolved.status).toBe("resolved")
-    expect(resolved.resolvedSourceId).toBe("36kr-quick")
-    expect(resolved.resolution?.matchKind).toBe("alias")
-    expect(ambiguous.status).toBe("ambiguous")
-    expect(ambiguous.resolvedSourceId).toBeNull()
+    expect(resolved.status).toBe("resolved");
+    expect(resolved.resolvedSourceId).toBe("36kr-quick");
+    expect(resolved.resolution?.matchKind).toBe("alias");
+    expect(ambiguous.status).toBe("ambiguous");
+    expect(ambiguous.resolvedSourceId).toBeNull();
     expect(ambiguous.items.map((item) => item.source.sourceId)).toEqual([
       "cls-depth",
       "cls-hot",
       "cls-telegraph",
-    ])
-    expect(exact.status).toBe("resolved")
-    expect(exact.resolvedSourceId).toBe("sspai")
-  })
+    ]);
+    expect(exact.status).toBe("resolved");
+    expect(exact.resolvedSourceId).toBe("sspai");
+  });
 
   test("does not resolve an ambiguous publisher when the returned candidates are limited", () => {
     const result = resolveNewsSourceQuery({
       query: "财联社",
       limit: 1,
-    })
+    });
 
-    expect(result.status).toBe("ambiguous")
-    expect(result.resolvedSourceId).toBeNull()
-    expect(result.count).toBe(3)
+    expect(result.status).toBe("ambiguous");
+    expect(result.resolvedSourceId).toBeNull();
+    expect(result.count).toBe(3);
     expect(result.items.map((item) => item.source.sourceId)).toEqual([
       "cls-depth",
-    ])
-  })
+    ]);
+  });
 
   test("updates curated briefs to canonical source ids", () => {
     expect(getNewsBriefById("tech")?.sourceIds).toEqual([
@@ -160,7 +157,7 @@ describe("newsnow catalog", () => {
       "ithome",
       "juejin",
       "sspai",
-    ])
+    ]);
     expect(getNewsBriefById("china")?.sourceIds).toEqual([
       "v2ex-share",
       "zhihu",
@@ -168,6 +165,6 @@ describe("newsnow catalog", () => {
       "bilibili-hot-search",
       "sspai",
       "thepaper",
-    ])
-  })
-})
+    ]);
+  });
+});

@@ -1,6 +1,5 @@
-import { describe, expect, test } from "vitest";
-
 import type { ProviderPromptPacket } from "@neobuni/contracts";
+import { describe, expect, test } from "vitest";
 
 import { getSurfacePolicy } from "./surface-policy";
 import { applySurfacePromptPolicy } from "./surface-prompt";
@@ -25,7 +24,9 @@ describe("applySurfacePromptPolicy", () => {
     });
 
     expect(result.systemPrompt).toContain("group-safe public surface");
-    expect(result.systemPrompt).toContain("Do not rely on private autobiographical context");
+    expect(result.systemPrompt).toContain(
+      "Do not rely on private autobiographical context"
+    );
     expect(result.sections).toEqual(promptPacket.sections);
   });
 

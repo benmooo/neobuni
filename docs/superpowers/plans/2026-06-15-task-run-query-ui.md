@@ -17,6 +17,7 @@ title: "Task-Run Query API And UI Implementation Plan"
 ### Task 1: Add Server-Side Task-Run Query Contracts And Routes
 
 **Files:**
+
 - Create: `packages/contracts/src/execution-layer/task-run-query.ts`
 - Create: `apps/server/src/routes/task-runs.test.ts`
 - Create: `apps/server/src/routes/task-runs.ts`
@@ -36,6 +37,7 @@ title: "Task-Run Query API And UI Implementation Plan"
 ### Task 2: Build Mobile Schedule Queries And Pages
 
 **Files:**
+
 - Create: `apps/mobile/src/hooks/use-schedules.ts`
 - Create: `apps/mobile/src/routes/_app/schedules/$scheduleId.tsx`
 - Create: `apps/mobile/src/routes/_app/schedules/runs/$taskRunId.tsx`
@@ -52,6 +54,7 @@ title: "Task-Run Query API And UI Implementation Plan"
 ### Task 3: Wire Ops Deep Links And Final Verification
 
 **Files:**
+
 - Modify: `apps/mobile/src/routes/_app/ops/runtime/index.tsx`
 - Modify: `apps/mobile/src/components/chat/RuntimeTimelineSheet.tsx`
 - Test: `apps/server/src/routes/task-runs.test.ts`

@@ -7,6 +7,7 @@ title: "Reflection Contracts And Storage"
 > Status: Partially superseded by simplified reflection design
 > Date: 2026-05-04
 > Companion docs:
+>
 > - [../../ARCHITECTURE.md](../../ARCHITECTURE.md)
 > - [./reflection-system-architecture.md](./reflection-system-architecture.md)
 > - [./reflection-observation-ingestion-pipeline.md](./reflection-observation-ingestion-pipeline.md)
@@ -394,12 +395,7 @@ type InterventionOutcome = {
   profileId: string;
   interventionPlanId: string;
   observedAt: string;
-  outcome:
-    | "accepted"
-    | "ignored"
-    | "dismissed"
-    | "partially_effective"
-    | "effective";
+  outcome: "accepted" | "ignored" | "dismissed" | "partially_effective" | "effective";
   summary: string;
   effectivenessScore: number | null;
   notes: Record<string, unknown> | null;

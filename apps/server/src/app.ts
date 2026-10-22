@@ -5,8 +5,8 @@ import { RPCHandler } from "@orpc/server/fetch";
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
 import { initLogger } from "evlog";
 import {
-	type BetterAuthInstance,
-	createAuthMiddleware,
+  type BetterAuthInstance,
+  createAuthMiddleware,
 } from "evlog/better-auth";
 import { createFsDrain } from "evlog/fs";
 import { type EvlogVariables, evlog } from "evlog/hono";
@@ -21,81 +21,81 @@ import { telegramIntegrationRoutes } from "./routes/integrations-telegram";
 import { auth } from "./services";
 
 initLogger({
-	env: { service: "neobuni-server" },
+  env: { service: "neobuni-server" },
 });
 
 const identifyUser = createAuthMiddleware(auth as BetterAuthInstance, {
-	exclude: ["/api/auth/**"],
-	maskEmail: true,
+  exclude: ["/api/auth/**"],
+  maskEmail: true,
 });
 
 export const app = new Hono<EvlogVariables>();
 
 app.use(
-	evlog({
-		drain: process.env.NODE_ENV === "production" ? undefined : createFsDrain(),
-	})
+  evlog({
+    drain: process.env.NODE_ENV === "production" ? undefined : createFsDrain(),
+  })
 );
 app.use("*", async (c, next) => {
-	await identifyUser(c.get("log"), c.req.raw.headers, c.req.path);
-	await next();
+  await identifyUser(c.get("log"), c.req.raw.headers, c.req.path);
+  await next();
 });
 
 app.use(
-	"/*",
-	cors({
-		origin: ENV.CORS_ORIGIN,
-		allowMethods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
-		allowHeaders: ["Content-Type", "Authorization"],
-		credentials: true,
-	})
+  "/*",
+  cors({
+    origin: ENV.CORS_ORIGIN,
+    allowMethods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
+    allowHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  })
 );
 
 app.on(["POST", "GET"], "/api/auth/*", async (c) => auth.handler(c.req.raw));
 
 export const apiHandler = new OpenAPIHandler(router, {
-	plugins: [
-		new OpenAPIReferencePlugin({
-			schemaConverters: [new ZodToJsonSchemaConverter()],
-		}),
-	],
-	interceptors: [
-		onError((error) => {
-			console.error(error);
-		}),
-	],
+  plugins: [
+    new OpenAPIReferencePlugin({
+      schemaConverters: [new ZodToJsonSchemaConverter()],
+    }),
+  ],
+  interceptors: [
+    onError((error) => {
+      console.error(error);
+    }),
+  ],
 });
 
 export const rpcHandler = new RPCHandler(router, {
-	interceptors: [
-		onError((error) => {
-			console.error(error);
-		}),
-	],
+  interceptors: [
+    onError((error) => {
+      console.error(error);
+    }),
+  ],
 });
 
 app.use("/*", async (c, next) => {
-	const context = await createContext({ context: c });
+  const context = await createContext({ context: c });
 
-	const rpcResult = await rpcHandler.handle(c.req.raw, {
-		prefix: "/rpc",
-		context,
-	});
+  const rpcResult = await rpcHandler.handle(c.req.raw, {
+    prefix: "/rpc",
+    context,
+  });
 
-	if (rpcResult.matched) {
-		return c.newResponse(rpcResult.response.body, rpcResult.response);
-	}
+  if (rpcResult.matched) {
+    return c.newResponse(rpcResult.response.body, rpcResult.response);
+  }
 
-	const apiResult = await apiHandler.handle(c.req.raw, {
-		prefix: "/api-reference",
-		context,
-	});
+  const apiResult = await apiHandler.handle(c.req.raw, {
+    prefix: "/api-reference",
+    context,
+  });
 
-	if (apiResult.matched) {
-		return c.newResponse(apiResult.response.body, apiResult.response);
-	}
+  if (apiResult.matched) {
+    return c.newResponse(apiResult.response.body, apiResult.response);
+  }
 
-	await next();
+  await next();
 });
 
 // Raw routes: streaming and external webhooks stay outside oRPC.

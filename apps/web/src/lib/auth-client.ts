@@ -4,17 +4,17 @@ import { createAuthClient } from "better-auth/react";
 import { apiBaseUrl } from "./api";
 
 const authClient = createAuthClient({
-	baseURL: `${apiBaseUrl}/api/auth`,
-	plugins: [
-		inferAdditionalFields({
-			session: {
-				activeProfileId: {
-					type: "string",
-					required: false,
-				},
-			},
-		}),
-	],
+  baseURL: `${apiBaseUrl}/api/auth`,
+  plugins: [
+    inferAdditionalFields({
+      session: {
+        activeProfileId: {
+          type: "string",
+          required: false,
+        },
+      },
+    }),
+  ],
 });
 
 export { authClient };

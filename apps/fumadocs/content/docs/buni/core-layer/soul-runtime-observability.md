@@ -500,9 +500,7 @@ V1 之后，`provider_stream` 采用：
 建议语义模型如下：
 
 ```ts
-type ProviderContributionKind =
-  | "text"
-  | "tool_activity";
+type ProviderContributionKind = "text" | "tool_activity";
 
 type ProviderStreamEvidence = {
   contributionKinds: ProviderContributionKind[];
@@ -530,18 +528,13 @@ type ProviderStreamEvidence = {
 基于 evidence，再做单独的纯函数归类：
 
 ```ts
-type ProviderStreamOutcome =
-  | "text"
-  | "tool_only"
-  | "empty"
-  | "aborted"
-  | "error";
+type ProviderStreamOutcome = "text" | "tool_only" | "empty" | "aborted" | "error";
 ```
 
 推荐规则：
 
 ```ts
-classifyProviderStreamOutcome(evidence)
+classifyProviderStreamOutcome(evidence);
 ```
 
 优先级：
@@ -566,13 +559,13 @@ classifyProviderStreamOutcome(evidence)
 
 `runtime_span.status` 继续表示阶段生命周期，不表示业务成功。
 
-| `providerOutcome` | `provider_stream.status` | 含义 |
-|---|---|---|
-| `text` | `completed` | provider 正常结束，并产出了文本 |
-| `tool_only` | `completed` | provider 正常结束，并产出了 tool activity |
-| `empty` | `completed` | provider 正常结束，但没有任何 assistant contribution |
-| `aborted` | `completed` | provider 生命周期因 abort 正常收尾 |
-| `error` | `failed` | provider 自身发生错误 |
+| `providerOutcome` | `provider_stream.status` | 含义                                                 |
+| ----------------- | ------------------------ | ---------------------------------------------------- |
+| `text`            | `completed`              | provider 正常结束，并产出了文本                      |
+| `tool_only`       | `completed`              | provider 正常结束，并产出了 tool activity            |
+| `empty`           | `completed`              | provider 正常结束，但没有任何 assistant contribution |
+| `aborted`         | `completed`              | provider 生命周期因 abort 正常收尾                   |
+| `error`           | `failed`                 | provider 自身发生错误                                |
 
 也就是：
 
@@ -584,13 +577,13 @@ classifyProviderStreamOutcome(evidence)
 
 turn 的最终状态不应该直接看散落条件，而应该基于 `providerOutcome` 做映射。
 
-| `providerOutcome` | turn status | error code |
-|---|---|---|
-| `text` | `completed` | `null` |
-| `tool_only` | `completed` | `null` |
-| `empty` | `failed` | `empty_provider_response` |
-| `aborted` | `aborted` | `aborted` |
-| `error` | `failed` | `provider_stream_failed` |
+| `providerOutcome` | turn status | error code                |
+| ----------------- | ----------- | ------------------------- |
+| `text`            | `completed` | `null`                    |
+| `tool_only`       | `completed` | `null`                    |
+| `empty`           | `failed`    | `empty_provider_response` |
+| `aborted`         | `aborted`   | `aborted`                 |
+| `error`           | `failed`    | `provider_stream_failed`  |
 
 建议在 server 层再定义一个显式的 turn 决议类型：
 
@@ -623,7 +616,7 @@ type ProviderTurnResolution =
 建议统一通过：
 
 ```ts
-resolveTurnFromProviderOutcome({ evidence, providerKey, modelKey })
+resolveTurnFromProviderOutcome({ evidence, providerKey, modelKey });
 ```
 
 把 `ProviderStreamEvidence` 翻译成 turn 级决议。
@@ -650,15 +643,15 @@ const providerOutcome = classifyProviderStreamOutcome(evidence);
 
 ```ts
 {
-  providerOutcome,
-  contributionKinds,
-  firstTokenAt,
-  finishReason,
-  durationMs,
-  contentLength,
-  textCharCount,
-  toolCallCount,
-  usage
+  (providerOutcome,
+    contributionKinds,
+    firstTokenAt,
+    finishReason,
+    durationMs,
+    contentLength,
+    textCharCount,
+    toolCallCount,
+    usage);
 }
 ```
 
@@ -666,7 +659,7 @@ const providerOutcome = classifyProviderStreamOutcome(evidence);
 
 ```ts
 {
-  abortReason
+  abortReason;
 }
 ```
 
@@ -677,12 +670,11 @@ resolveTurnFromProviderOutcome
 NOTE:
 
 - ProviderStreamEvidence / Outcome 描述的是 provider_stream 这个 span 里， LLM 到底做了什么。
- - resolveProviderTurnResolution 做的是：把这个 provider stream span 的结果 翻译成 chat turn 最终该怎么收尾。
+- resolveProviderTurnResolution 做的是：把这个 provider stream span 的结果 翻译成 chat turn 最终该怎么收尾。
 
- 所以它不是在描述“整个 runtime pipeline 的全部语义”，而是在做一层：
+所以它不是在描述“整个 runtime pipeline 的全部语义”，而是在做一层：
 
- provider_stream span result -> chat turn final status
-
+provider_stream span result -> chat turn final status
 
 ## 8.8 `tool_call`
 

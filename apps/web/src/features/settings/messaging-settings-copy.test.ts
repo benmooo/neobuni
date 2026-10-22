@@ -25,20 +25,24 @@ describe("messaging settings copy", () => {
   });
 
   test("uses user-facing target hints instead of tool ids", () => {
-    expect(getMessagingTargetUsageHint("feishu")).toContain("消息发送和定时推送");
+    expect(getMessagingTargetUsageHint("feishu")).toContain(
+      "消息发送和定时推送"
+    );
     expect(getMessagingTargetUsageHint("qq")).toContain("group_openid");
     expect(getMessagingTargetUsageHint("discord")).toContain("channel");
     expect(getMessagingTargetUsageHint("telegram")).toContain("topic");
-    expect(getMessagingTargetUsageHint("feishu")).not.toContain("send_feishu_message");
+    expect(getMessagingTargetUsageHint("feishu")).not.toContain(
+      "send_feishu_message"
+    );
     expect(getMessagingTargetUsageHint("qq")).not.toContain("send_qq_message");
   });
 
   test("renders a generic empty-state message with a platform-tailored follow-up", () => {
     expect(getMessagingTargetEmptyState("Discord 频道别名")).toBe(
-      "还没有配置发送目标。你可以先保存凭证，后面再补上Discord 频道别名。",
+      "还没有配置发送目标。你可以先保存凭证，后面再补上Discord 频道别名。"
     );
     expect(getMessagingTargetEmptyState("群聊或话题别名")).toBe(
-      "还没有配置发送目标。你可以先保存凭证，后面再补上群聊或话题别名。",
+      "还没有配置发送目标。你可以先保存凭证，后面再补上群聊或话题别名。"
     );
   });
 });

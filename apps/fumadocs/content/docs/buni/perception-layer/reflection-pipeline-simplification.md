@@ -7,6 +7,7 @@ title: "Reflection Pipeline Simplification"
 > Status: Active implementation
 > Date: 2026-05-23
 > Companion docs:
+>
 > - [../../ARCHITECTURE.md](../../ARCHITECTURE.md)
 > - [./reflection-observation-ingestion-pipeline.md](./reflection-observation-ingestion-pipeline.md)
 > - [./reflection-report-pipeline.md](./reflection-report-pipeline.md)

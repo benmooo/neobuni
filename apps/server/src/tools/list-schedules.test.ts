@@ -2,24 +2,26 @@ import { describe, expect, test } from "vitest";
 
 import { filterAndOrderSchedulesForTool } from "./list-schedules";
 
-const makeSchedule = (overrides: Partial<{
-  id: string;
-  type: "reminder" | "alarm" | "monitor";
-  status: "active" | "paused" | "completed" | "cancelled";
-  title: string;
-  content: string;
-  triggerAt: string | null;
-  cronExpr: string | null;
-  timezone: string;
-  metadata: Record<string, unknown>;
-  profileId: string;
-  lastTriggeredAt: string | null;
-  deliveredAt: string | null;
-  lastMaterializedAt: string | null;
-  blueprint: Record<string, unknown> | null;
-  createdAt: string;
-  updatedAt: string;
-}> = {}) => ({
+const makeSchedule = (
+  overrides: Partial<{
+    id: string;
+    type: "reminder" | "alarm" | "monitor";
+    status: "active" | "paused" | "completed" | "cancelled";
+    title: string;
+    content: string;
+    triggerAt: string | null;
+    cronExpr: string | null;
+    timezone: string;
+    metadata: Record<string, unknown>;
+    profileId: string;
+    lastTriggeredAt: string | null;
+    deliveredAt: string | null;
+    lastMaterializedAt: string | null;
+    blueprint: Record<string, unknown> | null;
+    createdAt: string;
+    updatedAt: string;
+  }> = {}
+) => ({
   id: overrides.id ?? "schedule-1",
   profileId: overrides.profileId ?? "profile-1",
   type: overrides.type ?? "reminder",

@@ -7,6 +7,7 @@ title: "Reflection Observation Ingestion Pipeline"
 > Status: Active design
 > Date: 2026-05-23
 > Companion docs:
+>
 > - [../../ARCHITECTURE.md](../../ARCHITECTURE.md)
 > - [./reflection-pipeline-simplification.md](./reflection-pipeline-simplification.md)
 > - [./reflection-contracts-and-storage.md](./reflection-contracts-and-storage.md)

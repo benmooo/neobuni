@@ -1,20 +1,20 @@
 import {
-	listNewsSourcesDef,
-	listNewsSourcesInputSchema,
+  listNewsSourcesDef,
+  listNewsSourcesInputSchema,
 } from "@neobuni/contracts";
 
 import { listAllNewsSources } from "../integrations/news/newsnow-catalog";
 import type { ServerToolContext } from "./types";
 
 const createListNewsSourcesTool = (_context: ServerToolContext) =>
-	listNewsSourcesDef.server(async (args) => {
-		listNewsSourcesInputSchema.parse(args);
-		const items = listAllNewsSources();
+  listNewsSourcesDef.server(async (args) => {
+    listNewsSourcesInputSchema.parse(args);
+    const items = listAllNewsSources();
 
-		return {
-			count: items.length,
-			items,
-		};
-	});
+    return {
+      count: items.length,
+      items,
+    };
+  });
 
 export { createListNewsSourcesTool };

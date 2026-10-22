@@ -8,4 +8,4 @@ import { Effect } from "effect";
  * sanctioned bridge for that boundary.
  */
 export const runRepo = <A, E>(effect: Effect.Effect<A, E>): Promise<A> =>
-	Effect.runPromise(effect);
+  Effect.runPromise(effect);

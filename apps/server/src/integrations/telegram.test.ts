@@ -1,9 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 
-import {
-  listTelegramTargets,
-  sendTelegramMessage,
-} from "./telegram";
+import { listTelegramTargets, sendTelegramMessage } from "./telegram";
 
 const originalEnv = {
   botToken: process.env.NEOBUNI_TELEGRAM_BOT_TOKEN,
@@ -62,7 +59,7 @@ describe("telegram integration", () => {
         Object.entries(init?.headers ?? {}).map(([key, value]) => [
           key,
           String(value),
-        ]),
+        ])
       );
 
       calls.push({
@@ -84,7 +81,7 @@ describe("telegram integration", () => {
           headers: {
             "Content-Type": "application/json",
           },
-        },
+        }
       );
     }) as typeof fetch;
 
@@ -104,7 +101,7 @@ describe("telegram integration", () => {
     expect(result.target.targetId).toBe("-1001234567890");
     expect(calls).toHaveLength(1);
     expect(calls[0]?.url).toBe(
-      "https://api.telegram.org/bottelegram_bot_token_123/sendMessage",
+      "https://api.telegram.org/bottelegram_bot_token_123/sendMessage"
     );
     expect(calls[0]?.method).toBe("POST");
     expect(JSON.parse(calls[0]?.body ?? "{}")).toEqual({

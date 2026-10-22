@@ -1,4 +1,4 @@
-import { describe, expect, vi, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 
 const createProviderConfig = (slot: "chat" | "memory_reasoning") => ({
   id: `provider-config-${slot}`,
@@ -19,7 +19,7 @@ const createDocument = (
   overrides: Partial<{
     markdown: string;
     plainText: string;
-  }> = {},
+  }> = {}
 ) => ({
   url: "https://example.com/post",
   finalUrl: "https://example.com/post",
@@ -47,11 +47,11 @@ describe("summarizeWebPage", () => {
     }
 
     const getMemoryReasoningProviderConfig = vi.fn(async () =>
-      createProviderConfig("memory_reasoning"),
+      createProviderConfig("memory_reasoning")
     );
     const getProviderConfig = vi.fn(async () => createProviderConfig("chat"));
     const createChatCompletion = vi.fn(
-      async () => "Buni now supports normalized web-page summaries.",
+      async () => "Buni now supports normalized web-page summaries."
     );
 
     const result = await mod.summarizeWebPage({
@@ -66,7 +66,9 @@ describe("summarizeWebPage", () => {
       },
     });
 
-    expect(result.summary).toBe("Buni now supports normalized web-page summaries.");
+    expect(result.summary).toBe(
+      "Buni now supports normalized web-page summaries."
+    );
     expect(result.notes).toEqual(["goal_applied"]);
     expect(getMemoryReasoningProviderConfig.mock.calls).toHaveLength(1);
     expect(getProviderConfig.mock.calls).toHaveLength(0);
@@ -74,7 +76,9 @@ describe("summarizeWebPage", () => {
     const completionCall = createChatCompletion.mock.calls[0] as unknown as
       | [unknown, Array<{ role: string; content: string }>, unknown?]
       | undefined;
-    expect(String(completionCall?.[1]?.[1]?.content)).toContain("Focus on the new web tools");
+    expect(String(completionCall?.[1]?.[1]?.content)).toContain(
+      "Focus on the new web tools"
+    );
   });
 
   test("falls back to the chat provider when memory reasoning is unavailable", async () => {

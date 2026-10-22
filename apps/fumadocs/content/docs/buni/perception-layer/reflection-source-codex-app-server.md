@@ -7,6 +7,7 @@ title: "Reflection Source: Codex App Server"
 > Status: Active design
 > Date: 2026-05-23
 > Companion docs:
+>
 > - [../../ARCHITECTURE.md](../../ARCHITECTURE.md)
 > - [./reflection-pipeline-simplification.md](./reflection-pipeline-simplification.md)
 > - [./reflection-push-ingestion-substrate.md](./reflection-push-ingestion-substrate.md)
@@ -440,11 +441,14 @@ Suggested local cursor state:
 type CodexBridgeCursor = {
   lastThreadUpdatedAt: string | null;
   threadIdsAtLastThreadUpdatedAt: string[];
-  threads: Record<string, {
-    sessionId: string;
-    lastCompletedTurnId: string | null;
-    lastThreadUpdatedAt: string | null;
-  }>;
+  threads: Record<
+    string,
+    {
+      sessionId: string;
+      lastCompletedTurnId: string | null;
+      lastThreadUpdatedAt: string | null;
+    }
+  >;
 };
 ```
 

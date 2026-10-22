@@ -1,54 +1,54 @@
 import { createChatTurnStream } from "./create-chat-turn-stream";
 import { getSurfacePolicy } from "./surface-policy";
 
-type RunExternalMessageTurnInput = {
-	profileId: string;
-	conversationId: string;
-	latestUserText: string;
-	platform: "discord" | "telegram";
-	externalThreadId: string;
-	clientTimezone?: string | null;
-};
+interface RunExternalMessageTurnInput {
+  clientTimezone?: string | null;
+  conversationId: string;
+  externalThreadId: string;
+  latestUserText: string;
+  platform: "discord" | "telegram";
+  profileId: string;
+}
 
-type RunExternalMessageTurnResult = {
-	assistantText: string;
-};
+interface RunExternalMessageTurnResult {
+  assistantText: string;
+}
 
-type RunExternalMessageTurnDeps = {
-	createChatTurnStream: typeof createChatTurnStream;
-};
+interface RunExternalMessageTurnDeps {
+  createChatTurnStream: typeof createChatTurnStream;
+}
 
 const defaultDeps: RunExternalMessageTurnDeps = {
-	createChatTurnStream,
+  createChatTurnStream,
 };
 
 const runExternalMessageTurn = async (
-	input: RunExternalMessageTurnInput,
-	deps: RunExternalMessageTurnDeps = defaultDeps
+  input: RunExternalMessageTurnInput,
+  deps: RunExternalMessageTurnDeps = defaultDeps
 ): Promise<RunExternalMessageTurnResult> => {
-	const abortController = new AbortController();
-	const stream = await deps.createChatTurnStream({
-		profileId: input.profileId,
-		conversationId: input.conversationId,
-		threadId: input.externalThreadId,
-		abortController,
-		clientTimezone: input.clientTimezone ?? null,
-		latestUserText: input.latestUserText,
-		clientTools: [],
-		surfacePolicy: getSurfacePolicy("chat_public_safe"),
-	});
+  const abortController = new AbortController();
+  const stream = await deps.createChatTurnStream({
+    profileId: input.profileId,
+    conversationId: input.conversationId,
+    threadId: input.externalThreadId,
+    abortController,
+    clientTimezone: input.clientTimezone ?? null,
+    latestUserText: input.latestUserText,
+    clientTools: [],
+    surfacePolicy: getSurfacePolicy("chat_public_safe"),
+  });
 
-	let assistantText = "";
+  let assistantText = "";
 
-	for await (const chunk of stream) {
-		if (chunk.type === "TEXT_MESSAGE_CONTENT" && chunk.delta) {
-			assistantText += chunk.delta;
-		}
-	}
+  for await (const chunk of stream) {
+    if (chunk.type === "TEXT_MESSAGE_CONTENT" && chunk.delta) {
+      assistantText += chunk.delta;
+    }
+  }
 
-	return {
-		assistantText: assistantText.trim(),
-	};
+  return {
+    assistantText: assistantText.trim(),
+  };
 };
 
 export type { RunExternalMessageTurnInput, RunExternalMessageTurnResult };

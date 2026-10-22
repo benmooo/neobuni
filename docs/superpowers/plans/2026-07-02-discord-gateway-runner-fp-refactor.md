@@ -34,6 +34,7 @@ title: "Discord Gateway Runner FP Refactor Implementation Plan"
 ### Task 1: Define Serializable Runner State
 
 **Files:**
+
 - Create: `apps/server/src/sidecars/discord-gateway/runner-state.ts`
 - Create: `apps/server/src/sidecars/discord-gateway/runner-state.test.ts`
 
@@ -43,10 +44,12 @@ title: "Discord Gateway Runner FP Refactor Implementation Plan"
 test("creates an initial idle runner state with no sessions", async () => {
   const { createInitialDiscordGatewayRunnerState } = await import("./runner-state");
 
-  expect(createInitialDiscordGatewayRunnerState({
-    enabled: true,
-    startedAt: "2026-07-02T08:00:00.000Z",
-  })).toEqual({
+  expect(
+    createInitialDiscordGatewayRunnerState({
+      enabled: true,
+      startedAt: "2026-07-02T08:00:00.000Z",
+    }),
+  ).toEqual({
     enabled: true,
     startedAt: "2026-07-02T08:00:00.000Z",
     phase: "idle",
@@ -97,6 +100,7 @@ Expected: PASS
 ### Task 2: Extract Pure Runner Core
 
 **Files:**
+
 - Create: `apps/server/src/sidecars/discord-gateway/runner-core.ts`
 - Create: `apps/server/src/sidecars/discord-gateway/runner-core.test.ts`
 - Modify: `apps/server/src/sidecars/discord-gateway/reconcile.ts`
@@ -110,9 +114,7 @@ test("skips a start action when the same fingerprint is already blocked", async 
 
   const result = planDiscordGatewayReconcile({
     state: blockedState,
-    desired: new Map([
-      ["profile-1", desiredSpec],
-    ]),
+    desired: new Map([["profile-1", desiredSpec]]),
   });
 
   expect(result.actions).toEqual([]);
@@ -140,8 +142,9 @@ const planDiscordGatewayReconcile = (input: {
   const actions = diffDiscordGatewaySessions({
     running: selectDiscordGatewayRunningSessions(nextState),
     desired: input.desired,
-  }).filter((action) =>
-    action.type !== "start" || !isBlockedForFingerprint(nextState, action.spec));
+  }).filter(
+    (action) => action.type !== "start" || !isBlockedForFingerprint(nextState, action.spec),
+  );
 
   return {
     nextState,
@@ -156,7 +159,9 @@ const planDiscordGatewayReconcile = (input: {
 const diffDiscordGatewaySessions = (input: {
   running: Map<string, DiscordGatewayRunningSession>;
   desired: Map<string, DiscordGatewaySessionSpec>;
-}) => { /* same diff logic without controller registry entries */ };
+}) => {
+  /* same diff logic without controller registry entries */
+};
 ```
 
 - [ ] **Step 5: Run the core tests to verify they pass**
@@ -167,6 +172,7 @@ Expected: PASS
 ### Task 3: Replace Mutable Heartbeat State With Pure Selectors
 
 **Files:**
+
 - Create: `apps/server/src/sidecars/discord-gateway/runner-selectors.ts`
 - Create: `apps/server/src/sidecars/discord-gateway/runner-selectors.test.ts`
 - Delete: `apps/server/src/sidecars/discord-gateway/heartbeat-state.ts`
@@ -178,12 +184,14 @@ Expected: PASS
 test("projects a blocked session into a degraded heartbeat session", async () => {
   const { selectDiscordGatewayHeartbeat } = await import("./runner-selectors");
 
-  expect(selectDiscordGatewayHeartbeat({
-    state: blockedState,
-    heartbeatIntervalMs: 10_000,
-    reconcileIntervalMs: 30_000,
-    now: "2026-07-02T10:00:10.000Z",
-  })).toMatchObject({
+  expect(
+    selectDiscordGatewayHeartbeat({
+      state: blockedState,
+      heartbeatIntervalMs: 10_000,
+      reconcileIntervalMs: 30_000,
+      now: "2026-07-02T10:00:10.000Z",
+    }),
+  ).toMatchObject({
     lastReconcileStatus: "error",
     sessions: [
       expect.objectContaining({
@@ -229,6 +237,7 @@ Expected: PASS
 ### Task 4: Collapse `runner.ts` Into An Imperative Shell
 
 **Files:**
+
 - Modify: `apps/server/src/sidecars/discord-gateway/runner.ts`
 - Modify: `apps/server/src/sidecars/discord-gateway/runner.test.ts`
 
@@ -267,12 +276,14 @@ const dispatch = (event: DiscordGatewayRunnerEvent) => {
 const publishHeartbeat = async () => {
   if (!input.publishHeartbeat) return;
 
-  await input.publishHeartbeat(selectDiscordGatewayHeartbeat({
-    state,
-    heartbeatIntervalMs: input.runtimeConfig.heartbeatIntervalMs,
-    reconcileIntervalMs: input.runtimeConfig.reconcileIntervalMs,
-    now: effectiveDeps.now(),
-  }));
+  await input.publishHeartbeat(
+    selectDiscordGatewayHeartbeat({
+      state,
+      heartbeatIntervalMs: input.runtimeConfig.heartbeatIntervalMs,
+      reconcileIntervalMs: input.runtimeConfig.reconcileIntervalMs,
+      now: effectiveDeps.now(),
+    }),
+  );
 };
 ```
 
@@ -284,6 +295,7 @@ Expected: PASS
 ### Task 5: Full Verification
 
 **Files:**
+
 - Modify: `docs/superpowers/specs/2026-07-02-discord-gateway-runner-fp-refactor-design.md`
 
 - [ ] **Step 1: Run the focused Discord suite**

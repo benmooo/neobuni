@@ -17,6 +17,7 @@
   },
   "devDependencies": {
     "@neobuni/config": "workspace:*",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "5.0.3"
   }
 }

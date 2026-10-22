@@ -18,7 +18,8 @@ describe("sendFeishuMessage", () => {
   beforeEach(() => {
     process.env.NEOBUNI_FEISHU_APP_ID = "cli_test_app";
     process.env.NEOBUNI_FEISHU_APP_SECRET = "cli_test_secret";
-    process.env.NEOBUNI_FEISHU_BASE_URL = "https://feishu.example.com/open-apis";
+    process.env.NEOBUNI_FEISHU_BASE_URL =
+      "https://feishu.example.com/open-apis";
     process.env.NEOBUNI_FEISHU_TARGETS_JSON = JSON.stringify({
       daily_sync: {
         receiveIdType: "chat_id",
@@ -53,7 +54,7 @@ describe("sendFeishuMessage", () => {
         Object.entries(init?.headers ?? {}).map(([key, value]) => [
           key,
           String(value),
-        ]),
+        ])
       );
 
       calls.push({
@@ -74,7 +75,7 @@ describe("sendFeishuMessage", () => {
             headers: {
               "Content-Type": "application/json",
             },
-          },
+          }
         );
       }
 
@@ -89,7 +90,7 @@ describe("sendFeishuMessage", () => {
           headers: {
             "Content-Type": "application/json",
           },
-        },
+        }
       );
     }) as typeof fetch;
 
@@ -109,10 +110,10 @@ describe("sendFeishuMessage", () => {
     expect(result.messageType).toBe("text");
     expect(calls).toHaveLength(2);
     expect(calls[0]?.url).toBe(
-      "https://feishu.example.com/open-apis/auth/v3/tenant_access_token/internal",
+      "https://feishu.example.com/open-apis/auth/v3/tenant_access_token/internal"
     );
     expect(calls[1]?.url).toBe(
-      "https://feishu.example.com/open-apis/im/v1/messages?receive_id_type=chat_id",
+      "https://feishu.example.com/open-apis/im/v1/messages?receive_id_type=chat_id"
     );
     expect(JSON.parse(calls[1]?.body ?? "{}")).toEqual({
       receive_id: "oc_test_chat",
@@ -139,7 +140,7 @@ describe("sendFeishuMessage", () => {
         Object.entries(init?.headers ?? {}).map(([key, value]) => [
           key,
           String(value),
-        ]),
+        ])
       );
 
       calls.push({
@@ -160,7 +161,7 @@ describe("sendFeishuMessage", () => {
             headers: {
               "Content-Type": "application/json",
             },
-          },
+          }
         );
       }
 
@@ -175,7 +176,7 @@ describe("sendFeishuMessage", () => {
           headers: {
             "Content-Type": "application/json",
           },
-        },
+        }
       );
     }) as typeof fetch;
 
@@ -211,7 +212,7 @@ describe("sendFeishuMessage", () => {
         Object.entries(init?.headers ?? {}).map(([key, value]) => [
           key,
           String(value),
-        ]),
+        ])
       );
 
       calls.push({
@@ -232,7 +233,7 @@ describe("sendFeishuMessage", () => {
             headers: {
               "Content-Type": "application/json",
             },
-          },
+          }
         );
       }
 
@@ -247,7 +248,7 @@ describe("sendFeishuMessage", () => {
           headers: {
             "Content-Type": "application/json",
           },
-        },
+        }
       );
     }) as typeof fetch;
 

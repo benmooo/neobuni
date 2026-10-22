@@ -25,14 +25,16 @@ describe("resolveTurnFromProviderOutcome", () => {
         durationMs: 120,
         contentLength: 5,
         usage: null,
-      },
+      }
     );
 
-    expect(resolveTurnFromProviderOutcome({
-      evidence,
-      providerKey,
-      modelKey,
-    })).toEqual({
+    expect(
+      resolveTurnFromProviderOutcome({
+        evidence,
+        providerKey,
+        modelKey,
+      })
+    ).toEqual({
       providerOutcome: "text",
       status: "completed",
     });
@@ -46,14 +48,16 @@ describe("resolveTurnFromProviderOutcome", () => {
         durationMs: 120,
         contentLength: 0,
         usage: null,
-      },
+      }
     );
 
-    expect(resolveTurnFromProviderOutcome({
-      evidence,
-      providerKey,
-      modelKey,
-    })).toEqual({
+    expect(
+      resolveTurnFromProviderOutcome({
+        evidence,
+        providerKey,
+        modelKey,
+      })
+    ).toEqual({
       providerOutcome: "tool_only",
       status: "completed",
     });
@@ -67,11 +71,13 @@ describe("resolveTurnFromProviderOutcome", () => {
       usage: null,
     });
 
-    expect(resolveTurnFromProviderOutcome({
-      evidence,
-      providerKey,
-      modelKey,
-    })).toEqual({
+    expect(
+      resolveTurnFromProviderOutcome({
+        evidence,
+        providerKey,
+        modelKey,
+      })
+    ).toEqual({
       providerOutcome: "empty",
       status: "failed",
       errorCode: "empty_provider_response",
@@ -102,11 +108,13 @@ describe("resolveTurnFromProviderOutcome", () => {
       reason: "aborted",
     });
 
-    expect(resolveTurnFromProviderOutcome({
-      evidence,
-      providerKey,
-      modelKey,
-    })).toEqual({
+    expect(
+      resolveTurnFromProviderOutcome({
+        evidence,
+        providerKey,
+        modelKey,
+      })
+    ).toEqual({
       providerOutcome: "aborted",
       status: "aborted",
       errorCode: "aborted",
@@ -141,11 +149,13 @@ describe("resolveTurnFromProviderOutcome", () => {
       },
     });
 
-    expect(resolveTurnFromProviderOutcome({
-      evidence,
-      providerKey,
-      modelKey,
-    })).toEqual({
+    expect(
+      resolveTurnFromProviderOutcome({
+        evidence,
+        providerKey,
+        modelKey,
+      })
+    ).toEqual({
       providerOutcome: "error",
       status: "failed",
       errorCode: "provider_stream_failed",

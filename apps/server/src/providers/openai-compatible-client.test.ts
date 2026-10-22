@@ -24,7 +24,7 @@ describe("createEmbedding", () => {
           headers: {
             "Content-Type": "application/json",
           },
-        },
+        }
       );
     }) as typeof fetch;
 
@@ -35,7 +35,7 @@ describe("createEmbedding", () => {
         baseUrl: "https://openrouter.ai/api/v1",
         dimensions: 1024,
       },
-      "hello world",
+      "hello world"
     );
 
     expect(requestBody).toEqual({
@@ -61,7 +61,7 @@ describe("createEmbedding", () => {
           headers: {
             "Content-Type": "application/json",
           },
-        },
+        }
       );
     }) as typeof fetch;
 
@@ -71,7 +71,7 @@ describe("createEmbedding", () => {
         model: "text-embedding-v4",
         baseUrl: "https://example.com/v1",
       },
-      "hello world",
+      "hello world"
     );
 
     expect(requestBody).toEqual({

@@ -7,6 +7,7 @@ title: "Reflection Source: Git"
 > Status: Active design
 > Date: 2026-05-07
 > Companion docs:
+>
 > - [../../ARCHITECTURE.md](../../ARCHITECTURE.md)
 > - [./reflection-system-architecture.md](./reflection-system-architecture.md)
 > - [./reflection-contracts-and-storage.md](./reflection-contracts-and-storage.md)

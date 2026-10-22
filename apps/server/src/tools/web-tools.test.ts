@@ -1,10 +1,4 @@
-import {
-  beforeEach,
-  describe,
-  expect,
-  test,
-  vi,
-} from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const appendEventMock = vi.fn(async () => ({
   id: "event-1",
@@ -132,7 +126,9 @@ describe("p0 web tools", () => {
   });
 
   test("save_page_to_knowledge bridges normalized page content into knowledge ingest", async () => {
-    const { createSavePageToKnowledgeTool } = await import("./save-page-to-knowledge");
+    const { createSavePageToKnowledgeTool } = await import(
+      "./save-page-to-knowledge"
+    );
     const tool = createSavePageToKnowledgeTool(createToolContext(), {
       appendEvent: appendEventMock,
       fetchWebclawPage: fetchWebclawPageMock,
@@ -205,7 +201,9 @@ describe("p0 web tools", () => {
     expect(summarizeWebPageMock).toHaveBeenCalledTimes(1);
     expect(appendEventMock).toHaveBeenCalledTimes(1);
     expect(result.document.title).toBe("Example Post");
-    expect(result.summary).toBe("Buni now supports summarizing normalized web pages.");
+    expect(result.summary).toBe(
+      "Buni now supports summarizing normalized web pages."
+    );
     expect(result.notes).toEqual(["goal_applied"]);
   });
 });

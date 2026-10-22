@@ -7,6 +7,7 @@ title: "Reflection Git Observability UI"
 > Status: Active design
 > Date: 2026-05-09
 > Companion docs:
+>
 > - [../../ARCHITECTURE.md](../../ARCHITECTURE.md)
 > - [./reflection-source-git.md](./reflection-source-git.md)
 > - [./reflection-source-git-local-bridge.md](./reflection-source-git-local-bridge.md)

@@ -1,27 +1,21 @@
-import {
-  beforeEach,
-  describe,
-  expect,
-  test,
-  vi,
-} from "vitest";
 import { Hono } from "hono";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
-type TelegramStoredIntegration = {
-  id: string;
-  profileId: string;
-  platform: "telegram";
-  enabled: boolean;
-  botToken: string;
+interface TelegramStoredIntegration {
   appId: string;
   appSecret: string;
-  publicKey: string;
-  webhookSecret: string;
   baseUrl: string;
-  metadata: Record<string, unknown>;
+  botToken: string;
   createdAt: string;
+  enabled: boolean;
+  id: string;
+  metadata: Record<string, unknown>;
+  platform: "telegram";
+  profileId: string;
+  publicKey: string;
   updatedAt: string;
-};
+  webhookSecret: string;
+}
 
 const buildTelegramIntegration = (): TelegramStoredIntegration => ({
   id: "telegram-integration-1",
@@ -44,8 +38,8 @@ const buildTelegramIntegration = (): TelegramStoredIntegration => ({
 const getMessagingIntegrationByWebhookSecretMock = vi.fn(
   async (
     _platform?: string,
-    _webhookSecret?: string,
-  ): Promise<TelegramStoredIntegration | null> => buildTelegramIntegration(),
+    _webhookSecret?: string
+  ): Promise<TelegramStoredIntegration | null> => buildTelegramIntegration()
 );
 
 const recordExternalEventReceiptMock = vi.fn(async () => ({
@@ -59,18 +53,20 @@ const recordExternalEventReceiptMock = vi.fn(async () => ({
   },
 }));
 
-const getExternalConversationBindingMock = vi.fn(async () =>
-  null as null | {
-    id: string;
-    profileId: string;
-    platform: "telegram";
-    scopeType: "telegram_chat";
-    scopeKey: string;
-    conversationId: string;
-    lastInboundAt: string | null;
-    createdAt: string;
-    updatedAt: string;
-  });
+const getExternalConversationBindingMock = vi.fn(
+  async () =>
+    null as null | {
+      id: string;
+      profileId: string;
+      platform: "telegram";
+      scopeType: "telegram_chat";
+      scopeKey: string;
+      conversationId: string;
+      lastInboundAt: string | null;
+      createdAt: string;
+      updatedAt: string;
+    }
+);
 
 const createExternalConversationBindingMock = vi.fn(async () => ({
   id: "binding-1",
@@ -122,28 +118,34 @@ const sendTelegramMessageMock = vi.fn(async () => ({
   preview: "今天的 AI 热点如下",
 }));
 
-const { createTelegramIntegrationRoutes } = await import("./integrations-telegram");
-const app = new Hono().route("/v1/integrations/telegram", createTelegramIntegrationRoutes({
-  getMessagingIntegrationByWebhookSecret: getMessagingIntegrationByWebhookSecretMock,
-  recordExternalEventReceipt: recordExternalEventReceiptMock,
-  getExternalConversationBinding: getExternalConversationBindingMock,
-  createExternalConversationBinding: createExternalConversationBindingMock,
-  touchExternalConversationBinding: touchExternalConversationBindingMock,
-  createConversation: createConversationMock,
-  runExternalMessageTurn: runExternalMessageTurnMock,
-  sendTelegramMessage: sendTelegramMessageMock,
-}));
+const { createTelegramIntegrationRoutes } = await import(
+  "./integrations-telegram"
+);
+const app = new Hono().route(
+  "/v1/integrations/telegram",
+  createTelegramIntegrationRoutes({
+    getMessagingIntegrationByWebhookSecret:
+      getMessagingIntegrationByWebhookSecretMock,
+    recordExternalEventReceipt: recordExternalEventReceiptMock,
+    getExternalConversationBinding: getExternalConversationBindingMock,
+    createExternalConversationBinding: createExternalConversationBindingMock,
+    touchExternalConversationBinding: touchExternalConversationBindingMock,
+    createConversation: createConversationMock,
+    runExternalMessageTurn: runExternalMessageTurnMock,
+    sendTelegramMessage: sendTelegramMessageMock,
+  })
+);
 
 describe("telegram integration routes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    getMessagingIntegrationByWebhookSecretMock.mockImplementation(async (
-      _platform?: string,
-      webhookSecret?: string,
-    ): Promise<TelegramStoredIntegration | null> =>
-      webhookSecret === "telegram-secret"
-        ? buildTelegramIntegration()
-        : null);
+    getMessagingIntegrationByWebhookSecretMock.mockImplementation(
+      async (
+        _platform?: string,
+        webhookSecret?: string
+      ): Promise<TelegramStoredIntegration | null> =>
+        webhookSecret === "telegram-secret" ? buildTelegramIntegration() : null
+    );
     recordExternalEventReceiptMock.mockResolvedValue({
       inserted: true,
       receipt: {
@@ -209,7 +211,7 @@ describe("telegram integration routes", () => {
         message_id: 2001,
         text: "/buni 整理今天 AI 热点",
         chat: {
-          id: -1001234567890,
+          id: -1_001_234_567_890,
           type: "supergroup",
           title: "Friends Room",
         },
@@ -276,7 +278,7 @@ describe("telegram integration routes", () => {
         message_id: 2002,
         text: "继续展开第二条",
         chat: {
-          id: -1001234567890,
+          id: -1_001_234_567_890,
           type: "supergroup",
           title: "Friends Room",
         },
@@ -319,7 +321,7 @@ describe("telegram integration routes", () => {
         message_id: 2003,
         text: "hello everyone",
         chat: {
-          id: -1001234567890,
+          id: -1_001_234_567_890,
           type: "supergroup",
           title: "Friends Room",
         },
@@ -351,7 +353,7 @@ describe("telegram integration routes", () => {
         message_id: 2004,
         text: "/buni test",
         chat: {
-          id: -1001234567890,
+          id: -1_001_234_567_890,
           type: "supergroup",
         },
       },

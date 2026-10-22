@@ -1,13 +1,7 @@
-import {
-  beforeEach,
-  describe,
-  expect,
-  test,
-  vi,
-} from "vitest";
+import { generateKeyPairSync, sign } from "node:crypto";
 import type { ResolveDiscordExternalConversationWindowResult } from "@neobuni/db";
 import { Hono } from "hono";
-import { generateKeyPairSync, sign } from "node:crypto";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const getMessagingIntegrationByPlatformAppIdMock = vi.fn(async () => ({
   id: "discord-integration-1",
@@ -37,7 +31,7 @@ const recordExternalEventReceiptMock = vi.fn(async () => ({
 }));
 
 const createResolvedWindow = (
-  overrides: Partial<ResolveDiscordExternalConversationWindowResult> = {},
+  overrides: Partial<ResolveDiscordExternalConversationWindowResult> = {}
 ): ResolveDiscordExternalConversationWindowResult => ({
   conversationId: "conversation-new",
   lifecycle: "created",
@@ -47,35 +41,42 @@ const createResolvedWindow = (
 });
 
 const resolveDiscordExternalConversationWindowMock = vi.fn(
-  async (): Promise<ResolveDiscordExternalConversationWindowResult> => createResolvedWindow(),
+  async (): Promise<ResolveDiscordExternalConversationWindowResult> =>
+    createResolvedWindow()
 );
 const runExternalMessageTurnMock = vi.fn(async () => ({
   assistantText: "今天的 AI 热点如下",
 }));
 
 const { privateKey, publicKey } = generateKeyPairSync("ed25519");
-const publicKeyHex = publicKey.export({
-  type: "spki",
-  format: "der",
-}).toString("hex");
+const publicKeyHex = publicKey
+  .export({
+    type: "spki",
+    format: "der",
+  })
+  .toString("hex");
 
-const signDiscordRequest = (input: {
-  rawBody: string;
-  timestamp: string;
-}) =>
+const signDiscordRequest = (input: { rawBody: string; timestamp: string }) =>
   sign(
     null,
     Buffer.from(`${input.timestamp}${input.rawBody}`, "utf8"),
-    privateKey,
+    privateKey
   ).toString("hex");
 
-const { createDiscordIntegrationRoutes } = await import("./integrations-discord");
-const app = new Hono().route("/v1/integrations/discord", createDiscordIntegrationRoutes({
-  getMessagingIntegrationByPlatformAppId: getMessagingIntegrationByPlatformAppIdMock,
-  recordExternalEventReceipt: recordExternalEventReceiptMock,
-  resolveDiscordExternalConversationWindow: resolveDiscordExternalConversationWindowMock,
-  runExternalMessageTurn: runExternalMessageTurnMock,
-}));
+const { createDiscordIntegrationRoutes } = await import(
+  "./integrations-discord"
+);
+const app = new Hono().route(
+  "/v1/integrations/discord",
+  createDiscordIntegrationRoutes({
+    getMessagingIntegrationByPlatformAppId:
+      getMessagingIntegrationByPlatformAppIdMock,
+    recordExternalEventReceipt: recordExternalEventReceiptMock,
+    resolveDiscordExternalConversationWindow:
+      resolveDiscordExternalConversationWindowMock,
+    runExternalMessageTurn: runExternalMessageTurnMock,
+  })
+);
 
 describe("discord integration routes", () => {
   beforeEach(() => {
@@ -105,7 +106,9 @@ describe("discord integration routes", () => {
         receivedAt: "2026-06-15T00:00:00.000Z",
       },
     });
-    resolveDiscordExternalConversationWindowMock.mockResolvedValue(createResolvedWindow());
+    resolveDiscordExternalConversationWindowMock.mockResolvedValue(
+      createResolvedWindow()
+    );
     runExternalMessageTurnMock.mockResolvedValue({
       assistantText: "今天的 AI 热点如下",
     });
@@ -194,10 +197,12 @@ describe("discord integration routes", () => {
   });
 
   test("reuses an existing resolved window instead of creating a new conversation manually", async () => {
-    resolveDiscordExternalConversationWindowMock.mockResolvedValue(createResolvedWindow({
-      conversationId: "conversation-existing",
-      lifecycle: "reused",
-    }));
+    resolveDiscordExternalConversationWindowMock.mockResolvedValue(
+      createResolvedWindow({
+        conversationId: "conversation-existing",
+        lifecycle: "reused",
+      })
+    );
 
     const body = JSON.stringify({
       id: "interaction-1",

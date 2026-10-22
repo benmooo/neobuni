@@ -1,23 +1,23 @@
 export {
-	actionAuthorizationsTable,
-	actionProposalsTable,
+  actionAuthorizationsTable,
+  actionProposalsTable,
 } from "./action-proposals";
 export { actionRunsTable } from "./action-runs";
 export { agentConfigsTable } from "./agent-configs";
 export { authRelations } from "./auth";
 export {
-	accounts as accountsTable,
-	sessions as sessionsTable,
-	users as usersTable,
-	verifications as verificationsTable,
+  accounts as accountsTable,
+  sessions as sessionsTable,
+  users as usersTable,
+  verifications as verificationsTable,
 } from "./better-auth";
 export { commitmentsTable } from "./commitments";
 export { conversationsTable } from "./conversations";
 export {
-	decisionCandidatesTable,
-	decisionFeedbackTable,
-	decisionJudgmentsTable,
-	decisionsTable,
+  decisionCandidatesTable,
+  decisionFeedbackTable,
+  decisionJudgmentsTable,
+  decisionsTable,
 } from "./decisions";
 export { digestAnchorsTable } from "./digest-anchors";
 export { eventsTable } from "./events";

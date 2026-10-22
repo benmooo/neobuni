@@ -17,16 +17,18 @@ describe("messaging settings model", () => {
   });
 
   test("creates draft targets with client ids and strips them back to contract input", () => {
-    const drafts = toMessagingTargetDrafts([{
-      alias: "friends",
-      label: "Friends Group",
-      targetType: "group",
-      targetId: "-1001234567890",
-      enabled: true,
-      metadata: {
-        note: "weekend",
+    const drafts = toMessagingTargetDrafts([
+      {
+        alias: "friends",
+        label: "Friends Group",
+        targetType: "group",
+        targetId: "-1001234567890",
+        enabled: true,
+        metadata: {
+          note: "weekend",
+        },
       },
-    }]);
+    ]);
 
     expect(drafts).toHaveLength(1);
     expect(typeof drafts[0]?.clientId).toBe("string");

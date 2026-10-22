@@ -7,6 +7,7 @@ title: "Reflection Comparison Signal Projection"
 > Status: Superseded by simplified reflection design
 > Date: 2026-05-04
 > Companion docs:
+>
 > - [./reflection-report-pipeline.md](./reflection-report-pipeline.md)
 > - [./reflection-context-pipeline.md](./reflection-context-pipeline.md)
 > - [../../ARCHITECTURE.md](../../ARCHITECTURE.md)

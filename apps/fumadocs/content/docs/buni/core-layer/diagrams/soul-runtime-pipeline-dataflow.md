@@ -12,13 +12,13 @@ title: "SOUL Runtime Pipeline — 函数式数据流图"
 
 ## 图例 Legend
 
-| 形状 | 含义 | 用法 |
-|:----:|------|------|
-| `[/ /]` | 外部输入 / 输出 | `latestUserText`、`Prompt Input`、`Reply` |
-| `[ ]` | 数据 / Contract | `SoulSummary`、`ProtectiveDecision`、`ResponsePlan` |
-| `[[ ]]` | 纯函数 | `buildSoulSummary`、`appraiseContext`、`buildResponsePlan` |
-| `{ }` | Gate / 决策 | `Action Policy Gate` |
-| `(( ))` | 事件 / side-channel | observability signal、fallback signal |
+|  形状   | 含义                | 用法                                                       |
+| :-----: | ------------------- | ---------------------------------------------------------- |
+| `[/ /]` | 外部输入 / 输出     | `latestUserText`、`Prompt Input`、`Reply`                  |
+|  `[ ]`  | 数据 / Contract     | `SoulSummary`、`ProtectiveDecision`、`ResponsePlan`        |
+| `[[ ]]` | 纯函数              | `buildSoulSummary`、`appraiseContext`、`buildResponsePlan` |
+|  `{ }`  | Gate / 决策         | `Action Policy Gate`                                       |
+| `(( ))` | 事件 / side-channel | observability signal、fallback signal                      |
 
 说明：
 
@@ -77,7 +77,7 @@ flowchart LR
 
 ---
 
-## Chart 2: Phase 1–2  SOUL Layer — 人格底板
+## Chart 2: Phase 1–2 SOUL Layer — 人格底板
 
 `soulConfig` 各字段 → `loadSoulConfig` → `Soul Summary Builder` → `soulSummary`
 
@@ -111,7 +111,7 @@ flowchart TD
 
 ---
 
-## Chart 3: Phase 3–4  Context & Guard Layer — 情境感知 + 守护判定
+## Chart 3: Phase 3–4 Context & Guard Layer — 情境感知 + 守护判定
 
 外部原始输入 → `Context Appraisal` → `AppraisedContext` → `Protective Evaluator` → `ProtectiveDecision`
 
@@ -152,7 +152,7 @@ flowchart TD
 
 ---
 
-## Chart 4: Phase 5–7  Decision Layer — 策略决策三连
+## Chart 4: Phase 5–7 Decision Layer — 策略决策三连
 
 `ProtectiveDecision` + `AppraisedContext` 作为共同驱动，串联 Drive Reorder → Stance Selector → Response Planner。
 
@@ -203,7 +203,7 @@ flowchart TD
 
 ---
 
-## Chart 5: Phase 8–9  Gate & Output — 边界闸门 + 最终输出
+## Chart 5: Phase 8–9 Gate & Output — 边界闸门 + 最终输出
 
 `ResponsePlan` 经过最后一道边界检查，才能生成三类产物。
 

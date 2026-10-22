@@ -13,7 +13,10 @@ import remend from "remend";
 import { CodeBlock, Pre as CodePre } from "../../codeblock";
 
 const processor = remark().use(remarkGfm).use(remarkRehype);
-const streamProcessor = remark().use(remarkGfm).use(remarkRehype).use(rehypeWords);
+const streamProcessor = remark()
+  .use(remarkGfm)
+  .use(remarkRehype)
+  .use(rehypeWords);
 
 const components: Components = {
   ...defaultMdxComponents,
@@ -34,15 +37,25 @@ export function Markdown({ text, live }: { text: string; live: boolean }) {
       {blocks.map((block, i) => (
         <Block
           key={i}
-          text={live && i === blocks.length - 1 ? remend(block, { linkMode: "text-only" }) : block}
           live={live && i === blocks.length - 1}
+          text={
+            live && i === blocks.length - 1
+              ? remend(block, { linkMode: "text-only" })
+              : block
+          }
         />
       ))}
     </div>
   );
 }
 
-const Block = memo(function Block({ text, live }: { text: string; live: boolean }) {
+const Block = memo(function Block({
+  text,
+  live,
+}: {
+  text: string;
+  live: boolean;
+}) {
   // only words that stream in fade, a chat from history renders plain text
   const [streamed] = useState(live);
   const p = streamed ? streamProcessor : processor;
@@ -70,7 +83,9 @@ export function splitBlocks(text: string): string[] {
     if (fence) {
       block += `\n${line}`;
       const close = /^ {0,3}(`{3,}|~{3,})\s*$/.exec(line)?.[1];
-      if (close && close[0] === fence[0] && close.length >= fence.length) fence = undefined;
+      if (close && close[0] === fence[0] && close.length >= fence.length) {
+        fence = undefined;
+      }
       continue;
     }
 
@@ -89,26 +104,39 @@ export function splitBlocks(text: string): string[] {
       block += blank ? `\n\n${line}` : `\n${line}`;
     }
 
-    if (!indented) inList = listItem.test(line);
+    if (!indented) {
+      inList = listItem.test(line);
+    }
     blank = false;
     fence = /^ {0,3}(`{3,}|~{3,})/.exec(line)?.[1];
   }
 
-  if (block.length > 0) blocks.push(block);
+  if (block.length > 0) {
+    blocks.push(block);
+  }
   return blocks;
 }
 
 function Pre({ children }: ComponentProps<"pre">) {
   const code = codeOf(children);
-  if (!code) return null;
+  if (!code) {
+    return null;
+  }
   const lang = /language-(\S+)/.exec(code.className ?? "")?.[1] ?? "text";
 
-  return <DynamicCodeBlock lang={lang === "mdx" ? "md" : lang} code={code.children.trimEnd()} />;
+  return (
+    <DynamicCodeBlock
+      code={code.children.trimEnd()}
+      lang={lang === "mdx" ? "md" : lang}
+    />
+  );
 }
 
 function LivePre({ children }: ComponentProps<"pre">) {
   const code = codeOf(children);
-  if (!code) return null;
+  if (!code) {
+    return null;
+  }
 
   return (
     <CodeBlock className="my-0">
@@ -120,20 +148,29 @@ function LivePre({ children }: ComponentProps<"pre">) {
 }
 
 function codeOf(children: unknown) {
-  const props = (children as { props?: ComponentProps<"code"> } | undefined)?.props;
-  if (typeof props?.children === "string") return props as { children: string; className?: string };
+  const props = (children as { props?: ComponentProps<"code"> } | undefined)
+    ?.props;
+  if (typeof props?.children === "string") {
+    return props as { children: string; className?: string };
+  }
 }
 
 function rehypeWords() {
   const split = (parent: Root | Element) => {
     for (let i = 0; i < parent.children.length; i++) {
       const node = parent.children[i];
-      if (node.type === "element" && node.tagName !== "pre") split(node);
-      if (node.type !== "text") continue;
+      if (node.type === "element" && node.tagName !== "pre") {
+        split(node);
+      }
+      if (node.type !== "text") {
+        continue;
+      }
 
       const words: ElementContent[] = [];
       for (const word of node.value.split(/(?=\s)/)) {
-        if (word.length === 0) continue;
+        if (word.length === 0) {
+          continue;
+        }
         words.push({
           type: "element",
           tagName: "span",

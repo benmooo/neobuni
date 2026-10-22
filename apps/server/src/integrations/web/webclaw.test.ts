@@ -44,22 +44,25 @@ describe("fetchWebclawPage", () => {
       url: "https://example.com/post",
       deps: {
         fetch: async () =>
-          new Response(JSON.stringify({
-            url: "https://example.com/post",
-            metadata: {
-              title: "Example Post",
-              description: "Example excerpt",
-              author: "Aka",
-              published_date: "2026-06-13T00:00:00.000Z",
-              language: "en",
-              site_name: "Example",
-            },
-            markdown: "# Example Post",
-            text: "Example Post",
-          }), {
-            status: 200,
-            headers: { "Content-Type": "application/json" },
-          }),
+          new Response(
+            JSON.stringify({
+              url: "https://example.com/post",
+              metadata: {
+                title: "Example Post",
+                description: "Example excerpt",
+                author: "Aka",
+                published_date: "2026-06-13T00:00:00.000Z",
+                language: "en",
+                site_name: "Example",
+              },
+              markdown: "# Example Post",
+              text: "Example Post",
+            }),
+            {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            }
+          ),
       },
       config: {
         apiKey: "wc_test",
@@ -88,17 +91,20 @@ describe("fetchWebclawExtract", () => {
       instruction: "Extract all pricing tiers",
       deps: {
         fetch: async () =>
-          new Response(JSON.stringify({
-            data: {
-              tiers: [{ name: "Pro", price: 49 }],
-            },
-            generated_schema: {
-              type: "object",
-            },
-          }), {
-            status: 200,
-            headers: { "Content-Type": "application/json" },
-          }),
+          new Response(
+            JSON.stringify({
+              data: {
+                tiers: [{ name: "Pro", price: 49 }],
+              },
+              generated_schema: {
+                type: "object",
+              },
+            }),
+            {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            }
+          ),
       },
       config: {
         apiKey: "wc_test",
@@ -128,20 +134,23 @@ describe("fetchWebclawSearch", () => {
       limit: 2,
       deps: {
         fetch: async () =>
-          new Response(JSON.stringify({
-            results: [
-              {
-                title: "Buni Web Tools",
-                url: "https://example.com/post",
-                snippet: "A first version of web tools for Buni.",
-                source_name: "Example",
-                published_at: "2026-06-13T00:00:00.000Z",
-              },
-            ],
-          }), {
-            status: 200,
-            headers: { "Content-Type": "application/json" },
-          }),
+          new Response(
+            JSON.stringify({
+              results: [
+                {
+                  title: "Buni Web Tools",
+                  url: "https://example.com/post",
+                  snippet: "A first version of web tools for Buni.",
+                  source_name: "Example",
+                  published_at: "2026-06-13T00:00:00.000Z",
+                },
+              ],
+            }),
+            {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            }
+          ),
       },
       config: {
         apiKey: "wc_test",
@@ -172,9 +181,15 @@ describe("fetchWebclawSearch", () => {
     }
 
     let callCount = 0;
-    const fetchMock = async (_input: string | URL | Request, init?: RequestInit) => {
+    const fetchMock = async (
+      _input: string | URL | Request,
+      init?: RequestInit
+    ) => {
       callCount += 1;
-      const body = typeof init?.body === "string" ? JSON.parse(init.body) as Record<string, unknown> : {};
+      const body =
+        typeof init?.body === "string"
+          ? (JSON.parse(init.body) as Record<string, unknown>)
+          : {};
 
       if (callCount === 1) {
         expect(body).toEqual({
@@ -192,19 +207,22 @@ describe("fetchWebclawSearch", () => {
         scrape: false,
       });
 
-      return new Response(JSON.stringify({
-        results: [
-          {
-            title: "Fallback Search Result",
-            url: "https://example.com/fallback",
-            snippet: "Legacy search payload succeeded.",
-            position: 1,
-          },
-        ],
-      }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
+      return new Response(
+        JSON.stringify({
+          results: [
+            {
+              title: "Fallback Search Result",
+              url: "https://example.com/fallback",
+              snippet: "Legacy search payload succeeded.",
+              position: 1,
+            },
+          ],
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
     };
 
     const result = await mod.fetchWebclawSearch({

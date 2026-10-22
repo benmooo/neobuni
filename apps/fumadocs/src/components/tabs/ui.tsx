@@ -1,3 +1,4 @@
+// biome-ignore-all lint/correctness/useHookAtTopLevel: controlled/uncontrolled tab state is intentional here
 "use client";
 
 import { Tabs as Primitive } from "@base-ui/react/tabs";
@@ -23,6 +24,8 @@ export interface TabsProps extends ComponentProps<typeof Primitive.Root> {
    */
   groupId?: string;
 
+  onValueChange?: (value: string) => void;
+
   /**
    * Enable persistent
    */
@@ -32,8 +35,6 @@ export interface TabsProps extends ComponentProps<typeof Primitive.Root> {
    * If true, updates the URL hash based on the tab's id
    */
   updateAnchor?: boolean;
-
-  onValueChange?: (value: string) => void;
 }
 
 const TabsContext = createContext<{
@@ -53,20 +54,29 @@ const TabsContext = createContext<{
 
 function useTabContext() {
   const ctx = use(TabsContext);
-  if (!ctx) throw new Error("You must wrap your component in <Tabs>");
+  if (!ctx) {
+    throw new Error("You must wrap your component in <Tabs>");
+  }
   return ctx;
 }
 
 export const TabsList = Primitive.List;
 
-export function TabsTrigger({ value, ref, ...props }: ComponentProps<typeof Primitive.Tab>) {
+export function TabsTrigger({
+  value,
+  ref,
+  ...props
+}: ComponentProps<typeof Primitive.Tab>) {
   const { triggers } = useTabContext();
 
   return (
     <Primitive.Tab
       ref={mergeRefs(ref, (element) => {
-        if (element) triggers.add(value);
-        else triggers.delete(value);
+        if (element) {
+          triggers.add(value);
+        } else {
+          triggers.delete(value);
+        }
       })}
       value={value}
       {...props}
@@ -88,20 +98,26 @@ export function Tabs({
   const valueToIdMap = useMemo(() => new Map<string, string>(), []);
   const panels = useMemo(() => new Map<string, HTMLElement>(), []);
   const triggers = useMemo(() => new Set<string>(), []);
+  // biome-ignore lint/correctness/useHookAtTopLevel: controlled/uncontrolled pairing is intentional here
   const [value, setValue] =
     _value === undefined
-      ? // eslint-disable-next-line react-hooks/rules-of-hooks -- not supposed to change controlled/uncontrolled
+      ? // biome-ignore lint/correctness/useHookAtTopLevel: controlled/uncontrolled pairing is intentional here
+        // eslint-disable-next-line react-hooks/rules-of-hooks -- not supposed to change controlled/uncontrolled
         useState(defaultValue)
       : // eslint-disable-next-line react-hooks/rules-of-hooks -- not supposed to change controlled/uncontrolled
         [_value, (v: string) => _onValueChange?.(v)];
 
   const onChange = useEffectEvent((v: string) => {
-    if (triggers.has(v)) setValue(v);
+    if (triggers.has(v)) {
+      setValue(v);
+    }
   });
 
   const openFromHash = useEffectEvent(() => {
     const hash = window.location.hash.slice(1);
-    if (!hash) return;
+    if (!hash) {
+      return;
+    }
 
     // hash points to a tab's own anchor id
     for (const [value, id] of valueToIdMap.entries()) {
@@ -115,10 +131,14 @@ export function Tabs({
     // hash points to an element inside a mounted (e.g. `keepMounted`) panel,
     // open the tab it belongs to, then scroll to it once the panel is visible.
     const target = document.getElementById(hash);
-    if (!target) return;
+    if (!target) {
+      return;
+    }
 
     for (const [value, panel] of panels.entries()) {
-      if (!panel.contains(target)) continue;
+      if (!panel.contains(target)) {
+        continue;
+      }
 
       setValue(value);
       requestAnimationFrame(() => target.scrollIntoView());
@@ -127,10 +147,16 @@ export function Tabs({
   });
 
   useLayoutEffect(() => {
-    if (!groupId) return;
+    if (!groupId) {
+      return;
+    }
     let previous = sessionStorage.getItem(groupId);
-    if (persist) previous ??= localStorage.getItem(groupId);
-    if (previous) onChange(previous);
+    if (persist) {
+      previous ??= localStorage.getItem(groupId);
+    }
+    if (previous) {
+      onChange(previous);
+    }
 
     const groupListeners = listeners.get(groupId) ?? new Set();
     groupListeners.add(onChange);
@@ -148,8 +174,6 @@ export function Tabs({
 
   return (
     <Primitive.Root
-      ref={mergeRefs(ref, tabsRef)}
-      value={value}
       onValueChange={(v: string) => {
         if (updateAnchor) {
           const id = valueToIdMap.get(v);
@@ -162,21 +186,27 @@ export function Tabs({
         if (groupId) {
           const groupListeners = listeners.get(groupId);
           if (groupListeners) {
-            for (const listener of groupListeners) listener(v);
+            for (const listener of groupListeners) {
+              listener(v);
+            }
           }
 
           sessionStorage.setItem(groupId, v);
-          if (persist) localStorage.setItem(groupId, v);
+          if (persist) {
+            localStorage.setItem(groupId, v);
+          }
         } else {
           setValue(v);
         }
       }}
+      ref={mergeRefs(ref, tabsRef)}
+      value={value}
       {...props}
     >
       <TabsContext
         value={useMemo(
           () => ({ valueToIdMap, panels, triggers }),
-          [valueToIdMap, panels, triggers],
+          [valueToIdMap, panels, triggers]
         )}
       >
         {props.children}
@@ -185,7 +215,11 @@ export function Tabs({
   );
 }
 
-export function TabsContent({ value, ref, ...props }: ComponentProps<typeof Primitive.Panel>) {
+export function TabsContent({
+  value,
+  ref,
+  ...props
+}: ComponentProps<typeof Primitive.Panel>) {
   const { valueToIdMap, panels } = useTabContext();
 
   if (props.id) {
@@ -195,8 +229,11 @@ export function TabsContent({ value, ref, ...props }: ComponentProps<typeof Prim
   return (
     <Primitive.Panel
       ref={mergeRefs(ref, (element) => {
-        if (element) panels.set(value, element);
-        else panels.delete(value);
+        if (element) {
+          panels.set(value, element);
+        } else {
+          panels.delete(value);
+        }
       })}
       value={value}
       {...props}

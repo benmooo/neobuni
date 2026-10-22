@@ -4,9 +4,9 @@ import { Effect } from "effect";
 type Awaited0<T> = T extends Effect.Effect<infer A, unknown, unknown> ? A : T;
 
 type PromiseApi<T> = {
-	[K in keyof T]: T[K] extends (...args: infer P) => infer R
-		? (...args: P) => Promise<Awaited0<R>>
-		: T[K];
+  [K in keyof T]: T[K] extends (...args: infer P) => infer R
+    ? (...args: P) => Promise<Awaited0<R>>
+    : T[K];
 };
 
 /**
@@ -17,18 +17,18 @@ type PromiseApi<T> = {
  * instead of using this bridge.
  */
 export const dbp = new Proxy(api, {
-	get(target, property, receiver) {
-		const value = Reflect.get(target, property, receiver);
+  get(target, property, receiver) {
+    const value = Reflect.get(target, property, receiver);
 
-		if (typeof value !== "function") {
-			return value;
-		}
+    if (typeof value !== "function") {
+      return value;
+    }
 
-		return (...args: unknown[]) =>
-			Effect.runPromise(
-				(value as (...input: unknown[]) => Effect.Effect<unknown, unknown>)(
-					...args
-				)
-			);
-	},
+    return (...args: unknown[]) =>
+      Effect.runPromise(
+        (value as (...input: unknown[]) => Effect.Effect<unknown, unknown>)(
+          ...args
+        )
+      );
+  },
 }) as unknown as PromiseApi<typeof api>;

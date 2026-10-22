@@ -14,18 +14,18 @@ import { schedulesRouter } from "./schedules";
 import { taskRunsRouter } from "./task-runs";
 
 export const appRouter = {
-	healthCheck: publicProcedure.handler(() => "OK"),
-	conversations: conversationsRouter,
-	messages: messagesRouter,
-	profile: profileRouter,
-	memories: memoriesRouter,
-	knowledge: knowledgeRouter,
-	schedules: schedulesRouter,
-	taskRuns: taskRunsRouter,
-	goals: goalsRouter,
-	config: configRouter,
-	runtime: runtimeRouter,
-	integrations: integrationsRouter,
+  healthCheck: publicProcedure.handler(() => "OK"),
+  conversations: conversationsRouter,
+  messages: messagesRouter,
+  profile: profileRouter,
+  memories: memoriesRouter,
+  knowledge: knowledgeRouter,
+  schedules: schedulesRouter,
+  taskRuns: taskRunsRouter,
+  goals: goalsRouter,
+  config: configRouter,
+  runtime: runtimeRouter,
+  integrations: integrationsRouter,
 };
 
 export type AppRouter = typeof appRouter;

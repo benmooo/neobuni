@@ -41,6 +41,7 @@ title: "Discord / Telegram Design Alignment Implementation Plan"
 ## Task 1: Make `chat_public_safe` Affect the Live Prompt
 
 **Files:**
+
 - Create: `apps/server/src/runtime/surface-prompt.test.ts`
 - Create: `apps/server/src/runtime/surface-prompt.ts`
 - Modify: `apps/server/src/runtime/create-chat-turn-stream.ts`
@@ -113,6 +114,7 @@ Expected: PASS
 ## Task 2: Move Messaging Uniqueness into the Real Schema
 
 **Files:**
+
 - Create: `packages/db/src/schema/messaging-schema.test.ts`
 - Modify: `packages/db/src/schema/messaging-integrations.ts`
 - Modify: `packages/db/src/schema/messaging-targets.ts`
@@ -156,7 +158,7 @@ Expected: FAIL because the schema files currently declare no indexes for these t
 ```ts
 const externalEventReceiptsTable = sqliteTable(
   "external_event_receipts",
-  { /* columns */ },
+  {/* columns */},
   (table) => [
     uniqueIndex("external_event_receipts_event_idx").on(
       table.profileId,
@@ -175,6 +177,7 @@ Expected: PASS
 ## Task 3: Extend Discord Beyond Slash Commands
 
 **Files:**
+
 - Create: `apps/server/src/integrations/discord-gateway.test.ts`
 - Create: `apps/server/src/integrations/discord-gateway.ts`
 - Modify: `apps/server/src/routes/integrations-discord.ts`
@@ -226,6 +229,7 @@ Expected: PASS
 ## Task 4: Verify the Alignment Tranche
 
 **Files:**
+
 - No new files
 
 - [ ] **Step 1: Run focused tests**

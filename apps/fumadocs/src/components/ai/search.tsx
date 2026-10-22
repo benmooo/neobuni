@@ -1,6 +1,11 @@
 "use client";
 import { useChat } from "@ai-sdk/react";
-import { DefaultChatTransport, type InferUITool, type Tool, type UIMessage } from "ai";
+import {
+  DefaultChatTransport,
+  type InferUITool,
+  type Tool,
+  type UIMessage,
+} from "ai";
 import type { ReactNode } from "react";
 
 import { type AIChatClientData, AIChatProvider, AIChatSearch } from "./chat";
@@ -35,5 +40,7 @@ export function AIChat({ children }: { children: ReactNode }) {
 }
 
 function renderPart(part: ChatUIMessage["parts"][number], live: boolean) {
-  if (part.type === "tool-search") return <AIChatSearch part={part} live={live} />;
+  if (part.type === "tool-search") {
+    return <AIChatSearch live={live} part={part} />;
+  }
 }

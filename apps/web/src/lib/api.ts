@@ -7,18 +7,18 @@ import { ENV } from "@/env";
 export const apiBaseUrl = ENV.VITE_SERVER_URL;
 
 const link = new RPCLink({
-	url: `${apiBaseUrl}/rpc`,
-	fetch: (input, init) =>
-		fetch(input, {
-			...init,
-			credentials: "include",
-		}),
+  url: `${apiBaseUrl}/rpc`,
+  fetch: (input, init) =>
+    fetch(input, {
+      ...init,
+      credentials: "include",
+    }),
 });
 
 export const api = createORPCClient<ServerRouterClient>(link);
 
 export const apiFetch = (path: string, init?: RequestInit) =>
-	fetch(`${apiBaseUrl}${path}`, {
-		...init,
-		credentials: "include",
-	});
+  fetch(`${apiBaseUrl}${path}`, {
+    ...init,
+    credentials: "include",
+  });

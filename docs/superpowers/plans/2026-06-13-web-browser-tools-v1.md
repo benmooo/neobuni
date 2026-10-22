@@ -13,6 +13,7 @@ title: "Web / Browser Tools V1 Implementation Plan"
 **Tech Stack:** Bun, TypeScript, Zod, Hono, `@tanstack/ai`, existing Buni SQLite/knowledge ingest, external `webclaw` REST API.
 
 **Execution Status (2026-06-13):**
+
 - 当前工作树已完成 Task 1-6 的实现和验证。
 - `summarize_page` 最终按 design spec 落为 Buni 自己的 orchestration：先拿规范化页面，再走 reasoning provider；没有透传 provider 原生 summary API。
 - 计划里的 `git commit` 步骤本轮未执行。
@@ -22,6 +23,7 @@ title: "Web / Browser Tools V1 Implementation Plan"
 ### Task 1: 定义 Web 工具 contracts 与共享 schema
 
 **Files:**
+
 - Create: `packages/contracts/src/execution-layer/web-shared.ts`
 - Create: `packages/contracts/src/execution-layer/open-url.ts`
 - Create: `packages/contracts/src/execution-layer/extract-page.ts`
@@ -112,11 +114,7 @@ const webPageDocumentSchema = z.object({
   fetchedAt: z.string().datetime(),
 });
 
-export {
-  webPageDocumentSchema,
-  webProviderSchema,
-  webRenderModeSchema,
-};
+export { webPageDocumentSchema, webProviderSchema, webRenderModeSchema };
 ```
 
 ```ts
@@ -124,11 +122,7 @@ export {
 import { toolDefinition } from "@tanstack/ai";
 import { z } from "zod";
 
-import {
-  webPageDocumentSchema,
-  webProviderSchema,
-  webRenderModeSchema,
-} from "./web-shared";
+import { webPageDocumentSchema, webProviderSchema, webRenderModeSchema } from "./web-shared";
 
 const openUrlInputSchema = z.object({
   url: z.url(),
@@ -156,11 +150,7 @@ export { openUrlDef, openUrlInputSchema, openUrlOutputSchema };
 import { toolDefinition } from "@tanstack/ai";
 import { z } from "zod";
 
-import {
-  webPageDocumentSchema,
-  webProviderSchema,
-  webRenderModeSchema,
-} from "./web-shared";
+import { webPageDocumentSchema, webProviderSchema, webRenderModeSchema } from "./web-shared";
 
 const extractPageInputSchema = z.object({
   url: z.url(),
@@ -219,11 +209,7 @@ const savePageToKnowledgeDef = toolDefinition({
   outputSchema: savePageToKnowledgeOutputSchema,
 });
 
-export {
-  savePageToKnowledgeDef,
-  savePageToKnowledgeInputSchema,
-  savePageToKnowledgeOutputSchema,
-};
+export { savePageToKnowledgeDef, savePageToKnowledgeInputSchema, savePageToKnowledgeOutputSchema };
 ```
 
 ```ts
@@ -255,6 +241,7 @@ git commit -m "feat: add p0 web tool contracts"
 ### Task 2: 接入 webclaw 并归一化页面结果
 
 **Files:**
+
 - Create: `apps/server/src/integrations/web/types.ts`
 - Create: `apps/server/src/integrations/web/webclaw.ts`
 - Create: `apps/server/src/integrations/web/webclaw.test.ts`
@@ -267,11 +254,7 @@ git commit -m "feat: add p0 web tool contracts"
 // apps/server/src/integrations/web/webclaw.test.ts
 import { describe, expect, test } from "bun:test";
 
-import {
-  fetchWebclawExtract,
-  fetchWebclawPage,
-  readWebclawConfig,
-} from "./webclaw";
+import { fetchWebclawExtract, fetchWebclawPage, readWebclawConfig } from "./webclaw";
 
 describe("readWebclawConfig", () => {
   test("reads defaults for base url and timeout", () => {
@@ -304,22 +287,25 @@ describe("fetchWebclawPage", () => {
       url: "https://example.com/post",
       deps: {
         fetch: async () =>
-          new Response(JSON.stringify({
-            url: "https://example.com/post",
-            metadata: {
-              title: "Example Post",
-              description: "Example excerpt",
-              author: "Aka",
-              published_date: "2026-06-13T00:00:00.000Z",
-              language: "en",
-              site_name: "Example",
+          new Response(
+            JSON.stringify({
+              url: "https://example.com/post",
+              metadata: {
+                title: "Example Post",
+                description: "Example excerpt",
+                author: "Aka",
+                published_date: "2026-06-13T00:00:00.000Z",
+                language: "en",
+                site_name: "Example",
+              },
+              markdown: "# Example Post",
+              text: "Example Post",
+            }),
+            {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
             },
-            markdown: "# Example Post",
-            text: "Example Post",
-          }), {
-            status: 200,
-            headers: { "Content-Type": "application/json" },
-          }),
+          ),
       },
       config: {
         apiKey: "wc_test",
@@ -342,17 +328,20 @@ describe("fetchWebclawExtract", () => {
       instruction: "Extract all pricing tiers",
       deps: {
         fetch: async () =>
-          new Response(JSON.stringify({
-            data: {
-              tiers: [{ name: "Pro", price: 49 }],
+          new Response(
+            JSON.stringify({
+              data: {
+                tiers: [{ name: "Pro", price: 49 }],
+              },
+              generated_schema: {
+                type: "object",
+              },
+            }),
+            {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
             },
-            generated_schema: {
-              type: "object",
-            },
-          }), {
-            status: 200,
-            headers: { "Content-Type": "application/json" },
-          }),
+          ),
       },
       config: {
         apiKey: "wc_test",
@@ -410,20 +399,12 @@ type WebExtractResult = {
   generatedSchema: Record<string, unknown> | null;
 };
 
-export type {
-  WebExtractResult,
-  WebPageDocument,
-  WebPageResult,
-  WebProviderName,
-};
+export type { WebExtractResult, WebPageDocument, WebPageResult, WebProviderName };
 ```
 
 ```ts
 // apps/server/src/integrations/web/webclaw.ts
-import type {
-  WebExtractResult,
-  WebPageResult,
-} from "./types";
+import type { WebExtractResult, WebPageResult } from "./types";
 
 type WebclawConfig = {
   apiKey: string;
@@ -438,8 +419,7 @@ type WebclawDeps = {
 const DEFAULT_WEBCLAW_BASE_URL = "https://api.webclaw.io";
 const DEFAULT_WEB_TIMEOUT_MS = 10_000;
 
-const normalizeBaseUrl = (value: string) =>
-  value.trim().replace(/\/+$/, "");
+const normalizeBaseUrl = (value: string) => value.trim().replace(/\/+$/, "");
 
 const toPositiveInt = (value: string | undefined, fallback: number) => {
   const parsed = value ? Number(value) : Number.NaN;
@@ -448,13 +428,8 @@ const toPositiveInt = (value: string | undefined, fallback: number) => {
 
 const readWebclawConfig = (): WebclawConfig => ({
   apiKey: process.env.BUNI_WEBCLAW_API_KEY?.trim() ?? "",
-  baseUrl: normalizeBaseUrl(
-    process.env.BUNI_WEBCLAW_BASE_URL?.trim() || DEFAULT_WEBCLAW_BASE_URL,
-  ),
-  timeoutMs: toPositiveInt(
-    process.env.BUNI_WEB_TIMEOUT_MS,
-    DEFAULT_WEB_TIMEOUT_MS,
-  ),
+  baseUrl: normalizeBaseUrl(process.env.BUNI_WEBCLAW_BASE_URL?.trim() || DEFAULT_WEBCLAW_BASE_URL),
+  timeoutMs: toPositiveInt(process.env.BUNI_WEB_TIMEOUT_MS, DEFAULT_WEB_TIMEOUT_MS),
 });
 
 const buildFetchSignal = (input: { timeoutMs: number; signal?: AbortSignal }) => {
@@ -517,7 +492,7 @@ const fetchWebclawJson = async <T>(input: {
       throw new Error(`Webclaw request failed (${response.status}): ${await response.text()}`);
     }
 
-    return await response.json() as T;
+    return (await response.json()) as T;
   } finally {
     request.cleanup();
   }
@@ -641,6 +616,7 @@ git commit -m "feat: add webclaw integration for p0 web tools"
 ### Task 3: 实现 `open_url`、`extract_page`、`save_page_to_knowledge` handlers 与知识桥接
 
 **Files:**
+
 - Create: `apps/server/src/tools/open-url.ts`
 - Create: `apps/server/src/tools/extract-page.ts`
 - Create: `apps/server/src/tools/save-page-to-knowledge.ts`
@@ -676,10 +652,7 @@ Expected: FAIL，提示 `open_url`、`extract_page`、`save_page_to_knowledge` �
 
 ```ts
 // apps/server/src/web/save-web-page-to-knowledge.ts
-import {
-  getMemoryEmbeddingProviderConfig,
-  getMemoryReasoningProviderConfig,
-} from "@buni/db";
+import { getMemoryEmbeddingProviderConfig, getMemoryReasoningProviderConfig } from "@buni/db";
 
 import { toOpenAICompatibleConfig } from "../digest/memory-provider-config";
 import { ingestKnowledgeDocument } from "../memory/knowledge-ingest-service";
@@ -721,10 +694,7 @@ export { saveWebPageToKnowledge };
 ```ts
 // apps/server/src/tools/open-url.ts
 import { appendEvent } from "@buni/db";
-import {
-  openUrlDef,
-  openUrlInputSchema,
-} from "@buni/contracts";
+import { openUrlDef, openUrlInputSchema } from "@buni/contracts";
 
 import { fetchWebclawPage } from "../integrations/web/webclaw";
 import type { ServerToolContext } from "./types";
@@ -753,15 +723,9 @@ export { createOpenUrlTool };
 ```ts
 // apps/server/src/tools/extract-page.ts
 import { appendEvent } from "@buni/db";
-import {
-  extractPageDef,
-  extractPageInputSchema,
-} from "@buni/contracts";
+import { extractPageDef, extractPageInputSchema } from "@buni/contracts";
 
-import {
-  fetchWebclawExtract,
-  fetchWebclawPage,
-} from "../integrations/web/webclaw";
+import { fetchWebclawExtract, fetchWebclawPage } from "../integrations/web/webclaw";
 import type { ServerToolContext } from "./types";
 
 const createExtractPageTool = (context: ServerToolContext) =>
@@ -801,10 +765,7 @@ export { createExtractPageTool };
 ```ts
 // apps/server/src/tools/save-page-to-knowledge.ts
 import { appendEvent } from "@buni/db";
-import {
-  savePageToKnowledgeDef,
-  savePageToKnowledgeInputSchema,
-} from "@buni/contracts";
+import { savePageToKnowledgeDef, savePageToKnowledgeInputSchema } from "@buni/contracts";
 
 import { fetchWebclawPage } from "../integrations/web/webclaw";
 import { saveWebPageToKnowledge } from "../web/save-web-page-to-knowledge";
@@ -945,6 +906,7 @@ git commit -m "feat: add p0 web execution tools"
 ### Task 4: 做 P0 验证并补齐导出与文档
 
 **Files:**
+
 - Modify: `packages/contracts/src/execution-layer/tools.ts`
 - Modify: `apps/server/.env.example`
 - Modify: `docs/execution-layer/news-tools-v1.md` (不改逻辑，只补相关指引时才需要)
@@ -971,6 +933,7 @@ git commit -m "test: verify p0 web tools wiring"
 ### Task 5: 实现 `search_web`
 
 **Files:**
+
 - Create: `packages/contracts/src/execution-layer/search-web.ts`
 - Create: `apps/server/src/tools/search-web.ts`
 - Modify: `packages/contracts/src/execution-layer/web-shared.ts`
@@ -1037,6 +1000,7 @@ git commit -m "feat: add search_web tool"
 ### Task 6: 实现 `summarize_page`
 
 **Files:**
+
 - Create: `packages/contracts/src/execution-layer/summarize-page.ts`
 - Create: `apps/server/src/tools/summarize-page.ts`
 - Create: `apps/server/src/web/summarize-web-page.ts`

@@ -1,9 +1,9 @@
-import { beforeEach, describe, expect, vi, test } from "vitest";
 import type { ModelMessage, StreamChunk } from "@tanstack/ai";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { ProviderTurnResolution } from "../providers/provider-stream-outcome";
 
 const createRuntimeMiddlewareMock = vi.fn(
-  (_input: Record<string, unknown>) => [] as Array<Record<string, unknown>>,
+  (_input: Record<string, unknown>) => [] as Record<string, unknown>[]
 );
 
 const chatMock = vi.fn((_input: Record<string, unknown>) =>
@@ -16,7 +16,7 @@ const chatMock = vi.fn((_input: Record<string, unknown>) =>
       type: "TEXT_MESSAGE_CONTENT",
       delta: "world",
     } as StreamChunk;
-  })(),
+  })()
 );
 
 const resolveTurnFromProviderOutcomeMock = vi.fn(
@@ -24,7 +24,7 @@ const resolveTurnFromProviderOutcomeMock = vi.fn(
     ({
       status: "completed" as const,
       providerOutcome: "text" as const,
-    }) as ProviderTurnResolution,
+    }) as ProviderTurnResolution
 );
 
 const createObserverStub = () => ({
@@ -86,7 +86,7 @@ describe("runAgentTurn", () => {
           createRuntimeMiddlewareMock as unknown as typeof import("./create-runtime-middleware").createRuntimeMiddleware,
         resolveTurnFromProviderOutcome:
           resolveTurnFromProviderOutcomeMock as unknown as typeof import("../providers/provider-stream-outcome").resolveTurnFromProviderOutcome,
-      },
+      }
     );
 
     expect(createRuntimeMiddlewareMock).toHaveBeenCalledTimes(1);
@@ -121,7 +121,7 @@ describe("runAgentTurn", () => {
           error: {
             message: "provider returned no content",
           },
-        }) as ProviderTurnResolution,
+        }) as ProviderTurnResolution
     );
 
     const result = await runAgentTurn(
@@ -158,13 +158,13 @@ describe("runAgentTurn", () => {
       },
       {
         chat: vi.fn((_input: Record<string, unknown>) =>
-          (async function* () {})(),
+          (async function* () {})()
         ) as unknown as typeof import("@tanstack/ai").chat,
         createRuntimeMiddleware:
           createRuntimeMiddlewareMock as unknown as typeof import("./create-runtime-middleware").createRuntimeMiddleware,
         resolveTurnFromProviderOutcome:
           resolveTurnFromProviderOutcomeMock as unknown as typeof import("../providers/provider-stream-outcome").resolveTurnFromProviderOutcome,
-      },
+      }
     );
 
     expect(result.providerTurnResolution).toEqual({
@@ -203,40 +203,45 @@ describe("runAgentTurn", () => {
       {
         role: "tool",
         toolCallId: "tool-1",
-        content: '{"delivered":true,"target":{"alias":"hermes0"},"preview":"hello"}',
+        content:
+          '{"delivered":true,"target":{"alias":"hermes0"},"preview":"hello"}',
       },
     ];
 
-    createRuntimeMiddlewareMock.mockImplementationOnce((rawInput: Record<string, unknown>) => {
-      const input = rawInput as {
-        initialPersistedMessageCount: number;
-        setProviderTurnMessages: (messages: ReadonlyArray<ModelMessage>) => void;
-      };
+    createRuntimeMiddlewareMock.mockImplementationOnce(
+      (rawInput: Record<string, unknown>) => {
+        const input = rawInput as {
+          initialPersistedMessageCount: number;
+          setProviderTurnMessages: (messages: readonly ModelMessage[]) => void;
+        };
 
-      return [
-        {
-          name: "capture-provider-messages",
-          onFinish: async (
-            ctx: { messages: ReadonlyArray<ModelMessage> },
-            _info: Record<string, unknown>,
-          ) => {
-            input.setProviderTurnMessages(ctx.messages.slice(input.initialPersistedMessageCount));
+        return [
+          {
+            name: "capture-provider-messages",
+            onFinish: async (
+              ctx: { messages: readonly ModelMessage[] },
+              _info: Record<string, unknown>
+            ) => {
+              input.setProviderTurnMessages(
+                ctx.messages.slice(input.initialPersistedMessageCount)
+              );
+            },
           },
-        },
-      ];
-    });
+        ];
+      }
+    );
 
     const chatWithToolAndFinalTextMock = vi.fn(
       (input: {
         middleware?: Array<{
           onFinish?: (
-            ctx: { messages: ReadonlyArray<ModelMessage> },
+            ctx: { messages: readonly ModelMessage[] },
             info: {
               finishReason?: string | null;
               duration: number;
               content: string;
               usage?: Record<string, unknown>;
-            },
+            }
           ) => Promise<void> | void;
         }>;
       }) =>
@@ -252,9 +257,9 @@ describe("runAgentTurn", () => {
               finishReason: "stop",
               duration: 1,
               content: finalAssistantText,
-            },
+            }
           );
-        })(),
+        })()
     );
 
     const result = await runAgentTurn(
@@ -295,7 +300,7 @@ describe("runAgentTurn", () => {
           createRuntimeMiddlewareMock as unknown as typeof import("./create-runtime-middleware").createRuntimeMiddleware,
         resolveTurnFromProviderOutcome:
           resolveTurnFromProviderOutcomeMock as unknown as typeof import("../providers/provider-stream-outcome").resolveTurnFromProviderOutcome,
-      },
+      }
     );
 
     expect(result.assistantText).toBe(finalAssistantText);

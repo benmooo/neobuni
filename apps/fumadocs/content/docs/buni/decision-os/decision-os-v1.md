@@ -144,31 +144,31 @@ A goal is an intended outcome, not merely a text task.
 
 ```ts
 type Goal = {
-  id: string
-  profileId: string
-  title: string
-  desiredOutcome: string
-  status: "draft" | "active" | "blocked" | "paused" | "completed" | "abandoned"
-  horizon: "today" | "week" | "project" | "ongoing"
-  successCriteria: SuccessCriterion[]
-  constraints: GoalConstraint[]
-  autonomyPolicyId: string
-  planVersion: number
-  nextReviewAt: string | null
-  createdAt: string
-  updatedAt: string
-}
+  id: string;
+  profileId: string;
+  title: string;
+  desiredOutcome: string;
+  status: "draft" | "active" | "blocked" | "paused" | "completed" | "abandoned";
+  horizon: "today" | "week" | "project" | "ongoing";
+  successCriteria: SuccessCriterion[];
+  constraints: GoalConstraint[];
+  autonomyPolicyId: string;
+  planVersion: number;
+  nextReviewAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
 
 type Commitment = {
-  id: string
-  goalId: string | null
-  kind: "task" | "promise" | "deadline" | "decision" | "dependency"
-  status: "open" | "blocked" | "done" | "cancelled"
-  title: string
-  dueAt: string | null
-  owner: "user" | "buni" | "external"
-  evidenceIds: string[]
-}
+  id: string;
+  goalId: string | null;
+  kind: "task" | "promise" | "deadline" | "decision" | "dependency";
+  status: "open" | "blocked" | "done" | "cancelled";
+  title: string;
+  dueAt: string | null;
+  owner: "user" | "buni" | "external";
+  evidenceIds: string[];
+};
 ```
 
 A `Goal` owns the purpose and evaluation context. A `Commitment` is an actionable or observable obligation inside that context. Existing task memories can be migrated into commitments only after the new model is proven; they remain evidence during the transition.
@@ -179,33 +179,27 @@ A `Goal` owns the purpose and evaluation context. A `Commitment` is an actionabl
 
 ```ts
 type WorldState = {
-  asOf: string
-  goal: Goal | null
-  commitments: Commitment[]
-  facts: Fact[]
-  evidence: Evidence[]
-  schedule: ScheduleState
-  actionRuns: ActionRunSummary[]
-  userContext: UserContext
-  riskSignals: RiskSignal[]
-}
+  asOf: string;
+  goal: Goal | null;
+  commitments: Commitment[];
+  facts: Fact[];
+  evidence: Evidence[];
+  schedule: ScheduleState;
+  actionRuns: ActionRunSummary[];
+  userContext: UserContext;
+  riskSignals: RiskSignal[];
+};
 
 type Evidence = {
-  id: string
-  kind:
-    | "message"
-    | "memory"
-    | "tool_result"
-    | "schedule"
-    | "document"
-    | "external_event"
-  sourceId: string
-  summary: string
-  observedAt: string
-  confidence: number | null
-  freshness: "current" | "aging" | "stale" | "unknown"
-  provenance: EvidenceProvenance
-}
+  id: string;
+  kind: "message" | "memory" | "tool_result" | "schedule" | "document" | "external_event";
+  sourceId: string;
+  summary: string;
+  observedAt: string;
+  confidence: number | null;
+  freshness: "current" | "aging" | "stale" | "unknown";
+  provenance: EvidenceProvenance;
+};
 ```
 
 A decision receives a minimal projection. It must not receive a raw conversation dump, all memories, or unfiltered external content.
@@ -214,39 +208,39 @@ A decision receives a minimal projection. It must not receive a raw conversation
 
 ```ts
 type Decision = {
-  id: string
-  profileId: string
-  goalId: string | null
-  kind: DecisionKind
-  stateFingerprint: string
-  candidateSet: DecisionCandidate[]
-  judgments: Judgment[]
-  policyResult: PolicyResult
-  route: DecisionRoute
-  outcome: DecisionOutcome | null
-  createdAt: string
-}
+  id: string;
+  profileId: string;
+  goalId: string | null;
+  kind: DecisionKind;
+  stateFingerprint: string;
+  candidateSet: DecisionCandidate[];
+  judgments: Judgment[];
+  policyResult: PolicyResult;
+  route: DecisionRoute;
+  outcome: DecisionOutcome | null;
+  createdAt: string;
+};
 
 type ActionProposal = {
-  id: string
-  goalId: string | null
-  decisionId: string
-  kind: string
-  title: string
-  rationale: string
-  expectedOutcome: string
-  reversibility: "reversible" | "partially_reversible" | "irreversible"
-  requiredAuthority: AuthorityLevel
-  input: Record<string, unknown>
-}
+  id: string;
+  goalId: string | null;
+  decisionId: string;
+  kind: string;
+  title: string;
+  rationale: string;
+  expectedOutcome: string;
+  reversibility: "reversible" | "partially_reversible" | "irreversible";
+  requiredAuthority: AuthorityLevel;
+  input: Record<string, unknown>;
+};
 
 type ActionAuthorization = {
-  proposalId: string
-  mode: "deny" | "suggest" | "request_confirmation" | "execute"
-  grantedBy: "policy" | "user"
-  constraints: ExecutionConstraint[]
-  expiresAt: string | null
-}
+  proposalId: string;
+  mode: "deny" | "suggest" | "request_confirmation" | "execute";
+  grantedBy: "policy" | "user";
+  constraints: ExecutionConstraint[];
+  expiresAt: string | null;
+};
 ```
 
 ## 6. Jev's Exact Role
@@ -301,24 +295,24 @@ Buni owns a provider-neutral interface. TypeSafe SDK types stay inside the adapt
 
 ```ts
 type DecisionProvider = {
-  id: string
-  decide(input: DecisionRequest): Promise<DecisionProviderResult>
-}
+  id: string;
+  decide(input: DecisionRequest): Promise<DecisionProviderResult>;
+};
 
 type DecisionProviderResult = {
-  providerId: string
-  providerVersion: string
-  answers: Record<string, DecisionAnswer>
-  usage: DecisionUsage
-}
+  providerId: string;
+  providerVersion: string;
+  answers: Record<string, DecisionAnswer>;
+  usage: DecisionUsage;
+};
 
 type DecisionAnswer = {
-  questionId: string
-  kind: "choice" | "score" | "noul"
-  selectedValue: string | number | boolean
-  probabilities: Record<string, number>
-  confidence: number | null
-}
+  questionId: string;
+  kind: "choice" | "score" | "noul";
+  selectedValue: string | number | boolean;
+  probabilities: Record<string, number>;
+  confidence: number | null;
+};
 ```
 
 The target provider order is not a democratic vote between models. It is a routing hierarchy:
@@ -351,18 +345,18 @@ Autonomy is scoped to a goal, tool family, destination, budget, and time window.
 
 ```ts
 const decideRoute = (input: {
-  hardPolicy: HardPolicyResult
-  authority: AuthorityResult
-  confidence: number
-  interruptionValue: number
-  reversibility: Reversibility
+  hardPolicy: HardPolicyResult;
+  authority: AuthorityResult;
+  confidence: number;
+  interruptionValue: number;
+  reversibility: Reversibility;
 }): DecisionRoute => {
-  if (!input.hardPolicy.permitted) return "deny"
-  if (!input.authority.granted) return "request_confirmation"
-  if (input.confidence < 0.8) return "use_system_two"
-  if (input.interruptionValue < 0.55) return "stay_silent"
-  return input.reversibility === "reversible" ? "execute" : "suggest"
-}
+  if (!input.hardPolicy.permitted) return "deny";
+  if (!input.authority.granted) return "request_confirmation";
+  if (input.confidence < 0.8) return "use_system_two";
+  if (input.interruptionValue < 0.55) return "stay_silent";
+  return input.reversibility === "reversible" ? "execute" : "suggest";
+};
 ```
 
 The numbers above are illustrative. Production thresholds are versioned policy values calibrated against Buni outcomes, not constants embedded in a provider adapter.

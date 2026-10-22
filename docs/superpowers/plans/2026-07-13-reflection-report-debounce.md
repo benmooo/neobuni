@@ -17,6 +17,7 @@ title: "Reflection Daily Report Debounce Implementation Plan"
 ### Task 1: Persist and coalesce debounced report marks
 
 **Files:**
+
 - Modify: `packages/db/src/schema/reflection-report-marks.ts`
 - Modify: `packages/db/src/repos/reflection-report-marks.ts`
 - Test: `apps/server/src/reflection/report/run-report-queue.test.ts`
@@ -29,6 +30,7 @@ title: "Reflection Daily Report Debounce Implementation Plan"
 ### Task 2: Gate report generation on mark eligibility
 
 **Files:**
+
 - Modify: `apps/server/src/reflection/report/run-report-queue.ts`
 - Test: `apps/server/src/reflection/report/run-report-queue.test.ts`
 

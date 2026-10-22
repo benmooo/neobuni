@@ -1,10 +1,4 @@
-import {
-  beforeEach,
-  describe,
-  expect,
-  test,
-  vi,
-} from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const appendEventMock = vi.fn(async () => ({
   id: "event-1",
@@ -55,7 +49,9 @@ describe("channel tools", () => {
   });
 
   test("list_channel_targets returns the aggregated items and appends an event", async () => {
-    const { createListChannelTargetsTool } = await import("./list-channel-targets");
+    const { createListChannelTargetsTool } = await import(
+      "./list-channel-targets"
+    );
     const tool = createListChannelTargetsTool(createToolContext(), {
       appendEvent: appendEventMock,
       listChannelTargets: listChannelTargetsMock,
@@ -77,7 +73,9 @@ describe("channel tools", () => {
   });
 
   test("send_channel_message delegates delivery and appends an event", async () => {
-    const { createSendChannelMessageTool } = await import("./send-channel-message");
+    const { createSendChannelMessageTool } = await import(
+      "./send-channel-message"
+    );
     const tool = createSendChannelMessageTool(createToolContext(), {
       appendEvent: appendEventMock,
       sendChannelMessage: sendChannelMessageMock,
@@ -103,7 +101,9 @@ describe("channel tools", () => {
   });
 
   test("send_channel_message can omit platform and target identifiers when runtime can resolve them", async () => {
-    const { createSendChannelMessageTool } = await import("./send-channel-message");
+    const { createSendChannelMessageTool } = await import(
+      "./send-channel-message"
+    );
     const tool = createSendChannelMessageTool(createToolContext(), {
       appendEvent: appendEventMock,
       sendChannelMessage: sendChannelMessageMock,

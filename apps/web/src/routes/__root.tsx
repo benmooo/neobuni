@@ -9,23 +9,23 @@ import { ChatDisplayPreferencesProvider } from "@/components/chat/chat-display-p
 import "../index.css";
 
 const queryClient = new QueryClient({
-	defaultOptions: {
-		queries: {
-			refetchOnWindowFocus: false,
-		},
-	},
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+    },
+  },
 });
 
 export const Route = createRootRoute({
-	component: () => (
-		<ThemeProvider>
-			<ChatDisplayPreferencesProvider>
-				<QueryClientProvider client={queryClient}>
-					<Outlet />
-				</QueryClientProvider>
-			</ChatDisplayPreferencesProvider>
-			<Toaster position="top-center" />
-			{/*<TanStackRouterDevtools position="top-right"  />*/}
-		</ThemeProvider>
-	),
+  component: () => (
+    <ThemeProvider>
+      <ChatDisplayPreferencesProvider>
+        <QueryClientProvider client={queryClient}>
+          <Outlet />
+        </QueryClientProvider>
+      </ChatDisplayPreferencesProvider>
+      <Toaster position="top-center" />
+      {/*<TanStackRouterDevtools position="top-right"  />*/}
+    </ThemeProvider>
+  ),
 });

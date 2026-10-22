@@ -7,6 +7,7 @@ title: "Reflection Source: Codex Local Bridge Setup"
 > Status: Active
 > Date: 2026-05-22
 > Companion docs:
+>
 > - [../../ARCHITECTURE.md](../../ARCHITECTURE.md)
 > - [./reflection-source-codex-app-server.md](./reflection-source-codex-app-server.md)
 > - [./reflection-source-codex-contracts-and-normalization.md](./reflection-source-codex-contracts-and-normalization.md)

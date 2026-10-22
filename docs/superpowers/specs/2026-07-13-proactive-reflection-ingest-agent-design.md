@@ -51,14 +51,14 @@ same entrypoint under its service supervisor on the machine that hosts Codex.
 The agent reports whether a sweep enqueued any completed turns. Its pure policy
 derives the next due time from that result:
 
-| Outcome | Next run |
-| --- | --- |
-| Startup or newly observed completed turn | 15 seconds |
-| Still inside the two-minute active window | 15 seconds |
-| First empty scan after active window | 30 seconds |
-| Second consecutive empty scan | 1 minute |
-| Later empty scans | 5 minutes |
-| Retryable agent failure | exponential retry, capped at 5 minutes |
+| Outcome                                   | Next run                               |
+| ----------------------------------------- | -------------------------------------- |
+| Startup or newly observed completed turn  | 15 seconds                             |
+| Still inside the two-minute active window | 15 seconds                             |
+| First empty scan after active window      | 30 seconds                             |
+| Second consecutive empty scan             | 1 minute                               |
+| Later empty scans                         | 5 minutes                              |
+| Retryable agent failure                   | exponential retry, capped at 5 minutes |
 
 An outbox flush happens as part of every claimed run. Existing per-record
 outbox retry timing remains authoritative for network errors. No Codex App

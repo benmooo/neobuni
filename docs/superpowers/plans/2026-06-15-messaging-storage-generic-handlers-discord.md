@@ -62,6 +62,7 @@ title: "Messaging Storage + Generic Handlers + Discord Adapter Implementation Pl
 ## Task 1: Add Failing Storage and Contract Tests
 
 **Files:**
+
 - Create: `packages/db/src/repos/messaging-config.integration.test.ts`
 - Create: `apps/server/src/integrations/discord.test.ts`
 - Create: `apps/server/src/routes/integrations-discord.test.ts`
@@ -167,6 +168,7 @@ Expected: FAIL because the new repo, Discord integration, route, and tool handle
 ## Task 2: Implement Messaging Storage and Discord Contracts
 
 **Files:**
+
 - Create: `packages/contracts/src/platform/config/discord.ts`
 - Create: `packages/db/src/schema/messaging-integrations.ts`
 - Create: `packages/db/src/schema/messaging-targets.ts`
@@ -186,15 +188,15 @@ Expected: FAIL because the new repo, Discord integration, route, and tool handle
 - [ ] **Step 1: Add Discord config contracts**
 
 ```ts
-const messagingTargetTypeSchema = z.enum([
-  "channel",
-  "group",
-  "supergroup",
-  "topic",
-]);
+const messagingTargetTypeSchema = z.enum(["channel", "group", "supergroup", "topic"]);
 
 const discordMessagingTargetInputSchema = z.object({
-  alias: z.string().trim().min(1).max(80).regex(/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/),
+  alias: z
+    .string()
+    .trim()
+    .min(1)
+    .max(80)
+    .regex(/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/),
   label: z.string().trim().max(120).default(""),
   targetType: messagingTargetTypeSchema,
   targetId: z.string().trim().min(1).max(200),
@@ -218,10 +220,12 @@ const discordMessagingConfigInputSchema = z.object({
 ```ts
 const messagingIntegrationsTable = sqliteTable("messaging_integrations", {
   id: text("id").primaryKey(),
-  profileId: text("profile_id").notNull().references(() => profilesTable.id, {
-    onDelete: "cascade",
-    onUpdate: "cascade",
-  }),
+  profileId: text("profile_id")
+    .notNull()
+    .references(() => profilesTable.id, {
+      onDelete: "cascade",
+      onUpdate: "cascade",
+    }),
   platform: text("platform").notNull(),
   enabled: integer("enabled", { mode: "boolean" }).notNull().default(false),
   botToken: text("bot_token").notNull().default(""),
@@ -283,6 +287,7 @@ Expected: PASS
 ## Task 3: Implement Generic Channel Handlers
 
 **Files:**
+
 - Create: `apps/server/src/integrations/messaging.ts`
 - Create: `apps/server/src/tools/send-channel-message.ts`
 - Create: `apps/server/src/tools/list-channel-targets.ts`
@@ -357,6 +362,7 @@ Expected: PASS
 ## Task 4: Implement Discord Outbound Delivery and Verified Ingress
 
 **Files:**
+
 - Create: `apps/server/src/integrations/discord.ts`
 - Create: `apps/server/src/routes/integrations-discord.ts`
 - Modify: `apps/server/src/routes/config.ts`
@@ -376,17 +382,14 @@ const sendDiscordMessage = async (
   const config = await getEffectiveDiscordConfig(profileId);
   const target = resolveDiscordTarget(config, input);
 
-  const response = await fetch(
-    `https://discord.com/api/v10/channels/${target.targetId}/messages`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bot ${config.botToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ content: input.message.text }),
+  const response = await fetch(`https://discord.com/api/v10/channels/${target.targetId}/messages`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bot ${config.botToken}`,
+      "Content-Type": "application/json",
     },
-  );
+    body: JSON.stringify({ content: input.message.text }),
+  });
 
   return {
     delivered: true,
@@ -424,32 +427,35 @@ const verifyDiscordRequest = async (input: {
 - [ ] **Step 3: Add the Discord routes**
 
 ```ts
-const discordIntegrationRoutes = new Hono()
-  .post("/events", async (c) => {
-    const rawBody = await c.req.raw.clone().text();
-    const interaction = JSON.parse(rawBody);
+const discordIntegrationRoutes = new Hono().post("/events", async (c) => {
+  const rawBody = await c.req.raw.clone().text();
+  const interaction = JSON.parse(rawBody);
 
-    if (interaction.type === 1) {
-      return c.json({ type: 1 }, 200);
-    }
+  if (interaction.type === 1) {
+    return c.json({ type: 1 }, 200);
+  }
 
-    const receipt = await recordExternalEventReceipt({
-      profileId,
-      platform: "discord",
-      eventId: interaction.id,
-    });
+  const receipt = await recordExternalEventReceipt({
+    profileId,
+    platform: "discord",
+    eventId: interaction.id,
+  });
 
-    if (!receipt.inserted) {
-      return c.json({ type: 4, data: { content: "Duplicate interaction ignored." } }, 200);
-    }
+  if (!receipt.inserted) {
+    return c.json({ type: 4, data: { content: "Duplicate interaction ignored." } }, 200);
+  }
 
-    return c.json({
+  return c.json(
+    {
       type: 4,
       data: {
-        content: "Discord command ingress is wired. Runtime execution will be connected in the next tranche.",
+        content:
+          "Discord command ingress is wired. Runtime execution will be connected in the next tranche.",
       },
-    }, 200);
-  });
+    },
+    200,
+  );
+});
 ```
 
 - [ ] **Step 4: Add config endpoints and route registration**
@@ -473,6 +479,7 @@ Expected: PASS
 ## Task 5: Verify the Full Tranche
 
 **Files:**
+
 - No new files
 
 - [ ] **Step 1: Run the focused tranche test suite**

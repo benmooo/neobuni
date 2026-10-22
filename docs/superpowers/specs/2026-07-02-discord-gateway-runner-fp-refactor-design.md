@@ -7,6 +7,7 @@ title: "Discord Gateway Runner FP Refactor 设计稿"
 > 状态：implemented
 > 日期：2026-07-02
 > 相关文件：
+>
 > - [../../../apps/server/src/sidecars/discord-gateway/runner.ts](../../../apps/server/src/sidecars/discord-gateway/runner.ts)
 > - [../../../apps/server/src/sidecars/discord-gateway/reconcile.ts](../../../apps/server/src/sidecars/discord-gateway/reconcile.ts)
 > - [../../../apps/server/src/sidecars/discord-gateway/discordjs-client.ts](../../../apps/server/src/sidecars/discord-gateway/discordjs-client.ts)

@@ -7,6 +7,7 @@ title: "Schedule Reminder Delivery V1"
 > Status: Active design
 > Date: 2026-05-29
 > Companion docs:
+>
 > - [../../ARCHITECTURE.md](../../ARCHITECTURE.md)
 > - [./tool-runtime-v1.md](./tool-runtime-v1.md)
 > - [./schedule-cron-recurrence-v1.md](./schedule-cron-recurrence-v1.md)

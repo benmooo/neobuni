@@ -37,6 +37,7 @@ pnpm evlog logs --where 'payment.amount>5000' --where audit.outcome=failure --js
 Logs are written by evlog's file system drain as `.jsonl` files, organized by date.
 
 **Format detection**: The drain supports two modes:
+
 - **NDJSON** (default, `pretty: false`): One compact JSON object per line. Parse line-by-line.
 - **Pretty** (`pretty: true`): Multi-line indented JSON per event. Parse by reading the entire file and splitting on top-level objects (e.g. `JSON.parse('[' + content.replace(/\}\n\{/g, '},{') + ']')`) or use a streaming JSON parser.
 
@@ -75,23 +76,23 @@ npx evlog init --yes --drain fs  # apply
 Ask before running it. On other frameworks (or if the user declines), guide the manual setup:
 
 ```typescript
-import { defineEvlog } from 'evlog'
-import { createFsDrain } from 'evlog/fs'
+import { defineEvlog } from "evlog";
+import { createFsDrain } from "evlog/fs";
 
 // Nuxt / Nitro: evlog.config.ts at the app root, which the module loads
-export default defineEvlog({ drain: createFsDrain() })
+export default defineEvlog({ drain: createFsDrain() });
 
 // Hono / Express / Elysia: pass in middleware options
-app.use(evlog({ drain: createFsDrain() }))
+app.use(evlog({ drain: createFsDrain() }));
 
 // Fastify: pass in plugin options
-await app.register(evlog, { drain: createFsDrain() })
+await app.register(evlog, { drain: createFsDrain() });
 
 // NestJS: pass in module options
-EvlogModule.forRoot({ drain: createFsDrain() })
+EvlogModule.forRoot({ drain: createFsDrain() });
 
 // Standalone: pass to initLogger
-initLogger({ drain: createFsDrain() })
+initLogger({ drain: createFsDrain() });
 ```
 
 After setup, the user needs to trigger some requests to generate logs, then re-analyze.
@@ -100,23 +101,23 @@ After setup, the user needs to trigger some requests to generate logs, then re-a
 
 Each line is a self-contained JSON object (wide event). Key fields:
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `timestamp` | `string` | ISO 8601 timestamp |
-| `level` | `string` | `info`, `warn`, `error`, `debug` |
-| `service` | `string` | Service name |
-| `environment` | `string` | `development`, `production`, etc. |
-| `method` | `string` | HTTP method (`GET`, `POST`, etc.) |
-| `path` | `string` | Request path (`/api/checkout`) |
-| `status` | `number` | HTTP response status code |
-| `duration` | `string` | Request duration, human-formatted (`"234ms"`) |
-| `durationMs` | `number` | Request duration in milliseconds. Filter and sort on this one |
-| `requestId` | `string` | Unique request identifier |
-| `error` | `object` | Error details: `name`, `message`, `stack`, `statusCode`, `data` |
-| `error.data.why` | `string` | Human-readable explanation of what went wrong |
-| `error.data.fix` | `string` | Suggested fix for the error |
-| `source` | `string` | `client` for browser logs, absent for server logs |
-| `userAgent` | `object` | Parsed browser/OS/device info |
+| Field            | Type     | Description                                                     |
+| ---------------- | -------- | --------------------------------------------------------------- |
+| `timestamp`      | `string` | ISO 8601 timestamp                                              |
+| `level`          | `string` | `info`, `warn`, `error`, `debug`                                |
+| `service`        | `string` | Service name                                                    |
+| `environment`    | `string` | `development`, `production`, etc.                               |
+| `method`         | `string` | HTTP method (`GET`, `POST`, etc.)                               |
+| `path`           | `string` | Request path (`/api/checkout`)                                  |
+| `status`         | `number` | HTTP response status code                                       |
+| `duration`       | `string` | Request duration, human-formatted (`"234ms"`)                   |
+| `durationMs`     | `number` | Request duration in milliseconds. Filter and sort on this one   |
+| `requestId`      | `string` | Unique request identifier                                       |
+| `error`          | `object` | Error details: `name`, `message`, `stack`, `statusCode`, `data` |
+| `error.data.why` | `string` | Human-readable explanation of what went wrong                   |
+| `error.data.fix` | `string` | Suggested fix for the error                                     |
+| `source`         | `string` | `client` for browser logs, absent for server logs               |
+| `userAgent`      | `object` | Parsed browser/OS/device info                                   |
 
 All other fields are application-specific context added via `log.set()` (e.g. `user`, `cart`, `payment`).
 

@@ -48,6 +48,7 @@ title: "Messaging Runtime Foundations Implementation Plan"
 ## Task 1: Add Surface Policy Contracts
 
 **Files:**
+
 - Create: `packages/contracts/src/runtime/surface.ts`
 - Create: `packages/contracts/src/runtime/surface.test.ts`
 - Modify: `packages/contracts/src/index.ts`
@@ -57,10 +58,7 @@ title: "Messaging Runtime Foundations Implementation Plan"
 ```ts
 import { describe, expect, test } from "bun:test";
 
-import {
-  runtimeSurfaceSchema,
-  surfacePolicySchema,
-} from "./surface";
+import { runtimeSurfaceSchema, surfacePolicySchema } from "./surface";
 
 describe("runtime surface contracts", () => {
   test("parses the public-safe surface policy", () => {
@@ -79,9 +77,7 @@ describe("runtime surface contracts", () => {
   });
 
   test("rejects unknown runtime surfaces", () => {
-    expect(() =>
-      runtimeSurfaceSchema.parse("discord_unsafe"),
-    ).toThrow();
+    expect(() => runtimeSurfaceSchema.parse("discord_unsafe")).toThrow();
   });
 });
 ```
@@ -103,10 +99,7 @@ const runtimeSurfaceSchema = z.enum([
   "task_run_public_safe",
 ]);
 
-const surfaceResponseVisibilitySchema = z.enum([
-  "private",
-  "group",
-]);
+const surfaceResponseVisibilitySchema = z.enum(["private", "group"]);
 
 const surfacePolicySchema = z.object({
   surface: runtimeSurfaceSchema,
@@ -118,11 +111,7 @@ const surfacePolicySchema = z.object({
   responseVisibility: surfaceResponseVisibilitySchema,
 });
 
-export {
-  runtimeSurfaceSchema,
-  surfacePolicySchema,
-  surfaceResponseVisibilitySchema,
-};
+export { runtimeSurfaceSchema, surfacePolicySchema, surfaceResponseVisibilitySchema };
 
 export type RuntimeSurface = z.infer<typeof runtimeSurfaceSchema>;
 export type SurfacePolicy = z.infer<typeof surfacePolicySchema>;
@@ -154,6 +143,7 @@ git commit -m "feat: add runtime surface contracts"
 ## Task 2: Add Server-Side Surface Policy Helpers
 
 **Files:**
+
 - Create: `apps/server/src/runtime/surface-policy.ts`
 - Create: `apps/server/src/runtime/surface-policy.test.ts`
 - Modify: `apps/server/src/tools/execution-tool-names.ts`
@@ -164,10 +154,7 @@ git commit -m "feat: add runtime surface contracts"
 ```ts
 import { describe, expect, test } from "bun:test";
 
-import {
-  getSurfacePolicy,
-  filterToolNamesForSurfacePolicy,
-} from "./surface-policy";
+import { getSurfacePolicy, filterToolNamesForSurfacePolicy } from "./surface-policy";
 
 describe("surface-policy", () => {
   test("returns a public-safe group policy with no memory access", () => {
@@ -179,10 +166,12 @@ describe("surface-policy", () => {
   });
 
   test("filters schedule mutations out of public-safe task runs", () => {
-    expect(filterToolNamesForSurfacePolicy(
-      ["create_schedule", "search_web", "send_channel_message"],
-      getSurfacePolicy("task_run_public_safe"),
-    )).toEqual(["search_web", "send_channel_message"]);
+    expect(
+      filterToolNamesForSurfacePolicy(
+        ["create_schedule", "search_web", "send_channel_message"],
+        getSurfacePolicy("task_run_public_safe"),
+      ),
+    ).toEqual(["search_web", "send_channel_message"]);
   });
 });
 ```
@@ -223,17 +212,12 @@ const getSurfacePolicy = (surface: RuntimeSurface): SurfacePolicy => {
   };
 };
 
-const filterToolNamesForSurfacePolicy = (
-  toolNames: readonly string[],
-  policy: SurfacePolicy,
-) => toolNames.filter((toolName) =>
-  policy.allowScheduleMutation || !scheduleMutationToolNameSet.has(toolName)
-);
+const filterToolNamesForSurfacePolicy = (toolNames: readonly string[], policy: SurfacePolicy) =>
+  toolNames.filter(
+    (toolName) => policy.allowScheduleMutation || !scheduleMutationToolNameSet.has(toolName),
+  );
 
-export {
-  filterToolNamesForSurfacePolicy,
-  getSurfacePolicy,
-};
+export { filterToolNamesForSurfacePolicy, getSurfacePolicy };
 ```
 
 - [ ] **Step 4: Export the schedule mutation set**
@@ -267,6 +251,7 @@ git commit -m "feat: add server surface policy helpers"
 ## Task 3: Make Turn Context Loading Surface-Aware
 
 **Files:**
+
 - Modify: `apps/server/src/runtime/load-turn-context.ts`
 - Modify: `apps/server/src/runtime/run-headless-task-turn.ts`
 - Create: `apps/server/src/runtime/surface-policy.test.ts`
@@ -277,11 +262,13 @@ git commit -m "feat: add server surface policy helpers"
 import { applyMemoryPolicy } from "./surface-policy";
 
 test("drops memory slices for public-safe surfaces", () => {
-  expect(applyMemoryPolicy({
-    policy: getSurfacePolicy("chat_public_safe"),
-    unresolvedSlices: [{ id: "u1" }],
-    recentSlices: [{ id: "r1" }],
-  })).toEqual({
+  expect(
+    applyMemoryPolicy({
+      policy: getSurfacePolicy("chat_public_safe"),
+      unresolvedSlices: [{ id: "u1" }],
+      recentSlices: [{ id: "r1" }],
+    }),
+  ).toEqual({
     unresolvedSlices: [],
     recentSlices: [],
   });
@@ -296,19 +283,20 @@ Expected: FAIL because `applyMemoryPolicy` does not exist yet.
 - [ ] **Step 3: Add a pure memory policy helper**
 
 ```ts
-const applyMemoryPolicy = <T,>(input: {
+const applyMemoryPolicy = <T>(input: {
   policy: SurfacePolicy;
   unresolvedSlices: T[];
   recentSlices: T[];
-}) => input.policy.allowMemoryRecall
-  ? {
-      unresolvedSlices: [...input.unresolvedSlices],
-      recentSlices: [...input.recentSlices],
-    }
-  : {
-      unresolvedSlices: [] as T[],
-      recentSlices: [] as T[],
-    };
+}) =>
+  input.policy.allowMemoryRecall
+    ? {
+        unresolvedSlices: [...input.unresolvedSlices],
+        recentSlices: [...input.recentSlices],
+      }
+    : {
+        unresolvedSlices: [] as T[],
+        recentSlices: [] as T[],
+      };
 ```
 
 Export it from `apps/server/src/runtime/surface-policy.ts`.
@@ -336,7 +324,7 @@ const loadTurnContext = async (input: {
     unresolvedSlices: memorySlices.unresolvedSlices,
     recentSlices: memorySlices.recentSlices,
   });
-}
+};
 ```
 
 Also update `runHeadlessTaskTurn(...)` to accept an optional `surfacePolicy` input and pass it through to `loadTurnContext` once the shared `runAgentTurn(...)` refactor lands. For this tranche, keep the function signature ready even if the current implementation still uses execution-tool-only mode.
@@ -359,6 +347,7 @@ git commit -m "feat: make turn context surface aware"
 ## Task 4: Add Generic Channel Target Contracts
 
 **Files:**
+
 - Create: `packages/contracts/src/execution-layer/channel-target.ts`
 - Create: `packages/contracts/src/execution-layer/send-channel-message.ts`
 - Create: `packages/contracts/src/execution-layer/list-channel-targets.ts`
@@ -374,10 +363,7 @@ git commit -m "feat: make turn context surface aware"
 ```ts
 import { describe, expect, test } from "bun:test";
 
-import {
-  scheduleDeliveryIntentSchema,
-  sendChannelMessageInputSchema,
-} from "./tools";
+import { scheduleDeliveryIntentSchema, sendChannelMessageInputSchema } from "./tools";
 
 describe("channel delivery contracts", () => {
   test("parses a schedule delivery intent with a generic channel target", () => {
@@ -413,26 +399,23 @@ Expected: FAIL because the new channel contracts do not exist yet.
 ```ts
 import { z } from "zod";
 
-const channelPlatformSchema = z.enum([
-  "discord",
-  "telegram",
-  "feishu",
-  "qq",
-]);
+const channelPlatformSchema = z.enum(["discord", "telegram", "feishu", "qq"]);
 
-const channelTargetSchema = z.object({
-  platform: channelPlatformSchema,
-  targetAlias: z.string().trim().min(1).nullable().default(null),
-  targetId: z.string().trim().min(1).nullable().default(null),
-}).superRefine((value, ctx) => {
-  if (value.targetAlias === null && value.targetId === null) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ["targetAlias"],
-      message: "Either targetAlias or targetId is required.",
-    });
-  }
-});
+const channelTargetSchema = z
+  .object({
+    platform: channelPlatformSchema,
+    targetAlias: z.string().trim().min(1).nullable().default(null),
+    targetId: z.string().trim().min(1).nullable().default(null),
+  })
+  .superRefine((value, ctx) => {
+    if (value.targetAlias === null && value.targetId === null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["targetAlias"],
+        message: "Either targetAlias or targetId is required.",
+      });
+    }
+  });
 ```
 
 Use it in:
@@ -479,6 +462,7 @@ git commit -m "feat: add generic channel delivery contracts"
 ## Task 5: Migrate Schedule Blueprint and Materialization to Channel Targets
 
 **Files:**
+
 - Modify: `apps/server/src/tools/schedule-tool-blueprint.ts`
 - Modify: `apps/server/src/tools/schedule-tool-blueprint.test.ts`
 - Modify: `apps/server/src/schedules/materialized-task-config.ts`

@@ -22,14 +22,17 @@ const makeSchedule = (
     blueprint: Record<string, unknown> | null;
     createdAt: string;
     updatedAt: string;
-  }> = {},
+  }> = {}
 ) => ({
   id: overrides.id ?? "schedule-1",
   profileId: overrides.profileId ?? "profile-1",
   type: overrides.type ?? "reminder",
   title: overrides.title ?? "Morning task",
   content: overrides.content ?? "Do the task",
-  triggerAt: overrides.triggerAt === undefined ? "2026-06-01T08:00:00.000Z" : overrides.triggerAt,
+  triggerAt:
+    overrides.triggerAt === undefined
+      ? "2026-06-01T08:00:00.000Z"
+      : overrides.triggerAt,
   cronExpr: overrides.cronExpr === undefined ? "0 8 * * *" : overrides.cronExpr,
   timezone: overrides.timezone ?? "UTC",
   status: overrides.status ?? "active",
@@ -59,7 +62,7 @@ describe("materializeDueSchedule", () => {
             prompt: "Fetch the latest headlines and send a summary.",
             toolAllowlist: ["get_news_headlines", "send_channel_message"],
             maxSteps: 4,
-            timeoutMs: 120000,
+            timeoutMs: 120_000,
             deliveryIntent: {
               conversationId: null,
               channelTarget: {
@@ -81,13 +84,16 @@ describe("materializeDueSchedule", () => {
             } as never);
           },
           updateSchedule: (_scheduleId, patch) => {
-            captured.schedulePatch = patch as unknown as Record<string, unknown>;
+            captured.schedulePatch = patch as unknown as Record<
+              string,
+              unknown
+            >;
             return Effect.succeed(
               makeSchedule({
                 triggerAt: patch.triggerAt ?? null,
                 status: patch.status ?? "active",
                 lastMaterializedAt: patch.lastMaterializedAt ?? null,
-              }) as never,
+              }) as never
             );
           },
           appendEvent: (_profileId, _type, payload) => {
@@ -97,7 +103,7 @@ describe("materializeDueSchedule", () => {
             } as never);
           },
         },
-      }),
+      })
     );
 
     expect(result).toEqual({
@@ -125,17 +131,17 @@ describe("materializeDueSchedule", () => {
       toolPolicySnapshot: {
         toolAllowlist: ["get_news_headlines", "send_channel_message"],
         maxSteps: 4,
-        timeoutMs: 120000,
+        timeoutMs: 120_000,
       },
     });
     expect(String(captured.taskRunInput?.promptSnapshot ?? "")).toContain(
-      "This scheduled task is due now.",
+      "This scheduled task is due now."
     );
     expect(String(captured.taskRunInput?.promptSnapshot ?? "")).toContain(
-      "Fetch the latest headlines and send a summary.",
+      "Fetch the latest headlines and send a summary."
     );
     expect(String(captured.taskRunInput?.promptSnapshot ?? "")).toContain(
-      "Do not create, update, delete, or request another schedule",
+      "Do not create, update, delete, or request another schedule"
     );
     expect(captured.schedulePatch).toEqual({
       triggerAt: "2026-06-02T08:00:00.000Z",
@@ -180,12 +186,12 @@ describe("materializeDueSchedule", () => {
                 triggerAt: null,
                 status: "completed",
                 lastMaterializedAt: patch.lastMaterializedAt ?? null,
-              }) as never,
+              }) as never
             );
           },
           appendEvent: () => Effect.succeed({ id: "event-2" } as never),
         },
-      }),
+      })
     );
 
     expect(result).toEqual({
@@ -222,7 +228,8 @@ describe("materializeDueSchedule", () => {
           },
           blueprint: {
             version: 1,
-            prompt: "等待到触发时间后，向 Telegram 目标别名 hermes0 发送文本消息：test message。",
+            prompt:
+              "等待到触发时间后，向 Telegram 目标别名 hermes0 发送文本消息：test message。",
             toolAllowlist: null,
             maxSteps: null,
             timeoutMs: null,
@@ -252,11 +259,11 @@ describe("materializeDueSchedule", () => {
                 triggerAt: patch.triggerAt ?? null,
                 status: patch.status ?? "completed",
                 lastMaterializedAt: patch.lastMaterializedAt ?? null,
-              }) as never,
+              }) as never
             ),
           appendEvent: () => Effect.succeed({ id: "event-4" } as never),
         },
-      }),
+      })
     );
 
     const promptSnapshot = String(taskRunInput?.promptSnapshot ?? "");
@@ -269,9 +276,11 @@ describe("materializeDueSchedule", () => {
     const toolAllowlist = toolPolicySnapshot?.toolAllowlist ?? null;
 
     expect(promptSnapshot).toContain("This scheduled task is due now.");
-    expect(promptSnapshot).toContain("Execute the task now instead of scheduling it again.");
     expect(promptSnapshot).toContain(
-      "等待到触发时间后，向 Telegram 目标别名 hermes0 发送文本消息：test message。",
+      "Execute the task now instead of scheduling it again."
+    );
+    expect(promptSnapshot).toContain(
+      "等待到触发时间后，向 Telegram 目标别名 hermes0 发送文本消息：test message。"
     );
     expect(Array.isArray(toolAllowlist)).toBe(true);
     expect(toolAllowlist?.includes("send_channel_message")).toBe(true);
@@ -294,9 +303,9 @@ describe("materializeDueSchedule", () => {
               new DbError({
                 operation: "createTaskRun",
                 cause: new Error(
-                  "UNIQUE constraint failed: task_runs.schedule_id, task_runs.scheduled_for",
+                  "UNIQUE constraint failed: task_runs.schedule_id, task_runs.scheduled_for"
                 ),
-              }),
+              })
             ),
           getTaskRunByScheduleAndScheduledFor: () => {
             lookupCalled = true;
@@ -310,11 +319,11 @@ describe("materializeDueSchedule", () => {
                 triggerAt: patch.triggerAt ?? null,
                 status: patch.status ?? "active",
                 lastMaterializedAt: patch.lastMaterializedAt ?? null,
-              }) as never,
+              }) as never
             ),
           appendEvent: () => Effect.succeed({ id: "event-3" } as never),
         },
-      }),
+      })
     );
 
     expect(lookupCalled).toBe(true);

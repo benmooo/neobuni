@@ -1,53 +1,53 @@
 type WebProviderName = "webclaw";
 
-type WebPageDocument = {
-	url: string;
-	finalUrl: string;
-	title: string | null;
-	siteName: string | null;
-	byline: string | null;
-	publishedAt: string | null;
-	language: string | null;
-	excerpt: string | null;
-	markdown: string;
-	plainText: string;
-	statusCode: number | null;
-	extractionMethod: "reader" | "rendered" | "provider";
-	warnings: string[];
-	fetchedAt: string;
-};
+interface WebPageDocument {
+  byline: string | null;
+  excerpt: string | null;
+  extractionMethod: "reader" | "rendered" | "provider";
+  fetchedAt: string;
+  finalUrl: string;
+  language: string | null;
+  markdown: string;
+  plainText: string;
+  publishedAt: string | null;
+  siteName: string | null;
+  statusCode: number | null;
+  title: string | null;
+  url: string;
+  warnings: string[];
+}
 
-type WebPageResult = {
-	provider: WebProviderName;
-	document: WebPageDocument;
-};
+interface WebPageResult {
+  document: WebPageDocument;
+  provider: WebProviderName;
+}
 
-type WebSearchResultItem = {
-	rank: number;
-	title: string;
-	url: string;
-	snippet: string | null;
-	sourceName: string | null;
-	publishedAt: string | null;
-};
+interface WebSearchResultItem {
+  publishedAt: string | null;
+  rank: number;
+  snippet: string | null;
+  sourceName: string | null;
+  title: string;
+  url: string;
+}
 
-type WebSearchResult = {
-	provider: WebProviderName;
-	query: string;
-	items: WebSearchResultItem[];
-};
+interface WebSearchResult {
+  items: WebSearchResultItem[];
+  provider: WebProviderName;
+  query: string;
+}
 
-type WebExtractResult = {
-	provider: WebProviderName;
-	data: unknown;
-	generatedSchema: Record<string, unknown> | null;
-};
+interface WebExtractResult {
+  data: unknown;
+  generatedSchema: Record<string, unknown> | null;
+  provider: WebProviderName;
+}
 
 export type {
-	WebExtractResult,
-	WebPageDocument,
-	WebPageResult,
-	WebProviderName,
-	WebSearchResult,
-	WebSearchResultItem,
+  WebExtractResult,
+  WebPageDocument,
+  WebPageResult,
+  WebProviderName,
+  WebSearchResult,
+  WebSearchResultItem,
 };

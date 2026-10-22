@@ -6,18 +6,18 @@
 
 ## 1. Decisions (locked)
 
-| # | Decision | Choice |
-|---|----------|--------|
-| 1 | Frontend | Web only. Port buni's mobile-first UI into `apps/web`. No Tauri. |
-| 2 | API | Hybrid. oRPC for JSON CRUD/queries, raw Hono for SSE chat and inbound webhooks. |
-| 3 | Database | Single libsql/Turso DB. Native libsql vectors replace `sqlite-vec`. FTS5 kept. |
-| 4 | FP style | Effect v4 in `packages/db`, `packages/api`, `apps/server`. `packages/core` stays pure sync, no Effect imports. |
-| 5 | Schemas | Zod 4 for contracts. Effect Schema only for internal runtime errors/config if needed. |
-| 6 | Scope | Everything except reflection. Keep messaging, news, web tools, decision-os/goals. Drop the Discord gateway sidecar and dev scripts. |
-| 7 | Reflection | Delete all code (core, contracts, db, routes, tools, UI, scripts). Archive its docs. |
-| 8 | Observability | Keep `runtime_turns` / `runtime_spans` as product traces. Add evlog for request-level wide events. |
-| 9 | Data | No data migration. Fresh DB, `db:push`. |
-| 10 | Tests | `vp test` (Vitest 5) + `@effect/vitest`. Convert buni's 120 `bun:test` files. |
+| #   | Decision      | Choice                                                                                                                              |
+| --- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Frontend      | Web only. Port buni's mobile-first UI into `apps/web`. No Tauri.                                                                    |
+| 2   | API           | Hybrid. oRPC for JSON CRUD/queries, raw Hono for SSE chat and inbound webhooks.                                                     |
+| 3   | Database      | Single libsql/Turso DB. Native libsql vectors replace `sqlite-vec`. FTS5 kept.                                                      |
+| 4   | FP style      | Effect v4 in `packages/db`, `packages/api`, `apps/server`. `packages/core` stays pure sync, no Effect imports.                      |
+| 5   | Schemas       | Zod 4 for contracts. Effect Schema only for internal runtime errors/config if needed.                                               |
+| 6   | Scope         | Everything except reflection. Keep messaging, news, web tools, decision-os/goals. Drop the Discord gateway sidecar and dev scripts. |
+| 7   | Reflection    | Delete all code (core, contracts, db, routes, tools, UI, scripts). Archive its docs.                                                |
+| 8   | Observability | Keep `runtime_turns` / `runtime_spans` as product traces. Add evlog for request-level wide events.                                  |
+| 9   | Data          | No data migration. Fresh DB, `db:push`.                                                                                             |
+| 10  | Tests         | `vp test` (Vitest 5) + `@effect/vitest`. Convert buni's 120 `bun:test` files.                                                       |
 
 ## 2. Target layout
 
@@ -127,14 +127,14 @@ Workers to port: schedule materializer, task-run worker, action-run worker, init
 
 Raw Hono routes (outside oRPC):
 
-| Route | Why |
-|---|---|
-| `/api/auth/*` | better-auth handler |
-| `POST /v1/chat/stream` | `@tanstack/ai` SSE protocol |
-| `/v1/integrations/discord` | webhook + signature verification |
-| `/v1/integrations/telegram` | webhook + secret token |
-| `/internal/*` | internal token routes (if any survive the sidecar removal) |
-| `/` | health |
+| Route                       | Why                                                        |
+| --------------------------- | ---------------------------------------------------------- |
+| `/api/auth/*`               | better-auth handler                                        |
+| `POST /v1/chat/stream`      | `@tanstack/ai` SSE protocol                                |
+| `/v1/integrations/discord`  | webhook + signature verification                           |
+| `/v1/integrations/telegram` | webhook + secret token                                     |
+| `/internal/*`               | internal token routes (if any survive the sidecar removal) |
+| `/`                         | health                                                     |
 
 Everything else becomes oRPC procedures under `/rpc`:
 
@@ -159,19 +159,19 @@ The port runs **TanStack AI 1.0** (not buni's 0.22). Required changes applied:
 
 ## 6. Dropped / archived
 
-| Item | Action |
-|---|---|
-| `packages/core/src/reflection/**` | delete |
-| `packages/contracts/src/reflection/**` | delete |
-| reflection db schema + repos + job tables | delete |
-| `apps/server/src/routes/reflection.ts` | delete |
-| `apps/server/src/reflection/**` | delete |
-| reflection tools (`create/get/list/update/delete/render_*`) + tool-set entries | delete |
-| `apps/mobile/src/routes/_app/reflection/**`, `use-codex-reflection`, `use-git-reflection` | delete |
-| `scripts/reflection-*`, `startCodexBridgeAgent` bootstrap | delete |
-| Discord gateway sidecar (`apps/server/src/sidecars/**`, runtime gateway routes, internal client) | delete |
-| `scripts/workbench.ts`, `scripts/verify-memory.ts` | delete |
-| `docs/**` | port to fumadocs, reflection docs under `docs/archive/reflection/` |
+| Item                                                                                             | Action                                                             |
+| ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| `packages/core/src/reflection/**`                                                                | delete                                                             |
+| `packages/contracts/src/reflection/**`                                                           | delete                                                             |
+| reflection db schema + repos + job tables                                                        | delete                                                             |
+| `apps/server/src/routes/reflection.ts`                                                           | delete                                                             |
+| `apps/server/src/reflection/**`                                                                  | delete                                                             |
+| reflection tools (`create/get/list/update/delete/render_*`) + tool-set entries                   | delete                                                             |
+| `apps/mobile/src/routes/_app/reflection/**`, `use-codex-reflection`, `use-git-reflection`        | delete                                                             |
+| `scripts/reflection-*`, `startCodexBridgeAgent` bootstrap                                        | delete                                                             |
+| Discord gateway sidecar (`apps/server/src/sidecars/**`, runtime gateway routes, internal client) | delete                                                             |
+| `scripts/workbench.ts`, `scripts/verify-memory.ts`                                               | delete                                                             |
+| `docs/**`                                                                                        | port to fumadocs, reflection docs under `docs/archive/reflection/` |
 
 Discord stays as webhook-in + API-out through the messaging integration layer.
 Reflection's `reflection.*` tools are removed from every tool set, including headless/external turns.
@@ -236,15 +236,15 @@ Reflection's `reflection.*` tools are removed from every tool set, including hea
 
 ## 8. Risks
 
-| Risk | Mitigation |
-|---|---|
-| Effect v4 API drift vs examples online (most docs are v3) | Pin 4.0.5; check `.d.ts` in `node_modules` as source of truth; keep a small internal cookbook. |
-| Sync→async DB rewrite misses an await | Typecheck is authoritative; no `as any` allowed in `packages/db`. |
-| Drizzle effect-driver bugs (`effect-*` is marked unstable) | Keep raw `@libsql/client` escape hatch for vector/FTS SQL; isolate in `packages/db/src/vector`. |
-| oRPC ↔ Effect impedance (streaming, error mapping) | Single `effectProcedure` helper; raw routes for SSE; map tagged errors centrally. |
-| 94k LOC reformat noise from Biome | Port per package, run `vp check --fix` once per package as the last step of each phase. |
-| assistant-ui version skew (`@tanstack/ai` 0.22 vs assistant-ui 0.14) | Pin buni's tested versions first, upgrade later. |
-| Effect fibers leak on hot reload | `ManagedRuntime` per process, `dispose` on SIGTERM and dev reload. |
+| Risk                                                                 | Mitigation                                                                                      |
+| -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Effect v4 API drift vs examples online (most docs are v3)            | Pin 4.0.5; check `.d.ts` in `node_modules` as source of truth; keep a small internal cookbook.  |
+| Sync→async DB rewrite misses an await                                | Typecheck is authoritative; no `as any` allowed in `packages/db`.                               |
+| Drizzle effect-driver bugs (`effect-*` is marked unstable)           | Keep raw `@libsql/client` escape hatch for vector/FTS SQL; isolate in `packages/db/src/vector`. |
+| oRPC ↔ Effect impedance (streaming, error mapping)                   | Single `effectProcedure` helper; raw routes for SSE; map tagged errors centrally.               |
+| 94k LOC reformat noise from Biome                                    | Port per package, run `vp check --fix` once per package as the last step of each phase.         |
+| assistant-ui version skew (`@tanstack/ai` 0.22 vs assistant-ui 0.14) | Pin buni's tested versions first, upgrade later.                                                |
+| Effect fibers leak on hot reload                                     | `ManagedRuntime` per process, `dispose` on SIGTERM and dev reload.                              |
 
 ## 9. Conventions
 

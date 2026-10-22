@@ -1,10 +1,10 @@
 import {
-	appendEvent,
-	deleteKnowledgeChunkEmbedding,
-	deleteKnowledgeChunkFtsEntries,
-	deleteKnowledgeDocument,
-	getKnowledgeDocumentDetail,
-	listKnowledgeDocumentsVisible,
+  appendEvent,
+  deleteKnowledgeChunkEmbedding,
+  deleteKnowledgeChunkFtsEntries,
+  deleteKnowledgeDocument,
+  getKnowledgeDocumentDetail,
+  listKnowledgeDocumentsVisible,
 } from "@neobuni/db";
 import { ORPCError } from "@orpc/server";
 import { Effect } from "effect";
@@ -16,66 +16,66 @@ import { run } from "../run";
 const documentIdInput = z.object({ documentId: z.string().min(1) });
 
 const requireKnowledgeDocument = async (
-	profileId: string,
-	documentId: string
+  profileId: string,
+  documentId: string
 ) => {
-	const detail = await run(getKnowledgeDocumentDetail(profileId, documentId));
+  const detail = await run(getKnowledgeDocumentDetail(profileId, documentId));
 
-	if (!detail) {
-		throw new ORPCError("NOT_FOUND", {
-			message: "Knowledge document not found",
-		});
-	}
+  if (!detail) {
+    throw new ORPCError("NOT_FOUND", {
+      message: "Knowledge document not found",
+    });
+  }
 
-	return detail;
+  return detail;
 };
 
 // TODO(server): create - requires ingestKnowledgeDocument (apps/server knowledge ingest
 // service) plus toOpenAICompatibleConfig and the memory provider configs.
 export const knowledgeRouter = {
-	list: protectedProcedure.handler(({ context }) =>
-		run(listKnowledgeDocumentsVisible(context.profileId))
-	),
+  list: protectedProcedure.handler(({ context }) =>
+    run(listKnowledgeDocumentsVisible(context.profileId))
+  ),
 
-	get: protectedProcedure
-		.input(documentIdInput)
-		.handler(({ input, context }) =>
-			requireKnowledgeDocument(context.profileId, input.documentId)
-		),
+  get: protectedProcedure
+    .input(documentIdInput)
+    .handler(({ input, context }) =>
+      requireKnowledgeDocument(context.profileId, input.documentId)
+    ),
 
-	remove: protectedProcedure
-		.input(documentIdInput)
-		.handler(async ({ input, context }) => {
-			const detail = await requireKnowledgeDocument(
-				context.profileId,
-				input.documentId
-			);
+  remove: protectedProcedure
+    .input(documentIdInput)
+    .handler(async ({ input, context }) => {
+      const detail = await requireKnowledgeDocument(
+        context.profileId,
+        input.documentId
+      );
 
-			if (detail.profileId !== context.profileId) {
-				throw new ORPCError("FORBIDDEN", {
-					message: "Only profile-owned knowledge documents can be deleted",
-				});
-			}
+      if (detail.profileId !== context.profileId) {
+        throw new ORPCError("FORBIDDEN", {
+          message: "Only profile-owned knowledge documents can be deleted",
+        });
+      }
 
-			const chunkIds = detail.chunks.map((chunk) => chunk.id);
-			await run(deleteKnowledgeChunkFtsEntries(chunkIds));
+      const chunkIds = detail.chunks.map((chunk) => chunk.id);
+      await run(deleteKnowledgeChunkFtsEntries(chunkIds));
 
-			// The vec_knowledge_chunks rows may not exist, so this cleanup is best effort.
-			await Promise.all(
-				chunkIds.map((chunkId) =>
-					run(deleteKnowledgeChunkEmbedding(chunkId).pipe(Effect.ignore))
-				)
-			);
+      // The vec_knowledge_chunks rows may not exist, so this cleanup is best effort.
+      await Promise.all(
+        chunkIds.map((chunkId) =>
+          run(deleteKnowledgeChunkEmbedding(chunkId).pipe(Effect.ignore))
+        )
+      );
 
-			await run(deleteKnowledgeDocument(input.documentId));
-			await run(
-				appendEvent(context.profileId, "knowledge.deleted", {
-					documentId: input.documentId,
-					chunkCount: detail.chunkCount,
-					factCount: detail.factCount,
-				})
-			);
+      await run(deleteKnowledgeDocument(input.documentId));
+      await run(
+        appendEvent(context.profileId, "knowledge.deleted", {
+          documentId: input.documentId,
+          chunkCount: detail.chunkCount,
+          factCount: detail.factCount,
+        })
+      );
 
-			return { id: input.documentId };
-		}),
+      return { id: input.documentId };
+    }),
 };

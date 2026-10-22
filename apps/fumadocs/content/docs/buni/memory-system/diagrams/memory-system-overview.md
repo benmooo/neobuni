@@ -10,14 +10,14 @@ title: "Memory System — 分层总览图"
 
 ## 图例 Legend
 
-| 形状 | 含义 | 用法 |
-|:----:|------|------|
-| `[/ /]` | 外部输入 / 外部输出 | `latestUserText`、`Provider Prompt`、`Reply` |
-| `[ ]` | 数据 Data / Contract | `MemoryGateDecision`、`RetrievalPlan`、`WorkingMemory` |
-| `[[ ]]` | 纯函数 Pure Function | `buildMemoryGateDecision`、`fuseEvidenceItems` |
-| `{ }` | 决策 / Gate / Planner | `shouldPreRecall?`、`stores enabled?` |
-| `[( )]` | Store / DB / IO | `Temporal Cortex`、`Hippocampus`、`World Knowledge` |
-| `(( ))` | 事件 / 信号 | `tool fallback available`、`turn started` |
+|  形状   | 含义                  | 用法                                                   |
+| :-----: | --------------------- | ------------------------------------------------------ |
+| `[/ /]` | 外部输入 / 外部输出   | `latestUserText`、`Provider Prompt`、`Reply`           |
+|  `[ ]`  | 数据 Data / Contract  | `MemoryGateDecision`、`RetrievalPlan`、`WorkingMemory` |
+| `[[ ]]` | 纯函数 Pure Function  | `buildMemoryGateDecision`、`fuseEvidenceItems`         |
+|  `{ }`  | 决策 / Gate / Planner | `shouldPreRecall?`、`stores enabled?`                  |
+| `[( )]` | Store / DB / IO       | `Temporal Cortex`、`Hippocampus`、`World Knowledge`    |
+| `(( ))` | 事件 / 信号           | `tool fallback available`、`turn started`              |
 
 说明：
 

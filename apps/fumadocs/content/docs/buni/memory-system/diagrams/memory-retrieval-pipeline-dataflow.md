@@ -10,14 +10,14 @@ title: "Memory Retrieval Pipeline — 函数式数据流图"
 
 ## 图例 Legend
 
-| 形状 | 含义 | 用法 |
-|:----:|------|------|
-| `[/ /]` | 外部输入 / 输出 | `latestUserText`、`query` |
-| `[ ]` | 数据 / Contract | `MemoryGateDecision`、`MemoryRecallQuery`、`RetrievalPlan` |
-| `[[ ]]` | 纯函数 | gate、query builder、planner |
-| `{ }` | 决策 / activation | `pre_recall?`、`graph enabled?` |
-| `[( )]` | Store / IO | recall stores |
-| `(( ))` | Signal / Event | fallback、observability signal |
+|  形状   | 含义              | 用法                                                       |
+| :-----: | ----------------- | ---------------------------------------------------------- |
+| `[/ /]` | 外部输入 / 输出   | `latestUserText`、`query`                                  |
+|  `[ ]`  | 数据 / Contract   | `MemoryGateDecision`、`MemoryRecallQuery`、`RetrievalPlan` |
+| `[[ ]]` | 纯函数            | gate、query builder、planner                               |
+|  `{ }`  | 决策 / activation | `pre_recall?`、`graph enabled?`                            |
+| `[( )]` | Store / IO        | recall stores                                              |
+| `(( ))` | Signal / Event    | fallback、observability signal                             |
 
 ---
 

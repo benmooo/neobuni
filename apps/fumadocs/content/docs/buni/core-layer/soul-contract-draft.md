@@ -80,9 +80,7 @@ V1 先把“人格配置”合同化，比先把所有“人格计算过程”�
 ## 3.1 `soulRoleSchema`
 
 ```ts
-z.enum([
-  "gentle_companion",
-]);
+z.enum(["gentle_companion"]);
 ```
 
 V1 先只保留一个默认角色即可。  
@@ -97,11 +95,7 @@ V1 先只保留一个默认角色即可。
 ## 3.2 `relationshipFlavorSchema`
 
 ```ts
-z.enum([
-  "soft_companion",
-  "light_romantic",
-  "caregiver_like",
-]);
+z.enum(["soft_companion", "light_romantic", "caregiver_like"]);
 ```
 
 V1 默认值：
@@ -113,11 +107,7 @@ V1 默认值：
 ## 3.3 `closenessLevelSchema`
 
 ```ts
-z.enum([
-  "low",
-  "medium",
-  "high",
-]);
+z.enum(["low", "medium", "high"]);
 ```
 
 ---
@@ -125,11 +115,7 @@ z.enum([
 ## 3.4 `initiativeLevelSchema`
 
 ```ts
-z.enum([
-  "low",
-  "medium",
-  "high",
-]);
+z.enum(["low", "medium", "high"]);
 ```
 
 ---
@@ -137,11 +123,7 @@ z.enum([
 ## 3.5 `initiativeStyleSchema`
 
 ```ts
-z.enum([
-  "subtle",
-  "gentle",
-  "explicit",
-]);
+z.enum(["subtle", "gentle", "explicit"]);
 ```
 
 ---
@@ -149,11 +131,7 @@ z.enum([
 ## 3.6 `interruptionPolicySchema`
 
 ```ts
-z.enum([
-  "minimal_by_default",
-  "allow_soft_interrupt",
-  "allow_strong_interrupt_when_abnormal",
-]);
+z.enum(["minimal_by_default", "allow_soft_interrupt", "allow_strong_interrupt_when_abnormal"]);
 ```
 
 ---
@@ -161,14 +139,7 @@ z.enum([
 ## 3.7 `stanceSchema`
 
 ```ts
-z.enum([
-  "companion",
-  "comforting",
-  "playful",
-  "reflective",
-  "protective",
-  "mobilizing",
-]);
+z.enum(["companion", "comforting", "playful", "reflective", "protective", "mobilizing"]);
 ```
 
 ---
@@ -176,14 +147,7 @@ z.enum([
 ## 3.8 `driveSchema`
 
 ```ts
-z.enum([
-  "respect",
-  "comfort",
-  "continuity",
-  "protection",
-  "progress",
-  "connection",
-]);
+z.enum(["respect", "comfort", "continuity", "protection", "progress", "connection"]);
 ```
 
 ---
@@ -191,23 +155,13 @@ z.enum([
 ## 3.9 `protectiveLevelSchema`
 
 ```ts
-z.enum([
-  "0",
-  "1",
-  "2",
-  "3",
-]);
+z.enum(["0", "1", "2", "3"]);
 ```
 
 或者如果更偏业务可读性：
 
 ```ts
-z.enum([
-  "none",
-  "light",
-  "moderate",
-  "high",
-]);
+z.enum(["none", "light", "moderate", "high"]);
 ```
 
 我更建议后者，对业务语义更清楚。
@@ -262,25 +216,11 @@ const relationshipContractSchema = z.object({
 
 ```ts
 const expressionStyleSchema = z.object({
-  tone: z.enum([
-    "warm_calm_natural",
-  ]),
-  pacing: z.enum([
-    "soft_and_clear",
-  ]),
-  verbosity: z.enum([
-    "low",
-    "medium",
-    "high",
-  ]),
-  intimacyDefault: z.enum([
-    "subtle",
-    "moderate",
-  ]),
-  intimacyMaxWithoutUserSignal: z.enum([
-    "subtle",
-    "moderate",
-  ]),
+  tone: z.enum(["warm_calm_natural"]),
+  pacing: z.enum(["soft_and_clear"]),
+  verbosity: z.enum(["low", "medium", "high"]),
+  intimacyDefault: z.enum(["subtle", "moderate"]),
+  intimacyMaxWithoutUserSignal: z.enum(["subtle", "moderate"]),
 });
 ```
 
@@ -388,7 +328,7 @@ prompt 是 contract 的消费结果，不应进 contract。
 ### 读取当前 soul config
 
 ```ts
-GET /v1/config/soul
+GET / v1 / config / soul;
 ```
 
 返回：
@@ -398,7 +338,7 @@ GET /v1/config/soul
 ### 更新可配置部分
 
 ```ts
-PATCH /v1/config/soul
+PATCH / v1 / config / soul;
 ```
 
 V1 可更新字段建议只开放：

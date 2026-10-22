@@ -11,12 +11,12 @@
  * procedures can be added as they are migrated.
  */
 export const integrationsRouter = {
-	discord: {
-		// TODO(server): raw webhook route — POST /v1/integrations/discord/events
-		// verifies the Ed25519 signature and records interaction receipts.
-	},
-	telegram: {
-		// TODO(server): raw webhook route — POST /v1/integrations/telegram/events
-		// verifies the X-Telegram-Bot-Api-Secret-Token and drives external turns.
-	},
+  discord: {
+    // TODO(server): raw webhook route — POST /v1/integrations/discord/events
+    // verifies the Ed25519 signature and records interaction receipts.
+  },
+  telegram: {
+    // TODO(server): raw webhook route — POST /v1/integrations/telegram/events
+    // verifies the X-Telegram-Bot-Api-Secret-Token and drives external turns.
+  },
 };

@@ -223,12 +223,7 @@ type ProtectiveDecision = {
 
 ```ts
 type EffectiveDriveOrder = Array<
-  "respect" |
-  "comfort" |
-  "continuity" |
-  "protection" |
-  "progress" |
-  "connection"
+  "respect" | "comfort" | "continuity" | "protection" | "progress" | "connection"
 >;
 ```
 
@@ -265,13 +260,7 @@ drive reorder 不是在改变人格，而是在调整人格在当前状态下的
 
 ```ts
 type StanceDecision = {
-  primary:
-    | "companion"
-    | "comforting"
-    | "playful"
-    | "reflective"
-    | "protective"
-    | "mobilizing";
+  primary: "companion" | "comforting" | "playful" | "reflective" | "protective" | "mobilizing";
   secondary?: string;
   blocked: string[];
 };
@@ -333,12 +322,7 @@ stance 选择必须被人格边界和 context block 一起约束。
 
 ```ts
 type ResponsePlan = {
-  goal:
-    | "stay_present"
-    | "soothe"
-    | "clarify"
-    | "guard"
-    | "gently_mobilize";
+  goal: "stay_present" | "soothe" | "clarify" | "guard" | "gently_mobilize";
   toneModifiers: string[];
   mustAvoid: string[];
   shouldAskFollowup: boolean;

@@ -1,14 +1,8 @@
-import * as React from "react"
+import type * as React from "react";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
-const defaultStates = [
-  "default",
-  "hover",
-  "focus",
-  "active",
-  "disabled",
-] as const
+const defaultStates = ["default", "hover", "focus", "active", "disabled"] as const;
 
 export function StateMatrix<Row extends string>({
   rows,
@@ -16,10 +10,10 @@ export function StateMatrix<Row extends string>({
   render,
   className,
 }: {
-  rows: readonly Row[]
-  states?: readonly string[]
-  render: (row: Row, state: string) => React.ReactNode
-  className?: string
+  rows: readonly Row[];
+  states?: readonly string[];
+  render: (row: Row, state: string) => React.ReactNode;
+  className?: string;
 }) {
   return (
     <div className={cn("w-full overflow-x-auto", className)}>
@@ -29,9 +23,9 @@ export function StateMatrix<Row extends string>({
             <th />
             {states.map((state) => (
               <th
+                className="text-left font-mono font-normal text-muted-foreground text-xs"
                 key={state}
                 scope="col"
-                className="text-left font-mono text-xs font-normal text-muted-foreground"
               >
                 {state}
               </th>
@@ -42,8 +36,8 @@ export function StateMatrix<Row extends string>({
           {rows.map((row) => (
             <tr key={row}>
               <th
+                className="pr-4 text-left font-mono font-normal text-muted-foreground text-xs"
                 scope="row"
-                className="pr-4 text-left font-mono text-xs font-normal text-muted-foreground"
               >
                 {row}
               </th>
@@ -55,18 +49,18 @@ export function StateMatrix<Row extends string>({
         </tbody>
       </table>
     </div>
-  )
+  );
 }
 
 // Spread onto a component to pin a state without interaction.
 export function previewState(state: string) {
   if (state === "disabled") {
-    return { disabled: true }
+    return { disabled: true };
   }
 
   if (["hover", "focus", "active"].includes(state)) {
-    return { "data-preview": state }
+    return { "data-preview": state };
   }
 
-  return {}
+  return {};
 }

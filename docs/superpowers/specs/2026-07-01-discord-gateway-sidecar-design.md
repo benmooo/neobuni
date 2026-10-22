@@ -7,6 +7,7 @@ title: "Buni Discord Gateway Sidecar 设计稿"
 > 状态：implemented
 > 日期：2026-07-01
 > 相关文档：
+>
 > - [2026-06-15-discord-telegram-personal-messaging-design.md](./2026-06-15-discord-telegram-personal-messaging-design.md)
 > - [../plans/2026-07-01-discord-telegram-design-alignment.md](../plans/2026-07-01-discord-telegram-design-alignment.md)
 > - [../../../apps/server/src/integrations/discord-gateway-normalize.ts](../../../apps/server/src/integrations/discord-gateway-normalize.ts)

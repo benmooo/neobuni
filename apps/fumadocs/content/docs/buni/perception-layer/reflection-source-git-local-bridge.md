@@ -7,6 +7,7 @@ title: "Reflection Source: Git Local Bridge"
 > Status: Active design
 > Date: 2026-05-07
 > Companion docs:
+>
 > - [../../ARCHITECTURE.md](../../ARCHITECTURE.md)
 > - [./reflection-push-ingestion-substrate.md](./reflection-push-ingestion-substrate.md)
 > - [./reflection-source-git.md](./reflection-source-git.md)

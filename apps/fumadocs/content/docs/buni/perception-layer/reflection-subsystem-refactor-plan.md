@@ -7,6 +7,7 @@ title: "Reflection Subsystem Refactor Plan"
 > Status: Superseded by simplified reflection design
 > Date: 2026-05-04
 > Companion docs:
+>
 > - [../../ARCHITECTURE.md](../../ARCHITECTURE.md)
 > - [./reflection-system-architecture.md](./reflection-system-architecture.md)
 > - [./reflection-report-pipeline.md](./reflection-report-pipeline.md)

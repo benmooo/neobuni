@@ -7,6 +7,7 @@ title: "Buni Discord / Telegram Personal Messaging Runtime 设计稿"
 > 状态：approved
 > 日期：2026-06-15
 > 相关文档：
+>
 > - [../../../ARCHITECTURE.md](../../../ARCHITECTURE.md)
 > - [../../execution-layer/schedule-agent-worker-v1.md](../../execution-layer/schedule-agent-worker-v1.md)
 > - [../../platform/provider-protocol-first-runtime.md](../../platform/provider-protocol-first-runtime.md)

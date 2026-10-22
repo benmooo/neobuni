@@ -6,23 +6,23 @@ import { protectedProcedure } from "../index";
 import { run } from "../run";
 
 export const profileRouter = {
-	get: protectedProcedure.handler(({ context }) =>
-		run(getProfile(context.profileId))
-	),
+  get: protectedProcedure.handler(({ context }) =>
+    run(getProfile(context.profileId))
+  ),
 
-	update: protectedProcedure
-		.input(profileUpdateInputSchema)
-		.handler(async ({ input, context }) => {
-			const profile = await run(updateProfile(context.profileId, input));
+  update: protectedProcedure
+    .input(profileUpdateInputSchema)
+    .handler(async ({ input, context }) => {
+      const profile = await run(updateProfile(context.profileId, input));
 
-			if (!profile) {
-				throw new ORPCError("NOT_FOUND", { message: "Profile not found" });
-			}
+      if (!profile) {
+        throw new ORPCError("NOT_FOUND", { message: "Profile not found" });
+      }
 
-			return profile;
-		}),
+      return profile;
+    }),
 
-	events: protectedProcedure.handler(({ context }) =>
-		run(listEvents(context.profileId))
-	),
+  events: protectedProcedure.handler(({ context }) =>
+    run(listEvents(context.profileId))
+  ),
 };

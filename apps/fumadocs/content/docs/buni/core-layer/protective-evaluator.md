@@ -303,12 +303,7 @@ function evaluateProtective(input): ProtectiveDecision {
   const behaviorLevel = detectBehaviorLevel(input.externalSignals, input.userBaseline);
   const environmentLevel = detectEnvironmentLevel(input.externalSignals);
 
-  let candidateLevel = max(
-    languageLevel,
-    emotionLevel,
-    behaviorLevel,
-    environmentLevel,
-  );
+  let candidateLevel = max(languageLevel, emotionLevel, behaviorLevel, environmentLevel);
 
   const boosts = [
     hasPersistence(input) ? 1 : 0,

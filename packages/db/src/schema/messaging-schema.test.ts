@@ -1,5 +1,5 @@
-import { describe, expect, test } from "vitest";
 import { getTableConfig } from "drizzle-orm/sqlite-core";
+import { describe, expect, test } from "vitest";
 
 import { externalConversationBindingsTable } from "./external-conversation-bindings";
 import { externalEventReceiptsTable } from "./external-event-receipts";
@@ -8,10 +8,10 @@ import { messagingTargetsTable } from "./messaging-targets";
 
 const readIndexColumnName = (column: unknown) => {
   if (
-    typeof column === "object"
-    && column !== null
-    && "name" in column
-    && typeof column.name === "string"
+    typeof column === "object" &&
+    column !== null &&
+    "name" in column &&
+    typeof column.name === "string"
   ) {
     return column.name;
   }

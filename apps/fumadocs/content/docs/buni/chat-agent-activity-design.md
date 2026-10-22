@@ -153,17 +153,17 @@ title: "Buni Chat Agent Activity 设计文档"
 
 聊天页内，用户应当能观察到以下状态：
 
-| 状态 | 用户文案 | 来源 |
-|------|----------|------|
-| submitting | 正在发送请求 | `status` |
-| thinking | 正在思考 | `isLoading` + 尚无 text 输出 |
-| tool input streaming | 正在准备工具参数：`toolName` | `tool-call.state` |
-| tool waiting | 正在调用工具：`toolName` | `tool-call.state` |
-| tool approval | 等待确认工具调用：`toolName` | `tool-call.approval` |
-| generating text | 正在生成回答 | assistant `text` part |
-| completed | 已完成 | `isLoading=false` |
-| aborted | 已停止生成 | `stop()` / abort error |
-| failed | 生成失败 | `error` |
+| 状态                 | 用户文案                     | 来源                         |
+| -------------------- | ---------------------------- | ---------------------------- |
+| submitting           | 正在发送请求                 | `status`                     |
+| thinking             | 正在思考                     | `isLoading` + 尚无 text 输出 |
+| tool input streaming | 正在准备工具参数：`toolName` | `tool-call.state`            |
+| tool waiting         | 正在调用工具：`toolName`     | `tool-call.state`            |
+| tool approval        | 等待确认工具调用：`toolName` | `tool-call.approval`         |
+| generating text      | 正在生成回答                 | assistant `text` part        |
+| completed            | 已完成                       | `isLoading=false`            |
+| aborted              | 已停止生成                   | `stop()` / abort error       |
+| failed               | 生成失败                     | `error`                      |
 
 ---
 

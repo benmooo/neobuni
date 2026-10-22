@@ -7,6 +7,7 @@ title: "Reflection Context Pipeline"
 > Status: Superseded by simplified reflection design
 > Date: 2026-05-04
 > Companion docs:
+>
 > - [../../ARCHITECTURE.md](../../ARCHITECTURE.md)
 > - [./reflection-system-architecture.md](./reflection-system-architecture.md)
 > - [./reflection-contracts-and-storage.md](./reflection-contracts-and-storage.md)
@@ -130,11 +131,16 @@ type ReflectionContext = {
   profileId: string;
   generatedAt: string;
   window: TimeWindow;
-  currentState: Partial<Record<StateDimension, {
-    value: number;
-    confidence: number;
-    summary: string;
-  }>>;
+  currentState: Partial<
+    Record<
+      StateDimension,
+      {
+        value: number;
+        confidence: number;
+        summary: string;
+      }
+    >
+  >;
   activePatterns: Array<{
     patternId: string;
     kind: string;

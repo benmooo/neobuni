@@ -7,6 +7,7 @@ title: "Reflection Source: Codex Contracts And Normalization"
 > Status: Active design
 > Date: 2026-05-23
 > Companion docs:
+>
 > - [../../ARCHITECTURE.md](../../ARCHITECTURE.md)
 > - [./reflection-pipeline-simplification.md](./reflection-pipeline-simplification.md)
 > - [./reflection-source-codex-app-server.md](./reflection-source-codex-app-server.md)

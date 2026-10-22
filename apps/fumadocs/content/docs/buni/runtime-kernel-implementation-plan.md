@@ -120,12 +120,7 @@ packages/contracts/src/runtime/prompt.ts
 `signal.ts`
 
 ```ts
-type Signal =
-  | TextSignal
-  | MemorySignal
-  | ScheduleSignal
-  | BehavioralSignal
-  | EnvironmentalSignal;
+type Signal = TextSignal | MemorySignal | ScheduleSignal | BehavioralSignal | EnvironmentalSignal;
 
 type SignalSet = {
   textSignals: TextSignal[];

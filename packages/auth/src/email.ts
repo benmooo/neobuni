@@ -1,69 +1,69 @@
 import { Resend } from "resend";
 
-type AuthEmailUser = {
-	email: string;
-	name?: string | null;
-};
+interface AuthEmailUser {
+  email: string;
+  name?: string | null;
+}
 
-type ResetPasswordEmailInput = {
-	user: AuthEmailUser;
-	url: string;
-};
+interface ResetPasswordEmailInput {
+  url: string;
+  user: AuthEmailUser;
+}
 
 const defaultFromEmail = "Buni <onboarding@resend.dev>";
 const defaultAppUrl = "http://localhost:5173";
 
 const escapeHtml = (value: string) =>
-	value
-		.replaceAll("&", "&amp;")
-		.replaceAll("<", "&lt;")
-		.replaceAll(">", "&gt;")
-		.replaceAll('"', "&quot;")
-		.replaceAll("'", "&#39;");
+  value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 
-export type EmailConfig = {
-	appUrl: string;
-	resendApiKey: string | null;
-	fromEmail: string | null;
-};
+export interface EmailConfig {
+  appUrl: string;
+  fromEmail: string | null;
+  resendApiKey: string | null;
+}
 
 const getResendClient = (config: EmailConfig) => {
-	const apiKey = config.resendApiKey?.trim();
+  const apiKey = config.resendApiKey?.trim();
 
-	if (!apiKey) {
-		throw new Error("RESEND_API_KEY is required for auth email flows.");
-	}
+  if (!apiKey) {
+    throw new Error("RESEND_API_KEY is required for auth email flows.");
+  }
 
-	return new Resend(apiKey);
+  return new Resend(apiKey);
 };
 
 const getFromEmail = (config: EmailConfig) =>
-	config.fromEmail?.trim() || defaultFromEmail;
+  config.fromEmail?.trim() || defaultFromEmail;
 
 const toGreetingName = (user: AuthEmailUser) => user.name?.trim() || user.email;
 
 const buildEmailShell = (input: {
-	preheader: string;
-	eyebrow: string;
-	title: string;
-	intro: string;
-	actionLabel: string;
-	actionUrl: string;
-	note: string;
-	fallbackLabel: string;
-	fallbackUrl: string;
+  preheader: string;
+  eyebrow: string;
+  title: string;
+  intro: string;
+  actionLabel: string;
+  actionUrl: string;
+  note: string;
+  fallbackLabel: string;
+  fallbackUrl: string;
 }) => {
-	const preheader = escapeHtml(input.preheader);
-	const eyebrow = escapeHtml(input.eyebrow);
-	const title = escapeHtml(input.title);
-	const intro = escapeHtml(input.intro);
-	const actionLabel = escapeHtml(input.actionLabel);
-	const actionUrl = escapeHtml(input.actionUrl);
-	const note = escapeHtml(input.note);
-	const fallbackLabel = escapeHtml(input.fallbackLabel);
-	const fallbackUrl = escapeHtml(input.fallbackUrl);
+  const preheader = escapeHtml(input.preheader);
+  const eyebrow = escapeHtml(input.eyebrow);
+  const title = escapeHtml(input.title);
+  const intro = escapeHtml(input.intro);
+  const actionLabel = escapeHtml(input.actionLabel);
+  const actionUrl = escapeHtml(input.actionUrl);
+  const note = escapeHtml(input.note);
+  const fallbackLabel = escapeHtml(input.fallbackLabel);
+  const fallbackUrl = escapeHtml(input.fallbackUrl);
 
-	return `
+  return `
 <!doctype html>
 <html lang="zh-CN">
   <head>
@@ -107,77 +107,77 @@ const buildEmailShell = (input: {
 };
 
 const buildResetPasswordEmail = (
-	{ user, url }: ResetPasswordEmailInput,
-	config: EmailConfig
+  { user, url }: ResetPasswordEmailInput,
+  config: EmailConfig
 ) => {
-	const greetingName = toGreetingName(user);
-	const appUrl = config.appUrl || defaultAppUrl;
+  const greetingName = toGreetingName(user);
+  const appUrl = config.appUrl || defaultAppUrl;
 
-	return {
-		subject: "重置你的 Buni 密码",
-		text: [
-			`${greetingName}，你好：`,
-			"",
-			"我们收到了你的密码重置请求。",
-			`重置链接：${url}`,
-			"",
-			"如果这不是你本人发起的操作，请忽略这封邮件，并检查账号安全。",
-			`Buni：${appUrl}`,
-		].join("\n"),
-		html: buildEmailShell({
-			preheader: "打开链接，设置新的 Buni 登录密码。",
-			eyebrow: "Buni",
-			title: "重置你的密码",
-			intro: `${greetingName}，你好。点击下面的链接后，你可以为 Buni 设置一个新的登录密码。`,
-			actionLabel: "重置密码",
-			actionUrl: url,
-			note: "如果这不是你本人发起的操作，请忽略这封邮件，并检查你的账号安全。",
-			fallbackLabel: url,
-			fallbackUrl: url,
-		}),
-	};
+  return {
+    subject: "重置你的 Buni 密码",
+    text: [
+      `${greetingName}，你好：`,
+      "",
+      "我们收到了你的密码重置请求。",
+      `重置链接：${url}`,
+      "",
+      "如果这不是你本人发起的操作，请忽略这封邮件，并检查账号安全。",
+      `Buni：${appUrl}`,
+    ].join("\n"),
+    html: buildEmailShell({
+      preheader: "打开链接，设置新的 Buni 登录密码。",
+      eyebrow: "Buni",
+      title: "重置你的密码",
+      intro: `${greetingName}，你好。点击下面的链接后，你可以为 Buni 设置一个新的登录密码。`,
+      actionLabel: "重置密码",
+      actionUrl: url,
+      note: "如果这不是你本人发起的操作，请忽略这封邮件，并检查你的账号安全。",
+      fallbackLabel: url,
+      fallbackUrl: url,
+    }),
+  };
 };
 
 const sendEmail = async (
-	input: {
-		to: string;
-		subject: string;
-		html: string;
-		text: string;
-	},
-	config: EmailConfig
+  input: {
+    to: string;
+    subject: string;
+    html: string;
+    text: string;
+  },
+  config: EmailConfig
 ) => {
-	const resend = getResendClient(config);
+  const resend = getResendClient(config);
 
-	const result = await resend.emails.send({
-		from: getFromEmail(config),
-		to: input.to,
-		subject: input.subject,
-		html: input.html,
-		text: input.text,
-	});
+  const result = await resend.emails.send({
+    from: getFromEmail(config),
+    to: input.to,
+    subject: input.subject,
+    html: input.html,
+    text: input.text,
+  });
 
-	if (result.error) {
-		throw new Error(`Failed to send auth email: ${result.error.message}`);
-	}
+  if (result.error) {
+    throw new Error(`Failed to send auth email: ${result.error.message}`);
+  }
 
-	return result.data;
+  return result.data;
 };
 
 const sendResetPasswordEmail = async (
-	input: ResetPasswordEmailInput,
-	config: EmailConfig
+  input: ResetPasswordEmailInput,
+  config: EmailConfig
 ) => {
-	const message = buildResetPasswordEmail(input, config);
-	await sendEmail(
-		{
-			to: input.user.email,
-			subject: message.subject,
-			html: message.html,
-			text: message.text,
-		},
-		config
-	);
+  const message = buildResetPasswordEmail(input, config);
+  await sendEmail(
+    {
+      to: input.user.email,
+      subject: message.subject,
+      html: message.html,
+      text: message.text,
+    },
+    config
+  );
 };
 
 export { sendResetPasswordEmail };

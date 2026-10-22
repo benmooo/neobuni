@@ -59,7 +59,7 @@ const authorization = {
 };
 const config = {
   enabled: true,
-  tickMs: 1_000,
+  tickMs: 1000,
   limitPerProfile: 1,
   leaseMs: 30_000,
 };
@@ -76,9 +76,15 @@ describe("executeClaimedActionRun", () => {
         workerId: "worker-1",
         deps: {
           claimActionRun: () =>
-            Effect.succeed({ ...actionRun, status: "claimed" as const } as never),
+            Effect.succeed({
+              ...actionRun,
+              status: "claimed" as const,
+            } as never),
           startActionRun: () =>
-            Effect.succeed({ ...actionRun, status: "running" as const } as never),
+            Effect.succeed({
+              ...actionRun,
+              status: "running" as const,
+            } as never),
           getActionProposal: () => Effect.succeed(proposal),
           getActionAuthorization: () => Effect.succeed(authorization),
           updateCommitmentStatus: () =>
@@ -107,7 +113,7 @@ describe("executeClaimedActionRun", () => {
             }),
           appendEvent: () => Effect.succeed(null as never),
         },
-      }),
+      })
     );
     expect(result).toEqual({ claimed: true, succeeded: true, failed: false });
     expect(completed).toMatchObject([
@@ -125,9 +131,15 @@ describe("executeClaimedActionRun", () => {
         workerId: "worker-1",
         deps: {
           claimActionRun: () =>
-            Effect.succeed({ ...actionRun, status: "claimed" as const } as never),
+            Effect.succeed({
+              ...actionRun,
+              status: "claimed" as const,
+            } as never),
           startActionRun: () =>
-            Effect.succeed({ ...actionRun, status: "running" as const } as never),
+            Effect.succeed({
+              ...actionRun,
+              status: "running" as const,
+            } as never),
           getActionProposal: () => Effect.succeed(proposal),
           getActionAuthorization: () =>
             Effect.succeed({
@@ -142,7 +154,7 @@ describe("executeClaimedActionRun", () => {
           failActionRun: () => Effect.succeed(null as never),
           appendEvent: () => Effect.succeed(null as never),
         },
-      }),
+      })
     );
     expect(result.failed).toBe(true);
     expect(mutated).toBe(false);
@@ -178,7 +190,10 @@ describe("executeClaimedActionRun", () => {
               },
             } as never),
           startActionRun: () =>
-            Effect.succeed({ ...actionRun, status: "running" as const } as never),
+            Effect.succeed({
+              ...actionRun,
+              status: "running" as const,
+            } as never),
           getActionProposal: () =>
             Effect.succeed({
               ...proposal,
@@ -229,7 +244,7 @@ describe("executeClaimedActionRun", () => {
           updateActionProposalStatus: () => Effect.succeed(proposal as never),
           appendEvent: () => Effect.succeed(null as never),
         },
-      }),
+      })
     );
     expect(result).toEqual({ claimed: true, succeeded: true, failed: false });
     expect(completed).toMatchObject([
@@ -271,7 +286,10 @@ describe("executeClaimedActionRun", () => {
               },
             } as never),
           startActionRun: () =>
-            Effect.succeed({ ...actionRun, status: "running" as const } as never),
+            Effect.succeed({
+              ...actionRun,
+              status: "running" as const,
+            } as never),
           getActionProposal: () =>
             Effect.succeed({
               ...proposal,
@@ -311,7 +329,7 @@ describe("executeClaimedActionRun", () => {
           failActionRun: () => Effect.succeed(null as never),
           appendEvent: () => Effect.succeed(null as never),
         },
-      }),
+      })
     );
     expect(result.failed).toBe(true);
     expect(sent).toBe(false);

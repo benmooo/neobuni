@@ -1,89 +1,89 @@
 import {
-	appendEvent as appendEventFx,
-	getSchedule as getScheduleFx,
-	runRepo,
-	updateSchedule as updateScheduleFx,
+  appendEvent as appendEventFx,
+  getSchedule as getScheduleFx,
+  runRepo,
+  updateSchedule as updateScheduleFx,
 } from "@neobuni/db";
 
 const appendEvent = (...args: Parameters<typeof appendEventFx>) =>
-	runRepo(appendEventFx(...args));
+  runRepo(appendEventFx(...args));
 const getSchedule = (...args: Parameters<typeof getScheduleFx>) =>
-	runRepo(getScheduleFx(...args));
+  runRepo(getScheduleFx(...args));
 const updateSchedule = (...args: Parameters<typeof updateScheduleFx>) =>
-	runRepo(updateScheduleFx(...args));
+  runRepo(updateScheduleFx(...args));
 
 import {
-	updateScheduleDef,
-	updateScheduleInputSchema,
+  updateScheduleDef,
+  updateScheduleInputSchema,
 } from "@neobuni/contracts";
 
 import {
-	planScheduleUpdateInput,
-	SchedulePlanError,
+  planScheduleUpdateInput,
+  SchedulePlanError,
 } from "../schedules/plan-schedule";
 import {
-	mergeScheduleBlueprintForUpdate,
-	normalizeScheduleBlueprint,
+  mergeScheduleBlueprintForUpdate,
+  normalizeScheduleBlueprint,
 } from "./schedule-tool-blueprint";
 import type { ServerToolContext } from "./types";
 
 const createUpdateScheduleTool = (context: ServerToolContext) =>
-	updateScheduleDef.server(async (args) => {
-		const input = updateScheduleInputSchema.parse(args);
-		const existing = await getSchedule(input.scheduleId);
+  updateScheduleDef.server(async (args) => {
+    const input = updateScheduleInputSchema.parse(args);
+    const existing = await getSchedule(input.scheduleId);
 
-		if (!existing || existing.profileId !== context.profileId) {
-			throw new Error("Schedule not found.");
-		}
+    if (!existing || existing.profileId !== context.profileId) {
+      throw new Error("Schedule not found.");
+    }
 
-		const blueprint = mergeScheduleBlueprintForUpdate({
-			existing: existing.blueprint ?? null,
-			update: input,
-			context,
-		});
+    const blueprint = mergeScheduleBlueprintForUpdate({
+      existing: existing.blueprint ?? null,
+      update: input,
+      context,
+    });
 
-		let schedule;
+    let schedule;
 
-		try {
-			const planned = planScheduleUpdateInput({
-				current: existing,
-				update: {
-					type: input.type,
-					title: input.title,
-					content: input.content,
-					triggerAt: input.triggerAt,
-					cronExpr: input.cronExpr,
-					timezone: input.timezone,
-					status: input.status,
-					metadata: existing.metadata,
-					blueprint,
-				},
-				referenceNow: context.referenceNow,
-			});
+    try {
+      const planned = planScheduleUpdateInput({
+        current: existing,
+        update: {
+          type: input.type,
+          title: input.title,
+          content: input.content,
+          triggerAt: input.triggerAt,
+          cronExpr: input.cronExpr,
+          timezone: input.timezone,
+          status: input.status,
+          metadata: existing.metadata,
+          blueprint,
+        },
+        referenceNow: context.referenceNow,
+      });
 
-			schedule = await updateSchedule(input.scheduleId, planned);
-		} catch (error) {
-			if (error instanceof SchedulePlanError) {
-				throw new Error(error.message);
-			}
+      schedule = await updateSchedule(input.scheduleId, planned);
+    } catch (error) {
+      if (error instanceof SchedulePlanError) {
+        throw new Error(error.message);
+      }
 
-			throw error;
-		}
+      throw error;
+    }
 
-		if (!schedule) {
-			throw new Error("Schedule not found.");
-		}
+    if (!schedule) {
+      throw new Error("Schedule not found.");
+    }
 
-		await appendEvent(context.profileId, "schedule.updated", {
-			scheduleId: schedule.id,
-			conversationId: context.conversationId,
-			turnId: context.turnId,
-		});
+    await appendEvent(context.profileId, "schedule.updated", {
+      scheduleId: schedule.id,
+      conversationId: context.conversationId,
+      turnId: context.turnId,
+    });
 
-		return {
-			...schedule,
-			blueprint: normalizeScheduleBlueprint(schedule.blueprint),
-		};
-	});
+    return {
+      ...schedule,
+      blueprint: normalizeScheduleBlueprint(schedule.blueprint),
+    };
+  });
 
 export { createUpdateScheduleTool };

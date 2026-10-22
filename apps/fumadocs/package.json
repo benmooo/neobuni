@@ -5,9 +5,9 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev --port=4000",
+    "lint": "oxlint",
     "start": "next start",
-    "types:check": "next typegen && tsc --noEmit",
-    "lint": "oxlint"
+    "types:check": "next typegen && tsc --noEmit"
   },
   "dependencies": {
     "@ai-sdk/react": "^4.0.0",
@@ -16,6 +16,7 @@
     "@fumadocs/base-ui": "16.17.7",
     "@openrouter/ai-sdk-provider": "^3.0.0",
     "ai": "^7.0.0",
+    "class-variance-authority": "^0.7.1",
     "cn": "^0.5.0",
     "flexsearch": "^0.8.212",
     "fumadocs-core": "16.17.7",

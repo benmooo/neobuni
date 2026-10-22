@@ -1,9 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 
-import {
-  listDiscordTargets,
-  sendDiscordMessage,
-} from "./discord";
+import { listDiscordTargets, sendDiscordMessage } from "./discord";
 
 const originalEnv = {
   botToken: process.env.NEOBUNI_DISCORD_BOT_TOKEN,
@@ -62,7 +59,7 @@ describe("discord integration", () => {
         Object.entries(init?.headers ?? {}).map(([key, value]) => [
           key,
           String(value),
-        ]),
+        ])
       );
 
       calls.push({
@@ -81,7 +78,7 @@ describe("discord integration", () => {
           headers: {
             "Content-Type": "application/json",
           },
-        },
+        }
       );
     }) as typeof fetch;
 
@@ -100,7 +97,7 @@ describe("discord integration", () => {
     expect(result.target.targetId).toBe("123456789012345678");
     expect(calls).toHaveLength(1);
     expect(calls[0]?.url).toBe(
-      "https://discord.com/api/v10/channels/123456789012345678/messages",
+      "https://discord.com/api/v10/channels/123456789012345678/messages"
     );
     expect(calls[0]?.method).toBe("POST");
     expect(calls[0]?.headers.Authorization).toBe("Bot discord_bot_token_123");

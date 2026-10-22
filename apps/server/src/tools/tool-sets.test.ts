@@ -77,8 +77,12 @@ describe("createChatToolSet", () => {
 
 describe("defaultMaterializedToolAllowlist", () => {
   test("removes schedule mutation tools while keeping normal execution tools", () => {
-    expect(defaultMaterializedToolAllowlist.includes("send_feishu_message")).toBe(true);
-    expect(defaultMaterializedToolAllowlist.includes("send_chat_message")).toBe(true);
+    expect(
+      defaultMaterializedToolAllowlist.includes("send_feishu_message")
+    ).toBe(true);
+    expect(defaultMaterializedToolAllowlist.includes("send_chat_message")).toBe(
+      true
+    );
 
     for (const toolName of scheduleMutationToolNames) {
       expect(defaultMaterializedToolAllowlist.includes(toolName)).toBe(false);

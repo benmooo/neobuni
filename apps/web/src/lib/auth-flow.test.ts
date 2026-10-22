@@ -32,7 +32,7 @@ describe("auth flow redirects", () => {
     expect(
       resolveSignInFailureToast({
         message: "Invalid email or password",
-      }),
+      })
     ).toEqual({
       id: "auth-sign-in-error",
       message: "Invalid email or password",

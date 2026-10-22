@@ -9,28 +9,28 @@ import { ORPCError } from "@orpc/server";
  * on the behaviour being asserted.
  */
 export const createTestContext = (profileId = "profile-1"): Context => ({
-	session: {
-		user: { id: "user-1" },
-		session: { id: "session-1" },
-	} as never,
-	db: {} as never,
-	userId: "user-1",
-	profileId,
-	profile: { id: profileId } as never,
+  session: {
+    user: { id: "user-1" },
+    session: { id: "session-1" },
+  } as never,
+  db: {} as never,
+  userId: "user-1",
+  profileId,
+  profile: { id: profileId } as never,
 });
 
 export const captureOrpcError = async (
-	run: () => Promise<unknown>
+  run: () => Promise<unknown>
 ): Promise<ORPCError<string, unknown>> => {
-	try {
-		await run();
-	} catch (error) {
-		if (error instanceof ORPCError) {
-			return error;
-		}
+  try {
+    await run();
+  } catch (error) {
+    if (error instanceof ORPCError) {
+      return error;
+    }
 
-		throw error;
-	}
+    throw error;
+  }
 
-	throw new Error("Expected procedure call to fail.");
+  throw new Error("Expected procedure call to fail.");
 };

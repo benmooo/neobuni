@@ -1,10 +1,17 @@
+import type {
+  ScheduleCreateInput,
+  ScheduleUpdateInput,
+} from "@neobuni/contracts";
 import { describe, expect, test } from "vitest";
 
-import type { ScheduleCreateInput, ScheduleUpdateInput } from "@neobuni/contracts";
+import {
+  planScheduleCreateInput,
+  planScheduleUpdateInput,
+} from "./plan-schedule";
 
-import { planScheduleCreateInput, planScheduleUpdateInput } from "./plan-schedule";
-
-const makeCreateInput = (overrides: Partial<ScheduleCreateInput> = {}): ScheduleCreateInput => ({
+const makeCreateInput = (
+  overrides: Partial<ScheduleCreateInput> = {}
+): ScheduleCreateInput => ({
   type: "monitor",
   title: "Weekly review",
   content: "Check the system",
@@ -42,7 +49,9 @@ describe("schedule planning", () => {
     });
 
     expect(planned.triggerAt).toBe("2026-06-01T00:00:00.000Z");
-    expect(planned.metadata.localDisplay).toBe("2026-06-01 08:00 Asia/Shanghai");
+    expect(planned.metadata.localDisplay).toBe(
+      "2026-06-01 08:00 Asia/Shanghai"
+    );
   });
 
   test("accepts explicit triggerAt when it matches cronExpr", () => {
@@ -54,7 +63,9 @@ describe("schedule planning", () => {
     });
 
     expect(planned.triggerAt).toBe("2026-06-01T00:00:00.000Z");
-    expect(planned.metadata.localDisplay).toBe("2026-06-01 08:00 Asia/Shanghai");
+    expect(planned.metadata.localDisplay).toBe(
+      "2026-06-01 08:00 Asia/Shanghai"
+    );
   });
 
   test("rejects explicit triggerAt when it does not match cronExpr", () => {
@@ -64,7 +75,7 @@ describe("schedule planning", () => {
           triggerAt: "2026-05-30T00:00:00.000Z",
         }),
         referenceNow: "2026-05-30T00:00:00.000Z",
-      }),
+      })
     ).toThrow(/triggerAt/);
   });
 
@@ -78,7 +89,9 @@ describe("schedule planning", () => {
     });
 
     expect(planned.triggerAt).toBe("2026-05-31T00:00:00.000Z");
-    expect(planned.metadata?.localDisplay).toBe("2026-05-31 08:00 Asia/Shanghai");
+    expect(planned.metadata?.localDisplay).toBe(
+      "2026-05-31 08:00 Asia/Shanghai"
+    );
   });
 
   test("replans recurring schedules when reactivated", () => {
@@ -94,6 +107,8 @@ describe("schedule planning", () => {
     });
 
     expect(planned.triggerAt).toBe("2026-06-08T00:00:00.000Z");
-    expect(planned.metadata?.localDisplay).toBe("2026-06-08 08:00 Asia/Shanghai");
+    expect(planned.metadata?.localDisplay).toBe(
+      "2026-06-08 08:00 Asia/Shanghai"
+    );
   });
 });

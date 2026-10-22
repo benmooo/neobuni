@@ -159,7 +159,9 @@ title: "Buni V2 多层记忆系统设计"
 未来系统不能再只返回：
 
 ```ts
-{ content, similarity }
+{
+  (content, similarity);
+}
 ```
 
 而必须返回：
@@ -180,12 +182,12 @@ title: "Buni V2 多层记忆系统设计"
 
 ## 4.1 脑区映射
 
-| 脑区 | 系统职责 | 主要存储 | 主要问题 |
-|---|---|---|---|
-| `Temporal Cortex` | 相似经历、相似表述、主题连续性 | SQLite + `sqlite-vec` | “这像不像之前聊过的东西” |
-| `Hippocampus` | 实体、事件、时间、关系、承诺、任务链 | SQLite graph tables | “谁和谁、何时、发生了什么、后来怎样” |
-| `World Knowledge` | 通用知识、领域知识、导入文档知识 | SQLite + FTS5 + `sqlite-vec` | “这个概念/领域知识是什么” |
-| `Prefrontal Cortex` | working memory、推理、规划、生成 | runtime in memory + spans | “结合证据，这轮该怎么行动” |
+| 脑区                | 系统职责                             | 主要存储                     | 主要问题                             |
+| ------------------- | ------------------------------------ | ---------------------------- | ------------------------------------ |
+| `Temporal Cortex`   | 相似经历、相似表述、主题连续性       | SQLite + `sqlite-vec`        | “这像不像之前聊过的东西”             |
+| `Hippocampus`       | 实体、事件、时间、关系、承诺、任务链 | SQLite graph tables          | “谁和谁、何时、发生了什么、后来怎样” |
+| `World Knowledge`   | 通用知识、领域知识、导入文档知识     | SQLite + FTS5 + `sqlite-vec` | “这个概念/领域知识是什么”            |
+| `Prefrontal Cortex` | working memory、推理、规划、生成     | runtime in memory + spans    | “结合证据，这轮该怎么行动”           |
 
 ## 4.2 分层模块图
 
@@ -351,14 +353,14 @@ Phase 3 可选升级：
 
 但建议逐步补充这些字段：
 
-| 字段 | 类型 | 说明 |
-|---|---|---|
-| `conversationId` | `TEXT NULL` | 来源会话 |
-| `episodeId` | `TEXT NULL` | 关联的事件/任务/主题片段 |
-| `memoryClass` | `TEXT` | `episodic | semantic | task` |
-| `status` | `TEXT` | `active | superseded | archived` |
-| `embeddingVersion` | `TEXT NULL` | embedding 版本 |
-| `sourceKind` | `TEXT` | `digest | manual | imported | learned` |
+| 字段               | 类型        | 说明                     |
+| ------------------ | ----------- | ------------------------ |
+| `conversationId`   | `TEXT NULL` | 来源会话                 |
+| `episodeId`        | `TEXT NULL` | 关联的事件/任务/主题片段 |
+| `memoryClass`      | `TEXT`      | `episodic                | semantic   | task`     |
+| `status`           | `TEXT`      | `active                  | superseded | archived` |
+| `embeddingVersion` | `TEXT NULL` | embedding 版本           |
+| `sourceKind`       | `TEXT`      | `digest                  | manual     | imported  | learned` |
 
 说明：
 
@@ -373,17 +375,17 @@ Phase 3 可选升级：
 
 建议字段：
 
-| 字段 | 类型 | 说明 |
-|---|---|---|
-| `id` | `TEXT PK` | 节点 ID |
-| `profileId` | `TEXT` | 所属 profile |
-| `kind` | `TEXT` | `person | topic | concept | event | task | preference | fact | document` |
-| `canonicalName` | `TEXT` | 标准名 |
-| `summary` | `TEXT` | 节点摘要 |
-| `status` | `TEXT` | `active | resolved | archived` |
-| `payloadJson` | `TEXT` | 扩展属性 |
-| `createdAt` | `TEXT` | 创建时间 |
-| `updatedAt` | `TEXT` | 更新时间 |
+| 字段            | 类型      | 说明         |
+| --------------- | --------- | ------------ |
+| `id`            | `TEXT PK` | 节点 ID      |
+| `profileId`     | `TEXT`    | 所属 profile |
+| `kind`          | `TEXT`    | `person      | topic    | concept   | event | task | preference | fact | document` |
+| `canonicalName` | `TEXT`    | 标准名       |
+| `summary`       | `TEXT`    | 节点摘要     |
+| `status`        | `TEXT`    | `active      | resolved | archived` |
+| `payloadJson`   | `TEXT`    | 扩展属性     |
+| `createdAt`     | `TEXT`    | 创建时间     |
+| `updatedAt`     | `TEXT`    | 更新时间     |
 
 ### `memory_graph_edges`
 
@@ -391,20 +393,20 @@ Phase 3 可选升级：
 
 建议字段：
 
-| 字段 | 类型 | 说明 |
-|---|---|---|
-| `id` | `TEXT PK` | 边 ID |
-| `profileId` | `TEXT` | 所属 profile |
-| `fromNodeId` | `TEXT` | 起点 |
-| `relationType` | `TEXT` | 关系类型 |
-| `toNodeId` | `TEXT` | 终点 |
-| `weight` | `REAL` | 强度 / 置信度 |
-| `sourceType` | `TEXT` | `message | memory | knowledge_chunk | manual` |
-| `sourceId` | `TEXT` | 来源记录 |
-| `validFromTs` | `TEXT NULL` | 生效开始 |
-| `validToTs` | `TEXT NULL` | 生效结束 |
-| `createdAt` | `TEXT` | 创建时间 |
-| `updatedAt` | `TEXT` | 更新时间 |
+| 字段           | 类型        | 说明          |
+| -------------- | ----------- | ------------- |
+| `id`           | `TEXT PK`   | 边 ID         |
+| `profileId`    | `TEXT`      | 所属 profile  |
+| `fromNodeId`   | `TEXT`      | 起点          |
+| `relationType` | `TEXT`      | 关系类型      |
+| `toNodeId`     | `TEXT`      | 终点          |
+| `weight`       | `REAL`      | 强度 / 置信度 |
+| `sourceType`   | `TEXT`      | `message      | memory | knowledge_chunk | manual` |
+| `sourceId`     | `TEXT`      | 来源记录      |
+| `validFromTs`  | `TEXT NULL` | 生效开始      |
+| `validToTs`    | `TEXT NULL` | 生效结束      |
+| `createdAt`    | `TEXT`      | 创建时间      |
+| `updatedAt`    | `TEXT`      | 更新时间      |
 
 推荐第一版关系类型：
 
@@ -425,17 +427,17 @@ Phase 3 可选升级：
 
 建议字段：
 
-| 字段 | 类型 | 说明 |
-|---|---|---|
-| `id` | `TEXT PK` | 来源记录 ID |
-| `profileId` | `TEXT` | 所属 profile |
-| `targetKind` | `TEXT` | `node | edge` |
-| `targetId` | `TEXT` | 目标 ID |
-| `sourceType` | `TEXT` | `message | memory | knowledge_chunk | manual` |
-| `sourceId` | `TEXT` | 来源对象 ID |
-| `evidenceText` | `TEXT` | 抽取依据摘要 |
-| `confidence` | `REAL` | 置信度 |
-| `createdAt` | `TEXT` | 创建时间 |
+| 字段           | 类型      | 说明         |
+| -------------- | --------- | ------------ |
+| `id`           | `TEXT PK` | 来源记录 ID  |
+| `profileId`    | `TEXT`    | 所属 profile |
+| `targetKind`   | `TEXT`    | `node        | edge`  |
+| `targetId`     | `TEXT`    | 目标 ID      |
+| `sourceType`   | `TEXT`    | `message     | memory | knowledge_chunk | manual` |
+| `sourceId`     | `TEXT`    | 来源对象 ID  |
+| `evidenceText` | `TEXT`    | 抽取依据摘要 |
+| `confidence`   | `REAL`    | 置信度       |
+| `createdAt`    | `TEXT`    | 创建时间     |
 
 说明：
 
@@ -450,19 +452,19 @@ Phase 3 可选升级：
 
 建议字段：
 
-| 字段 | 类型 | 说明 |
-|---|---|---|
-| `id` | `TEXT PK` | 文档 ID |
-| `profileId` | `TEXT NULL` | `NULL` 表示全局知识 |
-| `scope` | `TEXT` | `global | profile` |
-| `title` | `TEXT` | 文档标题 |
-| `sourceType` | `TEXT` | `url | file | manual | learned` |
-| `sourceUri` | `TEXT NULL` | 原始地址 |
-| `trustLevel` | `TEXT` | `curated | imported | learned` |
-| `checksum` | `TEXT NULL` | 内容 hash |
-| `status` | `TEXT` | `active | superseded | archived` |
-| `createdAt` | `TEXT` | 创建时间 |
-| `updatedAt` | `TEXT` | 更新时间 |
+| 字段         | 类型        | 说明                |
+| ------------ | ----------- | ------------------- |
+| `id`         | `TEXT PK`   | 文档 ID             |
+| `profileId`  | `TEXT NULL` | `NULL` 表示全局知识 |
+| `scope`      | `TEXT`      | `global             | profile`   |
+| `title`      | `TEXT`      | 文档标题            |
+| `sourceType` | `TEXT`      | `url                | file       | manual    | learned` |
+| `sourceUri`  | `TEXT NULL` | 原始地址            |
+| `trustLevel` | `TEXT`      | `curated            | imported   | learned`  |
+| `checksum`   | `TEXT NULL` | 内容 hash           |
+| `status`     | `TEXT`      | `active             | superseded | archived` |
+| `createdAt`  | `TEXT`      | 创建时间            |
+| `updatedAt`  | `TEXT`      | 更新时间            |
 
 ### `knowledge_chunks`
 
@@ -470,16 +472,16 @@ Phase 3 可选升级：
 
 建议字段：
 
-| 字段 | 类型 | 说明 |
-|---|---|---|
-| `id` | `TEXT PK` | chunk ID |
-| `documentId` | `TEXT` | 所属文档 |
-| `chunkIndex` | `INTEGER` | 序号 |
-| `content` | `TEXT` | chunk 内容 |
-| `keywordsJson` | `TEXT` | 关键词 |
-| `tokenCount` | `INTEGER` | token 数 |
-| `createdAt` | `TEXT` | 创建时间 |
-| `updatedAt` | `TEXT` | 更新时间 |
+| 字段           | 类型      | 说明       |
+| -------------- | --------- | ---------- |
+| `id`           | `TEXT PK` | chunk ID   |
+| `documentId`   | `TEXT`    | 所属文档   |
+| `chunkIndex`   | `INTEGER` | 序号       |
+| `content`      | `TEXT`    | chunk 内容 |
+| `keywordsJson` | `TEXT`    | 关键词     |
+| `tokenCount`   | `INTEGER` | token 数   |
+| `createdAt`    | `TEXT`    | 创建时间   |
+| `updatedAt`    | `TEXT`    | 更新时间   |
 
 配套向量表建议：
 
@@ -495,16 +497,16 @@ Phase 3 可选升级：
 
 建议字段：
 
-| 字段 | 类型 | 说明 |
-|---|---|---|
-| `id` | `TEXT PK` | fact ID |
-| `documentId` | `TEXT` | 所属文档 |
-| `chunkId` | `TEXT NULL` | 证据 chunk |
-| `subject` | `TEXT` | 主体 |
-| `predicate` | `TEXT` | 谓词 |
-| `object` | `TEXT` | 客体 |
-| `confidence` | `REAL` | 置信度 |
-| `createdAt` | `TEXT` | 创建时间 |
+| 字段         | 类型        | 说明       |
+| ------------ | ----------- | ---------- |
+| `id`         | `TEXT PK`   | fact ID    |
+| `documentId` | `TEXT`      | 所属文档   |
+| `chunkId`    | `TEXT NULL` | 证据 chunk |
+| `subject`    | `TEXT`      | 主体       |
+| `predicate`  | `TEXT`      | 谓词       |
+| `object`     | `TEXT`      | 客体       |
+| `confidence` | `REAL`      | 置信度     |
+| `createdAt`  | `TEXT`      | 创建时间   |
 
 ## 6.4 为什么不建议新增 `working_memory` 表
 
@@ -528,10 +530,7 @@ Phase 1 不建议新增常驻 `working_memory` 表。
 ## 7.1 Store 枚举
 
 ```ts
-type MemoryStoreKind =
-  | "temporal"
-  | "graph"
-  | "knowledge";
+type MemoryStoreKind = "temporal" | "graph" | "knowledge";
 
 type RetrievalReason =
   | "explicit_reference"
@@ -580,14 +579,7 @@ type RetrievalPlan = {
 type EvidenceItem = {
   id: string;
   store: MemoryStoreKind;
-  kind:
-    | "memory"
-    | "entity"
-    | "event"
-    | "task"
-    | "fact"
-    | "chunk"
-    | "relation";
+  kind: "memory" | "entity" | "event" | "task" | "fact" | "chunk" | "relation";
   title: string | null;
   content: string;
   score: number;
@@ -653,12 +645,7 @@ type EvidenceBundle = {
 
 ```ts
 type WorkingMemory = {
-  userIntent:
-    | "ask"
-    | "recall"
-    | "plan"
-    | "reflect"
-    | "act";
+  userIntent: "ask" | "recall" | "plan" | "reflect" | "act";
   personalContext: EvidenceItem[];
   relationshipContext: EvidenceItem[];
   taskContext: EvidenceItem[];
@@ -856,10 +843,7 @@ Working Memory
 
 ```ts
 {
-  vectorHitCount,
-  unresolvedCount,
-  recentCount,
-  returnedItems
+  (vectorHitCount, unresolvedCount, recentCount, returnedItems);
 }
 ```
 
@@ -867,9 +851,7 @@ Working Memory
 
 ```ts
 {
-  seedNodeCount,
-  traversedEdgeCount,
-  returnedItems
+  (seedNodeCount, traversedEdgeCount, returnedItems);
 }
 ```
 
@@ -877,9 +859,7 @@ Working Memory
 
 ```ts
 {
-  ftsHitCount,
-  vectorHitCount,
-  returnedItems
+  (ftsHitCount, vectorHitCount, returnedItems);
 }
 ```
 
@@ -887,10 +867,7 @@ Working Memory
 
 ```ts
 {
-  temporalInputCount,
-  graphInputCount,
-  knowledgeInputCount,
-  fusedCount
+  (temporalInputCount, graphInputCount, knowledgeInputCount, fusedCount);
 }
 ```
 
@@ -898,11 +875,11 @@ Working Memory
 
 ```ts
 {
-  personalContextCount,
-  relationshipContextCount,
-  taskContextCount,
-  worldContextCount,
-  openLoopCount
+  (personalContextCount,
+    relationshipContextCount,
+    taskContextCount,
+    worldContextCount,
+    openLoopCount);
 }
 ```
 
@@ -1044,19 +1021,18 @@ Buni 下一阶段的记忆系统不应该继续停留在：
 
 定义清楚。
 
-
 ## Q&A
 
 Evidence fusion vs memory fusion
 
 - evidence fusion：是一个更精确的 runtime 术语，意思是“把 temporal /
-    graph / knowledge 三路检索结果统一成 EvidenceItem[]，做去重、排序、冲突
-    处理”。
+  graph / knowledge 三路检索结果统一成 EvidenceItem[]，做去重、排序、冲突
+  处理”。
 - memory fusion：是更宽泛的说法。
-    - 如果你说的是“系统把多路记忆合在一起”，那它和 evidence fusion 基本是
-      同一件事。
-    - 但如果你说得更大，它还可以包括“检索前的多 store 协同、检索后的
-      working memory 构建、甚至 planner 使用这些结果”。
+  - 如果你说的是“系统把多路记忆合在一起”，那它和 evidence fusion 基本是
+    同一件事。
+  - 但如果你说得更大，它还可以包括“检索前的多 store 协同、检索后的
+    working memory 构建、甚至 planner 使用这些结果”。
 
   所以在这套实现里：
 
@@ -1065,35 +1041,35 @@ Evidence fusion vs memory fusion
   - 现在 apps/server/src/memory/memory-fusion-service.ts 实际上就是把temporal evidence build + evidence fusion + working memory build这条链包起来了
 
 1. temporal evidence build
-     把 temporal recall 命中的原始 memory，翻译成统一的 EvidenceItem。
-     也就是先把“数据库里捞出来的 memory 行”变成“可参与后续融合的证据对象”。
+   把 temporal recall 命中的原始 memory，翻译成统一的 EvidenceItem。
+   也就是先把“数据库里捞出来的 memory 行”变成“可参与后续融合的证据对象”。
 2. evidence fusion
-     把不同来源的证据合并。
-     输入不只 temporal，还可以有 graph、knowledge。
-     这一步做的是：
+   把不同来源的证据合并。
+   输入不只 temporal，还可以有 graph、knowledge。
+   这一步做的是：
 
-  - 去重
-  - 排序
-  - 统一分数语义
-  - 决定哪些证据值得进入当前 turn 的上下文
+- 去重
+- 排序
+- 统一分数语义
+- 决定哪些证据值得进入当前 turn 的上下文
 
-  所以它产出的是一组“本轮真正可用的证据”。
+所以它产出的是一组“本轮真正可用的证据”。
 
-  3. working memory build
-     把 fused evidence 再按认知用途重组。
-     不是再关心“这条来自哪张表”，而是关心“它在当前思考里扮演什么角色”。
-     比如分成：
+3. working memory build
+   把 fused evidence 再按认知用途重组。
+   不是再关心“这条来自哪张表”，而是关心“它在当前思考里扮演什么角色”。
+   比如分成：
 
-  - personal context
-  - relationship context
-  - task context
-  - world context
-  - open loops
+- personal context
+- relationship context
+- task context
+- world context
+- open loops
 
-  所以这一步产出的是“给 LLM 用的当前工作记忆结构”。
+所以这一步产出的是“给 LLM 用的当前工作记忆结构”。
 
-  一句话压缩：
+一句话压缩：
 
-  - temporal evidence build：把 temporal memory 变成证据
-  - evidence fusion：把多路证据合成一个证据集
-  - working memory build：把证据集重排成适合推理/生成的工作记忆
+- temporal evidence build：把 temporal memory 变成证据
+- evidence fusion：把多路证据合成一个证据集
+- working memory build：把证据集重排成适合推理/生成的工作记忆

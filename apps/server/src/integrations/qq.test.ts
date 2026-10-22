@@ -58,7 +58,7 @@ describe("qq integration", () => {
         Object.entries(init?.headers ?? {}).map(([key, value]) => [
           key,
           String(value),
-        ]),
+        ])
       );
 
       calls.push({
@@ -79,7 +79,7 @@ describe("qq integration", () => {
             headers: {
               "Content-Type": "application/json",
             },
-          },
+          }
         );
       }
 
@@ -93,7 +93,7 @@ describe("qq integration", () => {
           headers: {
             "Content-Type": "application/json",
           },
-        },
+        }
       );
     }) as typeof fetch;
 
@@ -115,7 +115,7 @@ describe("qq integration", () => {
     expect(calls).toHaveLength(2);
     expect(calls[0]?.url).toBe("https://bots.qq.com/app/getAppAccessToken");
     expect(calls[1]?.url).toBe(
-      "https://api.sgroup.qq.com/v2/groups/group_openid_123/messages",
+      "https://api.sgroup.qq.com/v2/groups/group_openid_123/messages"
     );
     expect(calls[1]?.headers.Authorization).toBe("QQBot qq_access_token_123");
     expect(JSON.parse(calls[1]?.body ?? "{}")).toEqual({
@@ -147,7 +147,7 @@ describe("qq integration", () => {
         Object.entries(init?.headers ?? {}).map(([key, value]) => [
           key,
           String(value),
-        ]),
+        ])
       );
 
       calls.push({
@@ -168,7 +168,7 @@ describe("qq integration", () => {
             headers: {
               "Content-Type": "application/json",
             },
-          },
+          }
         );
       }
 
@@ -182,7 +182,7 @@ describe("qq integration", () => {
           headers: {
             "Content-Type": "application/json",
           },
-        },
+        }
       );
     }) as typeof fetch;
 
@@ -204,7 +204,7 @@ describe("qq integration", () => {
     expect(result.deliveryMode).toBe("passive");
     expect(calls).toHaveLength(2);
     expect(calls[1]?.url).toBe(
-      "https://api.sgroup.qq.com/v2/users/user_openid_456/messages",
+      "https://api.sgroup.qq.com/v2/users/user_openid_456/messages"
     );
     expect(JSON.parse(calls[1]?.body ?? "{}")).toEqual({
       content: "收到，我来处理",

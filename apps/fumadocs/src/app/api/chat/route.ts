@@ -2,24 +2,24 @@ import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import {
   convertToModelMessages,
   createUIMessageStreamResponse,
+  type InferToolOutput,
   stepCountIs,
   streamText,
   tool,
   toUIMessageStream,
-  type InferToolOutput,
 } from "ai";
 import { Document, type DocumentData } from "flexsearch";
 import { z } from "zod";
 
 import { source } from "@/lib/source";
 
-import { ChatUIMessage, SearchTool } from "../../../components/ai/search";
+import type { ChatUIMessage, SearchTool } from "../../../components/ai/search";
 
 interface CustomDocument extends DocumentData {
-  url: string;
-  title: string;
-  description: string;
   content: string;
+  description: string;
+  title: string;
+  url: string;
 }
 const searchServer = createSearchServer();
 
@@ -34,7 +34,9 @@ async function createSearchServer() {
 
   const docs = await chunkedAll(
     source.getPages().map(async (page) => {
-      if (!("getText" in page.data)) return null;
+      if (!("getText" in page.data)) {
+        return null;
+      }
 
       return {
         title: page.data.title,
@@ -42,11 +44,13 @@ async function createSearchServer() {
         url: page.url,
         content: await page.data.getText("processed"),
       } as CustomDocument;
-    }),
+    })
   );
 
   for (const doc of docs) {
-    if (doc) search.add(doc);
+    if (doc) {
+      search.add(doc);
+    }
   }
 
   return search;
@@ -74,25 +78,31 @@ const systemPrompt = [
   "If you cannot find the answer in search results, say you do not know and suggest a better search query.",
 ].join("\n");
 
-export async function POST(req: Request, ctx: RouteContext<"/api/chat">) {
+export async function POST(req: Request, _ctx: RouteContext<"/api/chat">) {
   const reqJson = await req.json();
 
   const result = streamText({
-    model: openrouter.chat(process.env.OPENROUTER_MODEL ?? "anthropic/claude-3.5-sonnet"),
+    model: openrouter.chat(
+      process.env.OPENROUTER_MODEL ?? "anthropic/claude-3.5-sonnet"
+    ),
     stopWhen: stepCountIs(5),
     tools: {
       search: searchTool,
     },
     instructions: systemPrompt,
-    messages: await convertToModelMessages<ChatUIMessage>(reqJson.messages ?? [], {
-      convertDataPart(part) {
-        if (part.type === "data-client")
-          return {
-            type: "text",
-            text: `[Client Context: ${JSON.stringify(part.data)}]`,
-          };
-      },
-    }),
+    messages: await convertToModelMessages<ChatUIMessage>(
+      reqJson.messages ?? [],
+      {
+        convertDataPart(part) {
+          if (part.type === "data-client") {
+            return {
+              type: "text",
+              text: `[Client Context: ${JSON.stringify(part.data)}]`,
+            };
+          }
+        },
+      }
+    ),
     toolChoice: "auto",
   });
 
@@ -109,6 +119,10 @@ const searchTool = tool({
   }),
   async execute({ query, limit }): Promise<InferToolOutput<SearchTool>> {
     const search = await searchServer;
-    return await search.searchAsync(query, { limit, merge: true, enrich: true });
+    return await search.searchAsync(query, {
+      limit,
+      merge: true,
+      enrich: true,
+    });
   },
 }) satisfies SearchTool;

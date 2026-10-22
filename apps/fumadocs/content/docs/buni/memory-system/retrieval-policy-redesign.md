@@ -7,6 +7,7 @@ title: "Retrieval Policy Redesign"
 > Status: Active design
 > Date: 2026-05-02
 > Companion docs:
+>
 > - [memory-system-v2.md](./memory-system-v2.md)
 > - [memory-recall-redesign.md](./memory-recall-redesign.md)
 > - [diagrams/memory-retrieval-pipeline-dataflow.md](./diagrams/memory-retrieval-pipeline-dataflow.md)
@@ -356,7 +357,7 @@ if retrievalPlan.queries.knowledge exists
 The runtime observer may still keep a temporal-specific summary field such as `memoryRecallStrategy`, but that should be derived from:
 
 ```ts
-retrievalPlan.activation.temporal.mode
+retrievalPlan.activation.temporal.mode;
 ```
 
 not from a separate decision object.

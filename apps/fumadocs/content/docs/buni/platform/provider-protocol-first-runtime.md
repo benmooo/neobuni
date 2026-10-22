@@ -128,19 +128,11 @@ The config model must explicitly separate capability, vendor, and protocol.
 Current provider configuration is too vendor-shaped and too implicit. The replacement should move toward a transport profile like this:
 
 ```ts
-type ProviderCapability =
-  | "chat"
-  | "memory_embedding"
-  | "memory_reasoning";
+type ProviderCapability = "chat" | "memory_embedding" | "memory_reasoning";
 
 type ProviderProtocol = "openai" | "anthropic";
 
-type ProviderVendor =
-  | "mock"
-  | "openai"
-  | "anthropic"
-  | "deepseek"
-  | "qwen";
+type ProviderVendor = "mock" | "openai" | "anthropic" | "deepseek" | "qwen";
 
 type ProviderProfile = {
   capability: ProviderCapability;

@@ -53,6 +53,7 @@ title: "Discord Gateway Sidecar Implementation Plan"
 ## Task 1: Extract the Shared Discord Inbound Runtime
 
 **Files:**
+
 - Create: `apps/server/src/integrations/discord-gateway-normalize.test.ts`
 - Create: `apps/server/src/integrations/discord-gateway-normalize.ts`
 - Create: `apps/server/src/integrations/discord-inbound.test.ts`
@@ -66,17 +67,19 @@ title: "Discord Gateway Sidecar Implementation Plan"
 test("normalizes a mention message into an inbound prompt", async () => {
   const { normalizeDiscordGatewayMessage } = await import("./discord-gateway-normalize");
 
-  expect(normalizeDiscordGatewayMessage({
-    applicationId: "discord_app_123",
-    event: {
-      id: "message-1",
-      guild_id: "guild-1",
-      channel_id: "channel-1",
-      content: "<@discord_app_123> 整理今天 AI 热点",
-      author: { id: "user-1", bot: false },
-      mentions: [{ id: "discord_app_123", bot: true }],
-    },
-  })).toEqual({
+  expect(
+    normalizeDiscordGatewayMessage({
+      applicationId: "discord_app_123",
+      event: {
+        id: "message-1",
+        guild_id: "guild-1",
+        channel_id: "channel-1",
+        content: "<@discord_app_123> 整理今天 AI 热点",
+        author: { id: "user-1", bot: false },
+        mentions: [{ id: "discord_app_123", bot: true }],
+      },
+    }),
+  ).toEqual({
     eventId: "message-1",
     scopeKey: "guild-1:channel-1",
     targetId: "channel-1",
@@ -96,23 +99,26 @@ Expected: FAIL because `discord-gateway-normalize.ts` does not exist yet.
 test("dedupes and sends the reply through sendDiscordMessage", async () => {
   const { handleDiscordInboundMessage } = await import("./discord-inbound");
 
-  const result = await handleDiscordInboundMessage({
-    profileId: "profile-1",
-    inboundPrompt: {
-      eventId: "message-1",
-      scopeKey: "guild-1:channel-1",
-      targetId: "channel-1",
-      latestUserText: "整理今天 AI 热点",
+  const result = await handleDiscordInboundMessage(
+    {
+      profileId: "profile-1",
+      inboundPrompt: {
+        eventId: "message-1",
+        scopeKey: "guild-1:channel-1",
+        targetId: "channel-1",
+        latestUserText: "整理今天 AI 热点",
+      },
     },
-  }, {
-    createConversation: createConversationMock as never,
-    createExternalConversationBinding: createExternalConversationBindingMock as never,
-    getExternalConversationBinding: getExternalConversationBindingMock as never,
-    recordExternalEventReceipt: recordExternalEventReceiptMock as never,
-    runExternalMessageTurn: runExternalMessageTurnMock as never,
-    sendDiscordMessage: sendDiscordMessageMock as never,
-    touchExternalConversationBinding: touchExternalConversationBindingMock as never,
-  });
+    {
+      createConversation: createConversationMock as never,
+      createExternalConversationBinding: createExternalConversationBindingMock as never,
+      getExternalConversationBinding: getExternalConversationBindingMock as never,
+      recordExternalEventReceipt: recordExternalEventReceiptMock as never,
+      runExternalMessageTurn: runExternalMessageTurnMock as never,
+      sendDiscordMessage: sendDiscordMessageMock as never,
+      touchExternalConversationBinding: touchExternalConversationBindingMock as never,
+    },
+  );
 
   expect(result).toMatchObject({
     duplicate: false,
@@ -153,6 +159,7 @@ Expected: PASS
 ## Task 2: Add the Internal Discord Inbound Route
 
 **Files:**
+
 - Create: `apps/server/src/routes/integrations-discord-internal.test.ts`
 - Create: `apps/server/src/routes/integrations-discord-internal.ts`
 - Modify: `apps/server/src/app.ts`
@@ -162,9 +169,12 @@ Expected: PASS
 ```ts
 test("rejects requests without the internal bearer token", async () => {
   const { createDiscordInternalRoutes } = await import("./integrations-discord-internal");
-  const app = new Hono().route("/internal/integrations/discord", createDiscordInternalRoutes({
-    handleDiscordInboundMessage: handleDiscordInboundMessageMock as never,
-  }));
+  const app = new Hono().route(
+    "/internal/integrations/discord",
+    createDiscordInternalRoutes({
+      handleDiscordInboundMessage: handleDiscordInboundMessageMock as never,
+    }),
+  );
 
   const response = await app.request("/internal/integrations/discord/inbound-message", {
     method: "POST",
@@ -214,6 +224,7 @@ Expected: PASS
 ## Task 3: Implement the Discord.js Sidecar
 
 **Files:**
+
 - Create: `apps/server/src/sidecars/discord-gateway/discordjs-client.test.ts`
 - Create: `apps/server/src/sidecars/discord-gateway/discordjs-client.ts`
 - Create: `apps/server/src/sidecars/discord-gateway/internal-runtime-client.ts`
@@ -261,12 +272,12 @@ Expected: FAIL because `discordjs-client.ts` does not exist yet.
 test("restarts a session when the config fingerprint changes", async () => {
   const { diffDiscordGatewaySessions } = await import("./reconcile");
 
-  expect(diffDiscordGatewaySessions({
-    running: new Map([["profile-1", runningEntry]]),
-    desired: new Map([["profile-1", changedSpec]]),
-  })).toEqual([
-    { type: "restart", profileId: "profile-1", spec: changedSpec },
-  ]);
+  expect(
+    diffDiscordGatewaySessions({
+      running: new Map([["profile-1", runningEntry]]),
+      desired: new Map([["profile-1", changedSpec]]),
+    }),
+  ).toEqual([{ type: "restart", profileId: "profile-1", spec: changedSpec }]);
 });
 ```
 
@@ -333,6 +344,7 @@ Expected: PASS
 ## Task 4: End-to-End Verification
 
 **Files:**
+
 - No new files
 
 - [x] **Step 1: Run all focused Discord tests**

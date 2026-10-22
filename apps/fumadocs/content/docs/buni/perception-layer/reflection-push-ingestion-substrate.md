@@ -7,6 +7,7 @@ title: "Reflection Push Ingestion Substrate"
 > Status: Active design
 > Date: 2026-05-23
 > Companion docs:
+>
 > - [../../ARCHITECTURE.md](../../ARCHITECTURE.md)
 > - [./reflection-pipeline-simplification.md](./reflection-pipeline-simplification.md)
 > - [./reflection-contracts-and-storage.md](./reflection-contracts-and-storage.md)
@@ -453,11 +454,11 @@ That keeps the system from splitting into two ingestion stacks.
 
 The first three push-first sources should map like this:
 
-| Source | `sourceKind` | `connectorKind` | `syncMode` | Steady-state granularity |
-| --- | --- | --- | --- | --- |
-| Chrome tab focus | `browser` | `chrome_extension` | `webhook` | `event` |
-| Local git commits | `git` | `local_git` | `webhook` | `event` |
-| Codex turns | `codex` | `local_codex_app_server` | `webhook` | `turn` |
+| Source            | `sourceKind` | `connectorKind`          | `syncMode` | Steady-state granularity |
+| ----------------- | ------------ | ------------------------ | ---------- | ------------------------ |
+| Chrome tab focus  | `browser`    | `chrome_extension`       | `webhook`  | `event`                  |
+| Local git commits | `git`        | `local_git`              | `webhook`  | `event`                  |
+| Codex turns       | `codex`      | `local_codex_app_server` | `webhook`  | `turn`                   |
 
 `import` remains available for all three as a secondary path.
 

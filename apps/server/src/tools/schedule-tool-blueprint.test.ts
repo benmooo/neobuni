@@ -46,7 +46,7 @@ describe("schedule-tool-blueprint", () => {
         "send_channel_message",
       ],
       maxSteps: 5,
-      timeoutMs: 120000,
+      timeoutMs: 120_000,
       deliveryIntent: {
         conversationId: null,
         channelTarget: {
@@ -68,7 +68,7 @@ describe("schedule-tool-blueprint", () => {
         prompt: "Old prompt",
         toolAllowlist: ["send_chat_message"],
         maxSteps: 3,
-        timeoutMs: 60000,
+        timeoutMs: 60_000,
         deliveryIntent: {
           conversationId: "conversation-1",
           channelTarget: null,
@@ -97,7 +97,7 @@ describe("schedule-tool-blueprint", () => {
       prompt: "New prompt",
       toolAllowlist: ["send_chat_message"],
       maxSteps: 3,
-      timeoutMs: 60000,
+      timeoutMs: 60_000,
       deliveryIntent: {
         conversationId: null,
         channelTarget: {
@@ -113,18 +113,22 @@ describe("schedule-tool-blueprint", () => {
   });
 
   test("normalizeScheduleBlueprint rejects invalid stored values", () => {
-    expect(normalizeScheduleBlueprint({
-      version: 1,
-      prompt: "ok",
-      toolAllowlist: null,
-      maxSteps: null,
-      timeoutMs: null,
-      deliveryIntent: null,
-      input: null,
-    })).not.toBeNull();
+    expect(
+      normalizeScheduleBlueprint({
+        version: 1,
+        prompt: "ok",
+        toolAllowlist: null,
+        maxSteps: null,
+        timeoutMs: null,
+        deliveryIntent: null,
+        input: null,
+      })
+    ).not.toBeNull();
 
-    expect(normalizeScheduleBlueprint({
-      prompt: "missing version",
-    })).toBeNull();
+    expect(
+      normalizeScheduleBlueprint({
+        prompt: "missing version",
+      })
+    ).toBeNull();
   });
 });

@@ -45,6 +45,7 @@ Extends the push ingestion substrate and normalize layer with Zod schema-first c
 ## Progress
 
 Codex App Server bridge is now implemented end-to-end in local code:
+
 - raw payload contracts
 - import/backfill support
 - deterministic Codex normalization

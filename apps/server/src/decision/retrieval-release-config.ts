@@ -1,12 +1,12 @@
-type RetrievalReleaseGateConfig = {
-	minComparedPairs: number;
-	minAgreementRate: number;
-	maxAverageJevLatencyMs: number;
-	maxProviderErrorRate: number;
-};
+interface RetrievalReleaseGateConfig {
+  maxAverageJevLatencyMs: number;
+  maxProviderErrorRate: number;
+  minAgreementRate: number;
+  minComparedPairs: number;
+}
 
 const createRetrievalReleaseGateConfig = (input: RetrievalReleaseGateConfig) =>
-	input;
+  input;
 
 export type { RetrievalReleaseGateConfig };
 export { createRetrievalReleaseGateConfig };

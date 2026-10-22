@@ -7,6 +7,7 @@ title: "Reflection System Architecture"
 > Status: Superseded by simplified reflection design
 > Date: 2026-05-04
 > Companion docs:
+>
 > - [../../ARCHITECTURE.md](../../ARCHITECTURE.md)
 > - [./perception-signal-adapters-v1.md](./perception-signal-adapters-v1.md)
 > - [./reflection-contracts-and-storage.md](./reflection-contracts-and-storage.md)
@@ -451,14 +452,7 @@ type Observation = {
     | "meeting"
     | "emotion_tag"
     | "git";
-  category:
-    | "behavior"
-    | "physiology"
-    | "location"
-    | "consumption"
-    | "thought"
-    | "emotion"
-    | "work";
+  category: "behavior" | "physiology" | "location" | "consumption" | "thought" | "emotion" | "work";
   startedAt: string;
   endedAt: string | null;
   summary: string;
@@ -605,12 +599,7 @@ type InterventionOutcome = {
   profileId: string;
   interventionPlanId: string;
   observedAt: string;
-  outcome:
-    | "accepted"
-    | "ignored"
-    | "dismissed"
-    | "partially_effective"
-    | "effective";
+  outcome: "accepted" | "ignored" | "dismissed" | "partially_effective" | "effective";
   notes: string | null;
   followupObservationIds: string[];
 };

@@ -1,10 +1,4 @@
-import {
-  beforeEach,
-  describe,
-  expect,
-  test,
-  vi,
-} from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const resolveDiscordExternalConversationWindowMock = vi.fn(async () => ({
   conversationId: "conversation-new",
@@ -65,20 +59,24 @@ describe("handleDiscordInboundMessage", () => {
   test("dedupes, reuses the public-safe runtime path, and posts the reply back to the channel", async () => {
     const { handleDiscordInboundMessage } = await import("./discord-inbound");
 
-    const result = await handleDiscordInboundMessage({
-      profileId: "profile-1",
-      inboundPrompt: {
-        eventId: "message-1",
-        scopeKey: "guild-1:channel-1",
-        targetId: "channel-1",
-        latestUserText: "整理今天 AI 热点",
+    const result = await handleDiscordInboundMessage(
+      {
+        profileId: "profile-1",
+        inboundPrompt: {
+          eventId: "message-1",
+          scopeKey: "guild-1:channel-1",
+          targetId: "channel-1",
+          latestUserText: "整理今天 AI 热点",
+        },
       },
-    }, {
-      recordExternalEventReceipt: recordExternalEventReceiptMock as never,
-      resolveDiscordExternalConversationWindow: resolveDiscordExternalConversationWindowMock as never,
-      runExternalMessageTurn: runExternalMessageTurnMock as never,
-      sendDiscordMessage: sendDiscordMessageMock as never,
-    });
+      {
+        recordExternalEventReceipt: recordExternalEventReceiptMock as never,
+        resolveDiscordExternalConversationWindow:
+          resolveDiscordExternalConversationWindowMock as never,
+        runExternalMessageTurn: runExternalMessageTurnMock as never,
+        sendDiscordMessage: sendDiscordMessageMock as never,
+      }
+    );
 
     expect(recordExternalEventReceiptMock).toHaveBeenCalledWith({
       profileId: "profile-1",

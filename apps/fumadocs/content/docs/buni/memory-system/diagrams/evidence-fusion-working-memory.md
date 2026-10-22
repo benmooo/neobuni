@@ -10,11 +10,11 @@ title: "Evidence Fusion & Working Memory — 分层图"
 
 ## 图例 Legend
 
-| 形状 | 含义 | 用法 |
-|:----:|------|------|
-| `[/ /]` | 最终输出 / runtime-facing artifact | `FusedEvidence`、`WorkingMemory` |
-| `[ ]` | 数据 / schema | `EvidenceItem`、`taskContext` |
-| `[[ ]]` | 纯函数 | normalize、fuse、build working memory |
+|  形状   | 含义                               | 用法                                  |
+| :-----: | ---------------------------------- | ------------------------------------- |
+| `[/ /]` | 最终输出 / runtime-facing artifact | `FusedEvidence`、`WorkingMemory`      |
+|  `[ ]`  | 数据 / schema                      | `EvidenceItem`、`taskContext`         |
+| `[[ ]]` | 纯函数                             | normalize、fuse、build working memory |
 
 ---
 

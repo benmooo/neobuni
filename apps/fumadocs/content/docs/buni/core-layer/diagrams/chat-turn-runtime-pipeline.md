@@ -5,6 +5,7 @@ title: "Chat Turn Runtime Pipeline — Canonical Runtime Diagram"
 # Chat Turn Runtime Pipeline — Canonical Runtime Diagram
 
 > 配套文档：
+>
 > - [ARCHITECTURE.md](../../../ARCHITECTURE.md)
 > - [runtime-kernel-implementation-plan.md](../../runtime-kernel-implementation-plan.md)
 > - [soul-runtime-observability.md](../soul-runtime-observability.md)
@@ -13,14 +14,14 @@ title: "Chat Turn Runtime Pipeline — Canonical Runtime Diagram"
 
 ## 图例 Legend
 
-| 形状 | 含义 | 用法 |
-|:----:|------|------|
-| `[/ /]` | 外部输入 / 输出边界 | `POST /chat/stream`、`SSE chunks` |
-| `[ ]` | Runtime shell stage / runtime span | `request_received`、`prompt_compile` |
-| `[[ ]]` | 纯函数 / pure composition | `planTurnRetrieval`、`runTurnKernel` |
-| `{ }` | 分支 / gate / final status split | `pre-recall?`、`provider outcome?` |
+|  形状   | 含义                                            | 用法                                         |
+| :-----: | ----------------------------------------------- | -------------------------------------------- |
+| `[/ /]` | 外部输入 / 输出边界                             | `POST /chat/stream`、`SSE chunks`            |
+|  `[ ]`  | Runtime shell stage / runtime span              | `request_received`、`prompt_compile`         |
+| `[[ ]]` | 纯函数 / pure composition                       | `planTurnRetrieval`、`runTurnKernel`         |
+|  `{ }`  | 分支 / gate / final status split                | `pre-recall?`、`provider outcome?`           |
 | `[( )]` | Store / DB / Provider / Tool / side effect edge | `messages`、`temporal store`、`chat adapter` |
-| `(( ))` | side-channel / background task / timeout signal | `queueAutoDigestCheck`、`idle timeout` |
+| `(( ))` | side-channel / background task / timeout signal | `queueAutoDigestCheck`、`idle timeout`       |
 
 说明：
 
