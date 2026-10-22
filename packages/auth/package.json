@@ -15,7 +15,9 @@
     "@neobuni/db": "workspace:*",
     "better-auth": "catalog:",
     "drizzle-orm": "catalog:",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "effect": "4.0.5",
+    "resend": "^6.12.2"
   },
   "devDependencies": {
     "@neobuni/config": "workspace:*",

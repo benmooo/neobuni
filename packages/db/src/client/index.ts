@@ -57,6 +57,8 @@ export const configureDatabase = (config: DatabaseConfig) => {
   return activeDb;
 };
 
+export type Database = typeof activeDb;
+
 /** Configured drizzle client. Use `configureDatabase` at process bootstrap. */
 export const db = new Proxy({} as typeof activeDb, {
   get: (_target, property, receiver) => Reflect.get(activeDb, property, receiver),

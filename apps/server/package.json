@@ -23,7 +23,10 @@
     "hono": "^4.13.7",
     "libsql": "catalog:",
     "varlock": "catalog:",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "@neobuni/contracts": "workspace:*",
+    "@neobuni/core": "workspace:*",
+    "effect": "4.0.5"
   },
   "devDependencies": {
     "@neobuni/config": "workspace:*",

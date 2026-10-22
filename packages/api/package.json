@@ -16,7 +16,9 @@
     "@orpc/openapi": "catalog:",
     "@orpc/server": "catalog:",
     "@orpc/zod": "catalog:",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "@neobuni/contracts": "workspace:*",
+    "effect": "4.0.5"
   },
   "devDependencies": {
     "@neobuni/config": "workspace:*",
