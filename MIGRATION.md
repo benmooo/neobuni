@@ -1,6 +1,6 @@
 # neobuni Migration Plan (from buni)
 
-> Status: approved direction, execution not started
+> Status: implemented (phases 0-8), extreme-closeout notes at the bottom
 > Source: `/Users/aka/source/repos/lab/tmp/buni`
 > Target: `/Users/aka/source/repos/lab/tmp/neobuni`
 
@@ -254,3 +254,37 @@ Reflection's `reflection.*` tools are removed from every tool set, including hea
 - Naming: `*.service.ts` for Effect services, `*.layer.ts` for Layers, `*.repo.ts` for db access.
 - Tool handlers stay `(input, context) => Promise<Result>` so they can be registered with `@tanstack/ai`; the Effect wrapper lives in the tool registry, keeping tool definitions portable.
 - Tests colocated as `*.test.ts`; no snapshots for domain logic.
+
+## 10. Implementation status
+
+| Phase | Status |
+|---|---|
+| 0 Skeleton | done — packages, schema, env, deps |
+| 1 Auth + profile | done — profiles, `activeProfileId`, Resend reset mail |
+| 2 Core + contracts | done — reflection removed, all core tests green |
+| 3 DB repos | done — promise/libsql driver + Effect boundary, 9 db test files green |
+| 4 Chat vertical slice | done — raw SSE route, TanStack AI 1.0, mock + real adapters |
+| 5 API + frontend | done — oRPC routers, `ServerRouterClient`, buni UI on web |
+| 6 Execution | done — tools, schedules, task/action/initiative workers |
+| 7 Decision-OS + goals | done — goals, proposals, action runs, evaluation |
+| 8 Docs + hardening | done — docs in fumadocs, build, lint, 90 test files |
+
+### Deviations from the approved plan
+
+1. **Drizzle Effect driver**: `drizzle-orm/effect-libsql` crashes with Effect
+   4.0.5 (`Schema.TaggedErrorClass` was removed). Repos use the promise libsql
+   driver and expose Effects via `fromPromise`; the `runRepo` bridge keeps
+   promise-only adapters working.
+2. **Effect boundary**: Effect is used in `packages/db`, `packages/api` and the
+   server orchestration (turn runtime, workers, decision services). Tool
+   handlers, provider SDK glue and webhook clients remain Promise-based.
+3. **Vector storage**: dedicated `vec_*` tables + libsql vector indexes instead
+   of embedding columns on the main tables (keeps buni's repo shape).
+4. **Better Auth schema validation** is disabled (`advanced.database.validateSchema`):
+   the relational-v2 adapter cannot see the `verification` table through
+   drizzle's relation-derived schema.
+5. **Formatting**: Biome is canonical (`bun run check` → Ultracite). Vite+ still
+   owns dev/build/test; its formatter is not used.
+6. **Docs**: reflection docs are archived in fumadocs; internal
+   `workbench`/`superpowers` notes live in the repo-root `docs/` folder.
+

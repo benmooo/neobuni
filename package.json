@@ -47,7 +47,8 @@
     "format": "bunx ultracite fix",
     "postinstall": "varlock codegen --path ./apps/web/ && varlock codegen --path ./apps/server/ && varlock codegen --path ./packages/db/",
     "lint": "bunx ultracite check",
-    "staged": "bunx ultracite fix --staged"
+    "staged": "bunx ultracite fix --staged",
+    "test": "vp test run"
   },
   "overrides": {
     "vite": "npm:@voidzero-dev/vite-plus-core@1.1.0"

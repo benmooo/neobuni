@@ -1,150 +1,93 @@
 # neobuni
 
-This project was created with [Better-T-Stack](https://github.com/AmanVarshney01/create-better-t-stack), a modern TypeScript stack that combines React, TanStack Router, Hono, ORPC, and more.
+neobuni is the Effect-powered port of **buni** — a long-term AI companion with
+soul, memory, perception, expression and execution layers.
 
-## Features
+The product surface was ported 1:1 from buni's mobile-first UI into a web app.
+The engine was re-laid on the Better-T-Stack foundation: oRPC, libsql/Turso,
+Better Auth and Effect 4.
 
-- **TypeScript** - For type safety and improved developer experience
-- **TanStack Router** - File-based routing with full type safety
-- **TailwindCSS** - Utility-first CSS for rapid UI development
-- **Shared UI package** - shadcn/ui primitives live in `packages/ui`
-- **Hono** - Lightweight, performant server framework
-- **oRPC** - End-to-end type-safe APIs with OpenAPI integration
-- **Bun** - Runtime environment
-- **Drizzle** - TypeScript-first ORM
-- **SQLite/Turso** - Database engine
-- **Authentication** - Better-Auth
-- **Vite+** - Unified Vite toolchain, workspace task runner, linting, and formatting
-- **Biome** - Linting and formatting
-- **Oxlint** - Oxlint + Oxfmt (linting & formatting)
+## Stack
 
-## Getting Started
+| Layer | Choice |
+|---|---|
+| Runtime | Bun 1.4 |
+| Web | React 19, TanStack Router, TanStack Query, assistant-ui, Tailwind 4 |
+| API | Hono + oRPC (RPC + OpenAPI) |
+| AI | TanStack AI 1.0 (`@tanstack/ai`, `-openai`, `-anthropic`, `-openrouter`, `-react`) |
+| Effects | Effect 4.0.5 |
+| Database | libsql / Turso, drizzle-orm, native libsql vector index + FTS5 |
+| Auth | Better Auth 1.7 with profiles and `activeProfileId` |
+| Env | varlock (`ENV` accessor, `.env.schema` per app) |
+| Tooling | Vite+, Biome (Ultracite), Vitest, lefthook |
+| Docs | Fumadocs (`apps/fumadocs`) |
 
-First, install the dependencies:
+## Getting started
 
 ```bash
 bun install
-```
-
-## Database Setup
-
-This project uses SQLite with Drizzle ORM.
-
-1. Start the local SQLite database (optional):
-
-```bash
-bun run db:local
-```
-
-2. Update your `.env` file in the `apps/server` directory with the appropriate connection details if needed.
-
-3. Apply the schema to your database:
-
-```bash
-bun run db:push
-```
-
-Then, run the development server:
-
-```bash
+cp apps/server/.env.example apps/server/.env   # if present; otherwise fill .env.schema
+bun run db:migrate
 bun run dev
 ```
 
-Open [http://localhost:3001](http://localhost:3001) in your browser to see the web application.
-The API is running at [http://localhost:3000](http://localhost:3000).
+- Web: http://localhost:3001
+- API: http://localhost:3000
 
-## UI Customization
+`bun run auth:generate` regenerates `packages/db/src/schema/auth.ts` after auth
+plugin or field changes.
 
-React web apps in this stack share shadcn/ui primitives through `packages/ui`.
-
-- Change design tokens and global styles in `packages/ui/src/styles/globals.css`
-- Update shared primitives in `packages/ui/src/components/*`
-- Adjust shadcn aliases or style config in `packages/ui/components.json` and `apps/web/components.json`
-
-### Add more shared components
-
-Run this from the project root to add more primitives to the shared UI package:
-
-```bash
-npx shadcn@latest add accordion dialog popover sheet table -c packages/ui
-```
-
-Import shared components like this:
-
-```tsx
-import { Button } from "@neobuni/ui/components/button";
-```
-
-### Add app-specific blocks
-
-If you want to add app-specific blocks instead of shared primitives, run the shadcn CLI from `apps/web`.
-
-## Environment Configuration
-
-Each app owns its environment schema in `.env.schema`. Varlock generates `src/env.ts` during installation; run `bun run env:generate` after changing a schema. Commit schemas, and keep secrets in ignored env files or your deployment platform.
-
-Import the generated `ENV` accessor in application code. Shared database and auth packages receive configuration or initialized clients from the application. See [Varlock's monorepo guide](https://varlock.dev/guides/monorepos/).
-
-Bun's automatic env loading is disabled in `bunfig.toml`; the framework integration or server bootstrap loads Varlock. Node deployments must include Varlock and its dependencies alongside the app schema.
-
-Run standalone Node/Bun tools that use Varlock from the owning app directory so they load that app's schema and env files. `env:generate` only generates TypeScript files; it does not initialize environment values in a subsequent command.
-
-## Deployment
-
-### Docker Compose
-
-- Target: web + server
-- Config: `docker-compose.yml` (app Dockerfiles live in `apps/*/Dockerfile`)
-- Build images: bun run docker:build
-- Start: bun run docker:up
-- Logs: bun run docker:logs
-- Stop: bun run docker:down
-
-Environment variables are read from each app's `.env` file (baked into web builds for public variables) and overridden in `docker-compose.yml` for container networking.
-
-Docker Compose uses the local `./.data/local.db` file. Run `bun run db:push` before starting the stack.
-
-For more details, see the guide on [Deploying with Docker Compose](https://www.better-t-stack.dev/docs/guides/docker).
-
-## Git Hooks and Formatting
-
-- Run checks: `bun run check`
-
-## Project Structure
+## Project structure
 
 ```
-neobuni/
-├── apps/
-│   ├── web/         # Frontend application (React + TanStack Router)
-│   └── server/      # Backend API (Hono, ORPC)
-├── packages/
-│   ├── ui/          # Shared shadcn/ui components and styles
-│   ├── api/         # API layer / business logic
-│   ├── auth/        # Authentication configuration & logic
-│   └── db/          # Database schema & queries
+apps/
+  web/         React app (ported buni UI, oRPC client, SSE chat)
+  server/      Hono bootstrap, oRPC router + server-only routers, workers
+  fumadocs/    Documentation site (ported buni docs)
+packages/
+  core/        Pure decision kernel (no Effect, no I/O)
+  contracts/   Zod contracts shared by server, core and web
+  db/          Drizzle schema, libsql client, Effect-returning repos
+  api/         oRPC procedures, context and error mapping
+  auth/        Better Auth instance, profiles, reset mail
+  ui/          shadcn/ui component library
+  config/      Shared TypeScript config
+docs/          Internal workbench/superpowers notes
 ```
 
-## Available Scripts
+## Architecture rules
 
-- `bun run dev`: Start all applications in development mode
-- `bun run build`: Build all applications
-- `bun run dev:web`: Start only the web application
-- `bun run dev:server`: Start only the server
-- `bun run check-types`: Check TypeScript types across all apps
-- `bun run db:push`: Push schema changes to database
-- `bun run db:generate`: Generate database client/types
-- `bun run db:migrate`: Run database migrations
-- `bun run db:studio`: Open database studio UI
-- `bun run db:local`: Start the local SQLite database
-- `bun run check`: Run Vite+ format/lint checks and workspace TypeScript checks
-- `bun run lint`: Run Vite+ lint checks
-- `bun run format`: Run Vite+ formatting
-- `bun run staged`: Run Vite+ checks against staged files
-- `bun run docker:build`: Build the Docker Compose images
-- `bun run docker:up`: Build and start the Docker Compose stack
-- `bun run docker:logs`: Tail logs from the Docker Compose stack
-- `bun run docker:down`: Stop the Docker Compose stack
+- **Functional core, imperative shell.** `packages/core` is pure and synchronous.
+  Side effects live in `packages/db`, `packages/api` and `apps/server`.
+- **Zod first.** Contracts are Zod schemas; TypeScript types are inferred.
+- **Effect at the boundaries.** Repos, procedures, turn runtime and workers are
+  Effect-typed. Promise-only adapters (tool handlers, provider SDK glue, webhook
+  clients) use the `runRepo` bridge.
+- **Hybrid transport.** oRPC for JSON CRUD/query. Raw Hono for the chat SSE
+  stream (`POST /v1/chat/stream`), auth, and external webhooks.
 
-## Better Auth Schema Generation
+See `MIGRATION.md` for the port decisions, phase status and known deviations.
 
-After changing auth plugins or schema options, run `bun run auth:generate` from the project root. The script runs the Better Auth CLI through `varlock run` from the owning app directory, loading the auth instance from `src/services.ts`. Review the schema changes, then use your ORM's migration workflow to apply them.
+## Scripts
+
+| Script | Purpose |
+|---|---|
+| `bun run dev` | All apps |
+| `bun run dev:web` / `dev:server` | Single app |
+| `bun run build` | Build all apps |
+| `bun run check` | Biome/Ultracite lint + workspace typecheck |
+| `bun run check-types` | Typecheck all workspaces |
+| `bun run test` | Vitest (run `vp test run` directly) |
+| `bun run format` | Biome format + safe fixes |
+| `bun run db:migrate` / `db:push` / `db:studio` | Database |
+| `bun run env:generate` | Regenerate varlock `env.ts` files |
+| `bun run docker:up` | Docker Compose stack |
+
+## Intentional differences from buni
+
+- **Reflection** is removed (code deleted, docs archived under
+  `apps/fumadocs/content/docs/buni/archive/reflection`). It will be redesigned.
+- **Discord gateway sidecar** is dropped. Discord remains webhook-in + API-out.
+- **Tauri** is dropped; the UI ships as a mobile-first web app.
+- **sqlite-vec** is replaced by libsql native vectors and indexes.
+- **TanStack AI 1.0** replaces buni's 0.22, including the AG-UI wire changes.
