@@ -1,15 +1,29 @@
-import { createClient } from "@libsql/client";
-import { drizzle } from "drizzle-orm/libsql";
-
-import type { DatabaseConfig } from "./config";
-import { relations } from "./relations";
-
-export function createDb(env: DatabaseConfig) {
-  const client = createClient({
-    url: env.DATABASE_URL,
-  });
-
-  return drizzle({ client, relations });
-}
-
-export type Database = ReturnType<typeof createDb>;
+export * from "./client"
+export * from "./relations"
+export * from "./repos/agent-config"
+export * from "./repos/action-proposals"
+export * from "./repos/action-runs"
+export * from "./repos/conversations"
+export * from "./repos/digest-anchors"
+export * from "./repos/discord-external-conversations"
+export * from "./repos/events"
+export * from "./repos/feishu-config"
+export * from "./repos/knowledge"
+export * from "./repos/memories"
+export * from "./repos/memory-conflicts"
+export * from "./repos/memory-graph"
+export * from "./repos/messaging-config"
+export * from "./repos/messages"
+export * from "./repos/profiles"
+export * from "./repos/provider-config"
+export * from "./repos/qq-config"
+export * from "./repos/runtime-spans"
+export * from "./repos/runtime-turns"
+export * from "./repos/schedules"
+export * from "./repos/soul-config"
+export * from "./repos/task-runs"
+export * from "./repos/vec-knowledge-chunks"
+export * from "./repos/vec-memories"
+export * from "./schema"
+export * from "./repos/goals"
+export * from "./repos/decisions"
