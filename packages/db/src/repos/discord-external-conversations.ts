@@ -1,9 +1,10 @@
+import type { Client } from "@libsql/client";
 import { idSchema, isoDateTimeSchema } from "@neobuni/contracts";
 import { makeConversation, makeMessage } from "@neobuni/core";
 import { Effect } from "effect";
 import { z } from "zod";
 
-import { db, fromPromise, getClient } from "../client";
+import { fromPromise, getClient } from "../client";
 import {
 	DISCORD_EXTERNAL_CONVERSATION_ROLLOVER_LIMITS,
 	type DiscordExternalConversationRolloverLimits,
@@ -12,6 +13,8 @@ import {
 	estimateDiscordExternalConversationTokens,
 	selectDiscordExternalConversationSeedMessages,
 } from "./discord-external-conversation-rollover";
+
+type QueryExecutor = Pick<Client, "execute">;
 
 const resolveDiscordExternalConversationWindowLifecycleSchema = z.enum([
 	"created",
@@ -106,11 +109,14 @@ const mergeDiscordRolloverLimits = (
 	...(overrides ?? {}),
 });
 
-const readDiscordBinding = async (input: {
-	profileId: string;
-	scopeKey: string;
-}): Promise<DiscordExternalConversationBindingRow | null> => {
-	const { rows } = await getClient().execute({
+const readDiscordBinding = async (
+	executor: QueryExecutor,
+	input: {
+		profileId: string;
+		scopeKey: string;
+	}
+): Promise<DiscordExternalConversationBindingRow | null> => {
+	const { rows } = await executor.execute({
 		sql: `SELECT id, profile_id, scope_key, conversation_id, last_inbound_at, created_at, updated_at
        FROM external_conversation_bindings
        WHERE profile_id = ? AND platform = 'discord' AND scope_type = 'guild_channel' AND scope_key = ?
@@ -136,9 +142,10 @@ const readDiscordBinding = async (input: {
 };
 
 const readConversation = async (
+	executor: QueryExecutor,
 	conversationId: string
 ): Promise<DiscordConversationRow | null> => {
-	const { rows } = await getClient().execute({
+	const { rows } = await executor.execute({
 		sql: `SELECT id, profile_id, title, model_key, hidden, status, created_at, updated_at
        FROM conversations
        WHERE id = ?
@@ -164,9 +171,10 @@ const readConversation = async (
 };
 
 const readConversationMessages = async (
+	executor: QueryExecutor,
 	conversationId: string
 ): Promise<DiscordMessageRow[]> => {
-	const { rows } = await getClient().execute({
+	const { rows } = await executor.execute({
 		sql: `SELECT id, conversation_id, turn_id, role, kind, content, metadata_json, created_at
        FROM messages
        WHERE conversation_id = ?
@@ -204,11 +212,14 @@ const buildConversationStats = (messages: DiscordMessageRow[]) => {
 	};
 };
 
-const insertConversation = async (input: {
-	profileId: string;
-	scopeKey: string;
-	now: string;
-}) => {
+const insertConversation = async (
+	executor: QueryExecutor,
+	input: {
+		profileId: string;
+		scopeKey: string;
+		now: string;
+	}
+) => {
 	const record = createConversationRecord({
 		profileId: input.profileId,
 		title: buildDiscordConversationTitle(input.scopeKey),
@@ -222,7 +233,7 @@ const insertConversation = async (input: {
 		updatedAt: input.now,
 	};
 
-	await getClient().execute({
+	await executor.execute({
 		sql: `INSERT INTO conversations (id, profile_id, title, model_key, hidden, status, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 		args: [
@@ -240,12 +251,15 @@ const insertConversation = async (input: {
 	return nextRecord;
 };
 
-const insertBinding = async (input: {
-	profileId: string;
-	scopeKey: string;
-	conversationId: string;
-	now: string;
-}) => {
+const insertBinding = async (
+	executor: QueryExecutor,
+	input: {
+		profileId: string;
+		scopeKey: string;
+		conversationId: string;
+		now: string;
+	}
+) => {
 	const record = {
 		id: crypto.randomUUID(),
 		profileId: input.profileId,
@@ -258,7 +272,7 @@ const insertBinding = async (input: {
 		updatedAt: input.now,
 	};
 
-	await getClient().execute({
+	await executor.execute({
 		sql: `INSERT INTO external_conversation_bindings (
          id, profile_id, platform, scope_type, scope_key, conversation_id, last_inbound_at, created_at, updated_at
        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -278,13 +292,16 @@ const insertBinding = async (input: {
 	return record;
 };
 
-const updateBindingConversation = async (input: {
-	bindingId: string;
-	conversationId: string;
-	lastInboundAt: string;
-	now: string;
-}) => {
-	await getClient().execute({
+const updateBindingConversation = async (
+	executor: QueryExecutor,
+	input: {
+		bindingId: string;
+		conversationId: string;
+		lastInboundAt: string;
+		now: string;
+	}
+) => {
+	await executor.execute({
 		sql: `UPDATE external_conversation_bindings
        SET conversation_id = ?, last_inbound_at = ?, updated_at = ?
        WHERE id = ?`,
@@ -297,12 +314,15 @@ const updateBindingConversation = async (input: {
 	});
 };
 
-const touchBinding = async (input: {
-	bindingId: string;
-	lastInboundAt: string;
-	now: string;
-}) => {
-	await getClient().execute({
+const touchBinding = async (
+	executor: QueryExecutor,
+	input: {
+		bindingId: string;
+		lastInboundAt: string;
+		now: string;
+	}
+) => {
+	await executor.execute({
 		sql: `UPDATE external_conversation_bindings
        SET last_inbound_at = ?, updated_at = ?
        WHERE id = ?`,
@@ -310,12 +330,15 @@ const touchBinding = async (input: {
 	});
 };
 
-const updateConversationStatus = async (input: {
-	conversationId: string;
-	status: "active" | "archived";
-	now: string;
-}) => {
-	await getClient().execute({
+const updateConversationStatus = async (
+	executor: QueryExecutor,
+	input: {
+		conversationId: string;
+		status: "active" | "archived";
+		now: string;
+	}
+) => {
+	await executor.execute({
 		sql: `UPDATE conversations
        SET status = ?, updated_at = ?
        WHERE id = ?`,
@@ -323,13 +346,16 @@ const updateConversationStatus = async (input: {
 	});
 };
 
-const copySeedMessages = async (input: {
-	sourceConversationId: string;
-	targetConversationId: string;
-	messages: DiscordMessageRow[];
-	limits: DiscordExternalConversationRolloverLimits;
-	now: string;
-}) => {
+const copySeedMessages = async (
+	executor: QueryExecutor,
+	input: {
+		sourceConversationId: string;
+		targetConversationId: string;
+		messages: DiscordMessageRow[];
+		limits: DiscordExternalConversationRolloverLimits;
+		now: string;
+	}
+) => {
 	const seedMessages = selectDiscordExternalConversationSeedMessages({
 		messages: input.messages.map((message) => ({
 			id: message.id,
@@ -360,7 +386,7 @@ const copySeedMessages = async (input: {
 			},
 		});
 
-		await getClient().execute({
+		await executor.execute({
 			sql: `INSERT INTO messages (
            id, conversation_id, turn_id, role, kind, content, metadata_json, created_at
          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -375,6 +401,20 @@ const copySeedMessages = async (input: {
 				input.now,
 			],
 		});
+	}
+};
+
+const withWriteTransaction = async <A>(
+	run: (executor: QueryExecutor) => Promise<A>
+): Promise<A> => {
+	const transaction = await getClient().transaction("write");
+
+	try {
+		const result = await run(transaction);
+		await transaction.commit();
+		return result;
+	} finally {
+		transaction.close();
 	}
 };
 
@@ -398,122 +438,116 @@ export const resolveDiscordExternalConversationWindow = Effect.fnUntraced(
 		const limits = mergeDiscordRolloverLimits(input.limits);
 
 		return yield* fromPromise("resolveDiscordExternalConversationWindow", () =>
-			db.transaction(
-				async () => {
-					const binding = await readDiscordBinding({
+			withWriteTransaction(async (executor) => {
+				const binding = await readDiscordBinding(executor, {
+					profileId: input.profileId,
+					scopeKey: input.scopeKey,
+				});
+
+				if (!binding) {
+					const conversation = await insertConversation(executor, {
 						profileId: input.profileId,
 						scopeKey: input.scopeKey,
-					});
-
-					if (!binding) {
-						const conversation = await insertConversation({
-							profileId: input.profileId,
-							scopeKey: input.scopeKey,
-							now,
-						});
-						await insertBinding({
-							profileId: input.profileId,
-							scopeKey: input.scopeKey,
-							conversationId: conversation.id,
-							now,
-						});
-
-						return buildResult({
-							conversationId: conversation.id,
-							lifecycle: "created",
-							rolloverReason: null,
-							previousConversationId: null,
-						});
-					}
-
-					const existingConversation = await readConversation(
-						binding.conversation_id
-					);
-					if (
-						!existingConversation ||
-						existingConversation.status !== "active"
-					) {
-						const conversation = await insertConversation({
-							profileId: input.profileId,
-							scopeKey: input.scopeKey,
-							now,
-						});
-
-						await updateBindingConversation({
-							bindingId: binding.id,
-							conversationId: conversation.id,
-							lastInboundAt: now,
-							now,
-						});
-
-						return buildResult({
-							conversationId: conversation.id,
-							lifecycle: "repaired",
-							rolloverReason: null,
-							previousConversationId: binding.conversation_id,
-						});
-					}
-
-					const existingMessages = await readConversationMessages(
-						existingConversation.id
-					);
-					const rollover = decideDiscordExternalConversationRollover({
-						stats: buildConversationStats(existingMessages),
 						now,
-						limits,
+					});
+					await insertBinding(executor, {
+						profileId: input.profileId,
+						scopeKey: input.scopeKey,
+						conversationId: conversation.id,
+						now,
 					});
 
-					if (!rollover.shouldRollover) {
-						await touchBinding({
-							bindingId: binding.id,
-							lastInboundAt: now,
-							now,
-						});
+					return buildResult({
+						conversationId: conversation.id,
+						lifecycle: "created",
+						rolloverReason: null,
+						previousConversationId: null,
+					});
+				}
 
-						return buildResult({
-							conversationId: existingConversation.id,
-							lifecycle: "reused",
-							rolloverReason: null,
-							previousConversationId: null,
-						});
-					}
-
-					const nextConversation = await insertConversation({
+				const existingConversation = await readConversation(
+					executor,
+					binding.conversation_id
+				);
+				if (!existingConversation || existingConversation.status !== "active") {
+					const conversation = await insertConversation(executor, {
 						profileId: input.profileId,
 						scopeKey: input.scopeKey,
 						now,
 					});
 
-					await copySeedMessages({
-						sourceConversationId: existingConversation.id,
-						targetConversationId: nextConversation.id,
-						messages: existingMessages,
-						limits,
-						now,
-					});
-					await updateConversationStatus({
-						conversationId: existingConversation.id,
-						status: "archived",
-						now,
-					});
-					await updateBindingConversation({
+					await updateBindingConversation(executor, {
 						bindingId: binding.id,
-						conversationId: nextConversation.id,
+						conversationId: conversation.id,
 						lastInboundAt: now,
 						now,
 					});
 
 					return buildResult({
-						conversationId: nextConversation.id,
-						lifecycle: "rolled_over",
-						rolloverReason: rollover.reason,
-						previousConversationId: existingConversation.id,
+						conversationId: conversation.id,
+						lifecycle: "repaired",
+						rolloverReason: null,
+						previousConversationId: binding.conversation_id,
 					});
-				},
-				{
-					behavior: "immediate",
 				}
-			)
+
+				const existingMessages = await readConversationMessages(
+					executor,
+					existingConversation.id
+				);
+				const rollover = decideDiscordExternalConversationRollover({
+					stats: buildConversationStats(existingMessages),
+					now,
+					limits,
+				});
+
+				if (!rollover.shouldRollover) {
+					await touchBinding(executor, {
+						bindingId: binding.id,
+						lastInboundAt: now,
+						now,
+					});
+
+					return buildResult({
+						conversationId: existingConversation.id,
+						lifecycle: "reused",
+						rolloverReason: null,
+						previousConversationId: null,
+					});
+				}
+
+				const nextConversation = await insertConversation(executor, {
+					profileId: input.profileId,
+					scopeKey: input.scopeKey,
+					now,
+				});
+
+				await copySeedMessages(executor, {
+					sourceConversationId: existingConversation.id,
+					targetConversationId: nextConversation.id,
+					messages: existingMessages,
+					limits,
+					now,
+				});
+				await updateConversationStatus(executor, {
+					conversationId: existingConversation.id,
+					status: "archived",
+					now,
+				});
+				await updateBindingConversation(executor, {
+					bindingId: binding.id,
+					conversationId: nextConversation.id,
+					lastInboundAt: now,
+					now,
+				});
+
+				return buildResult({
+					conversationId: nextConversation.id,
+					lifecycle: "rolled_over",
+					rolloverReason: rollover.reason,
+					previousConversationId: existingConversation.id,
+				});
+			})
 		);
 	}
 );

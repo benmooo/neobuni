@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type { EvidenceItem } from "@neobuni/contracts";
 import { buildEvidenceRelevanceShadowDecision } from "@neobuni/core";
 import { recordDecisionTrace } from "@neobuni/db";
@@ -8,7 +9,7 @@ import {
 } from "./jev-provider-config";
 
 const hashState = (value: unknown) =>
-	new Bun.CryptoHasher("sha256")
+	createHash("sha256")
 		.update(JSON.stringify(value))
 		.digest("hex")
 		.slice(0, 32);

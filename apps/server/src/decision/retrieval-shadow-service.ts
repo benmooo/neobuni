@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type { RetrievalPlan } from "@neobuni/contracts";
 import {
 	applyJevRetrievalSuppression,
@@ -15,7 +16,7 @@ import {
 import { createRetrievalReleaseGateConfig } from "./retrieval-release-config";
 
 const hashState = (value: unknown) =>
-	new Bun.CryptoHasher("sha256")
+	createHash("sha256")
 		.update(JSON.stringify(value))
 		.digest("hex")
 		.slice(0, 32);

@@ -29,6 +29,7 @@
     "@neobuni/config": "workspace:*",
     "drizzle-kit": "1.0.0-rc.4",
     "typescript": "catalog:",
-    "varlock": "catalog:"
+    "varlock": "catalog:",
+    "vitest": "5.0.3"
   }
 }

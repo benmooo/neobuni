@@ -42,32 +42,25 @@ Rename `@buni/*` → `@neobuni/*`, `BUNI_*` → `NEOBUNI_*`, `buni.sqlite` → `
 
 Verified against the installed `drizzle-orm@1.0.0-rc.4` and `@effect/sql-libsql@4.0.5`.
 
-### 3.1 DB as a Layer
+### 3.1 DB boundary (adjusted during implementation)
+
+`drizzle-orm@1.0.0-rc.4`'s native Effect driver is unusable with Effect 4.0.5:
+it calls `Schema.TaggedErrorClass`, which no longer exists in Effect. The package
+therefore uses the promise-based `drizzle-orm/libsql` driver internally and
+exposes Effects at the module boundary:
 
 ```ts
-// packages/db/src/client.ts
-import { LibsqlClient } from "@effect/sql-libsql/LibsqlClient";
-import * as LibsqlDrizzle from "drizzle-orm/effect-libsql";
-import * as Layer from "effect/Layer";
-import { relations } from "./relations";
-import * as schema from "./schema";
+export const fromPromise = <A>(operation: string, run: () => Promise<A>) =>
+  Effect.tryPromise({ try: run, catch: (cause) => new DbError({ operation, cause }) });
 
-export const makeDatabase = LibsqlDrizzle.makeWithDefaults({ schema, relations });
-
-export const DatabaseLive = Layer.unwrapEffect(makeDatabase).pipe(
-  Layer.provide(LibsqlClient.layer({ url: ENV.DATABASE_URL })),
-);
-
-export class Db extends Context.Service<Db, EffectLibsqlDatabase>() {}
+export const listMemories = Effect.fnUntraced(function* (profileId: string) {
+  const rows = yield* fromPromise("listMemories", () => db.select()...);
+  return rows.map(toMemory);
+});
 ```
 
-Queries are Effects and are `yield*`-ed, not awaited:
-
-```ts
-const rows = yield* db.select().from(memories).where(eq(memories.profileId, id));
-```
-
-`SqlError` is part of the error channel; repos narrow it to domain errors.
+Async adapters that must stay promise-based (tool handlers, provider SDK glue,
+webhook clients) use the sanctioned `runRepo(effect)` bridge.
 
 ### 3.2 Service tags
 
@@ -77,22 +70,16 @@ One tag per capability, provided by Layers in `apps/server/src/layers.ts`.
 
 ### 3.3 Request boundary
 
-- One `ManagedRuntime` built from the app Layer in `apps/server/src/runtime.ts`.
-- oRPC handlers return `Effect`; a middleware runs it and maps tagged errors to `ORPCError`:
-
-```ts
-export const effectProcedure = protectedProcedure.use(async ({ next }) => next());
-
-const handler = effectProcedure.handler(({ context, input }) =>
-  Effect.gen(function* () {
-    const db = yield* Db;
-    return yield* listConversations(context.profileId);
-  }),
-);
-```
-
-- Abort: `c.req.raw.signal` → fiber interrupt (wrap in `Effect.onInterrupt` for cleanup).
-- No `Effect.runPromise` inside business code; only at the edges (oRPC adapter, SSE adapter, HTTP fetch).
+- oRPC handlers run repository Effects through `run(effect)` from
+  `@neobuni/api/run`, which maps tagged errors (`DbError`,
+  `UnauthorizedError`, `NoActiveProfileError`) to `ORPCError`.
+- Server-only procedures that need `apps/server` modules are exported from
+  `apps/server/src/router.ts` as `ServerRouter` / `ServerRouterClient` and
+  merged into the oRPC router. The web client is typed against that merged
+  router.
+- Abort is wired at the raw chat route (`c.req.raw.signal` → `AbortController`).
+- `Effect.runPromise` is confined to the oRPC edge, the SSE edge, worker
+  bootstrap and the `runRepo` adapter bridge.
 
 ### 3.4 Streaming chat
 
@@ -124,20 +111,12 @@ Workers to port: schedule materializer, task-run worker, action-run worker, init
 ## 4. Database plan
 
 - One `DATABASE_URL` (`file:./.data/neobuni.db` locally, Turso in prod).
-- Vector columns via `customType`:
-
-```ts
-const vector = (name: string, dimensions: number) =>
-  customType<{ data: Float32Array; driverData: Uint8Array }>({
-    dataType: () => `F32_BLOB(${dimensions})`,
-    toDriver: (value) => new Uint8Array(value.buffer.slice(0)),
-    fromDriver: (value) => new Float32Array(value),
-  })(name);
-```
-
-- Index: `CREATE INDEX memories_vec_idx ON memories (libsql_vector_idx(embedding))`.
-- Search: `vector_top_k('memories_vec_idx', vector32(?), k)` joined on `rowid`; cosine via `vector_distance_cos`.
-  Verified working locally: FTS5, vector index, `vector_top_k`, `vector32(?)` blob binding.
+- Vector storage keeps buni's shape: dedicated `vec_memories` and
+  `vec_knowledge_chunks` tables with `F32_BLOB(1024)` columns, created by
+  `ensureSchema()` together with the libsql vector indexes.
+- Search: `vector_top_k('<index>', vector32(?), k)` joined on `rowid`; cosine
+  via `vector_distance_cos`. Embeddings are bound as `Float32Array` bytes.
+  Verified locally: FTS5, vector index, `vector_top_k`, `vector32(?)` blob binding.
 - Keep FTS5 `fts_knowledge_chunks` (runtime-only, created by `ensureSchema()`).
 - Drop tables: `reflection_raw_observations`, `reflection_observations`, `reflection_reports`, `reflection_report_marks`, `reflection_report_scheduler_states`, `reflection_source_configs`, `reflection_source_sync_states`, `reflection_job_runs`.
 - Keep everything else, including `goals`, `decisions`, `action_proposals`, `action_runs`, `commitments`, `messaging_*`, `external_*`, `runtime_*`.
@@ -163,7 +142,20 @@ Everything else becomes oRPC procedures under `/rpc`:
 
 OpenAPI handler stays mounted for the public surface. oRPC zod converter keeps Zod contracts as the single source.
 
-Frontend: delete `hc` client; use `@orpc/tanstack-query` for CRUD, `fetchServerSentEvents` for chat, plain `fetch` for webhooks.
+Frontend: the `hc` client is gone. `apps/web/src/lib/api.ts` exposes an oRPC
+client typed as `ServerRouterClient`; chat still uses `fetchServerSentEvents`
+against `/v1/chat/stream`.
+
+### Provider/chat SDK
+
+The port runs **TanStack AI 1.0** (not buni's 0.22). Required changes applied:
+
+- `chat({ threadId })` is mandatory; `conversationId` was removed.
+- AG-UI events no longer carry `model`/`content`/`finishReason`; the mock
+  adapter emits `delta` only.
+- `mergeAgentTools` returns a readonly array; spread it before passing to chat.
+- Client `useChat` takes a mandatory `threadId` and no longer accepts `id`.
+- `@tanstack/ai-react` is the only client import surface.
 
 ## 6. Dropped / archived
 
