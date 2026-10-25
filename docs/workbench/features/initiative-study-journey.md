@@ -222,7 +222,8 @@ active plan v1
 
 实现要点：
 
-- 默认使用仓库内**自编考纲主题表** `study-templates/system-architect-2026.json`，不提交官方教材原文（版权）；
+- 默认使用仓库内**自编考纲主题表** `packages/core/src/study/templates/system-architect-2026.json`（11 模块 / 62 主题 / 约 6300 分钟），不提交官方教材原文（版权）；
+- 模板权重与科目归属由 `template.test.ts` 校验：模块权重和为 1、每个模块内主题权重和为 1、topic id 唯一；
 - 用户可把官方大纲 PDF 放进知识库，生成时作为参考；
 - 计划生成是长任务：`study_plan_jobs`（queued/running/succeeded/failed），由 worker 消费，前端轮询；
 - 重新生成时保留已完成 lesson 与 mastery，只重排未完成部分，`version + 1`。
@@ -394,7 +395,7 @@ Goal 创建扩展：`goals.create({ kind: "study_exam", targetAt, domainConfig, 
 | P0 | 本设计 + 范围确认（删除 vs 归档 Jev、是否保留 Telegram 试点） | 决策记录写入本文件 |
 | P1 | Decision OS 瘦身：契约收敛、Jev/shadow/gates 移出运行时、Now 去掉无关卡片 | ✅ done（2026-10-25）：Jev/shadow/gates 已归档到 `experiments/decision-os/`；`decisionEvaluation`、Jev provider 设置、Now 的 Telegram 草稿与决策健康面板已移除；`bun run check-types`、`bun run test`、Ultracite 全绿 |
 | P2 | Study 领域：schema + 纯 core（planner/scheduler/mastery）+ 单测 | ✅ done（2026-10-25）：`study_*` 契约、6 张表 + 迁移、`packages/core/src/study`（校验/排期/掌握度/进度），新增 20 个单测，全量 258 个测试绿 |
-| P3 | 计划生成：模板 + 结构化抽取 + 校验器 + job | 生成一份 6 个月计划，覆盖 100% 考纲叶子，所有 lesson ≤ 45 min |
+| P3 | 计划生成：模板 + 结构化抽取 + 校验器 + job | 🟡 in progress：自编模板 v0 已落（`system-architect-2026.json`，11 模块 / 62 主题 / 6300 分钟，权重校验测试通过）；待确定性展开、LLM lesson 生成与 job |
 | P4 | 会话/检查/进度 API + repo 集成测试 | 完成一节课 → mastery/readiness 变化可查 |
 | P5 | Now 驾驶舱 + Goal 详情 + 设置 | 移动端可完成"今天这一步"全流程 |
 | P6 | 主动推送 + 聊天工具 | 到点只推一次；漏学给出最小重排；静默时段不推 |

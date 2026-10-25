@@ -1,0 +1,885 @@
+{
+  "id": "system-architect-2026",
+  "exam": "系统架构设计师",
+  "level": "senior",
+  "version": "2026.1",
+  "source": "Self-authored topic map based on the public exam structure. It contains no official textbook text; module and topic weights are our own study estimates.",
+  "modules": [
+    {
+      "id": "module.computer-basics",
+      "title": "计算机与网络基础",
+      "paper": "comprehensive",
+      "weight": 0.1,
+      "topics": [
+        {
+          "id": "topic.computer-organization",
+          "title": "计算机组成与体系结构",
+          "weight": 0.18,
+          "minutes": 120,
+          "learningGoal": "能解释 CPU、存储层次和总线如何影响系统性能，并做基本的容量与性能估算",
+          "how": [
+            "画一张从 CPU 到磁盘的存储层次图",
+            "做 10 道组成原理真题并标注考点"
+          ],
+          "checkIdeas": [
+            "给定负载判断瓶颈更可能在 CPU、内存还是 I/O",
+            "解释缓存命中率对平均延迟的影响"
+          ],
+          "keywords": ["CPU", "缓存", "总线", "存储层次"]
+        },
+        {
+          "id": "topic.operating-systems",
+          "title": "操作系统",
+          "weight": 0.16,
+          "minutes": 120,
+          "learningGoal": "能比较进程与线程、调度策略、内存管理和文件系统在架构选型中的影响",
+          "how": [
+            "用对比表整理进程/线程/协程",
+            "分析一个高并发服务的上下文切换成本"
+          ],
+          "checkIdeas": [
+            "为什么线程数不是越多越好",
+            "虚拟内存如何影响大内存服务的稳定性"
+          ],
+          "keywords": ["进程", "线程", "调度", "虚拟内存"]
+        },
+        {
+          "id": "topic.networks",
+          "title": "计算机网络",
+          "weight": 0.18,
+          "minutes": 120,
+          "learningGoal": "能解释 TCP/IP、HTTP、DNS 和常见网络设备在分布式系统中的位置与故障点",
+          "how": [
+            "按 OSI 与 TCP/IP 两层模型各画一张图",
+            "复盘一次 HTTP 请求经过的组件"
+          ],
+          "checkIdeas": [
+            "从客户端到服务端列出可能超时的环节",
+            "长连接与短连接分别适合什么场景"
+          ],
+          "keywords": ["TCP/IP", "HTTP", "DNS", "负载均衡"]
+        },
+        {
+          "id": "topic.database-fundamentals",
+          "title": "数据库系统",
+          "weight": 0.16,
+          "minutes": 120,
+          "learningGoal": "能解释关系模型、索引、事务隔离和分布式数据库的基本取舍",
+          "how": [
+            "用一张表演示不同隔离级别下的异常",
+            "为一条慢查询设计索引并说明原因"
+          ],
+          "checkIdeas": [
+            "幻读与不可重复读的区别",
+            "什么时候应该分区而不是加索引"
+          ],
+          "keywords": ["关系模型", "索引", "事务", "隔离级别"]
+        },
+        {
+          "id": "topic.middleware-integration",
+          "title": "中间件与系统集成",
+          "weight": 0.12,
+          "minutes": 90,
+          "learningGoal": "能根据业务特征选择消息队列、缓存、API 网关和 ESB 等集成手段",
+          "how": [
+            "整理消息队列的投递语义与幂等策略",
+            "比较同步调用与异步事件的适用边界"
+          ],
+          "checkIdeas": [
+            "消息重复消费如何保证幂等",
+            "缓存穿透、击穿、雪崩分别怎么防"
+          ],
+          "keywords": ["消息队列", "缓存", "API 网关", "ESB"]
+        },
+        {
+          "id": "topic.security-fundamentals",
+          "title": "信息安全基础",
+          "weight": 0.12,
+          "minutes": 90,
+          "learningGoal": "能解释对称/非对称加密、认证授权和常见攻击的基本原理",
+          "how": ["画一张 TLS 握手时序图", "整理 OWASP Top 10 与对应防护"],
+          "checkIdeas": [
+            "为什么 HTTPS 仍然可能被中间人攻击",
+            "签名与加密分别解决什么问题"
+          ],
+          "keywords": ["加密", "认证", "授权", "OWASP"]
+        },
+        {
+          "id": "topic.standards-legal",
+          "title": "标准化与知识产权",
+          "weight": 0.08,
+          "minutes": 60,
+          "learningGoal": "能识别常见标准组织、标准类型和软件知识产权的基本规则",
+          "how": ["做一份标准与法规速查表", "用 5 道真题验证记忆点"],
+          "checkIdeas": [
+            "国际标准、国家标准、行业标准的层级关系",
+            "职务作品的著作权归属"
+          ],
+          "keywords": ["标准", "著作权", "专利", "合规"]
+        }
+      ]
+    },
+    {
+      "id": "module.software-engineering",
+      "title": "软件工程",
+      "paper": "comprehensive",
+      "weight": 0.08,
+      "topics": [
+        {
+          "id": "topic.lifecycle",
+          "title": "软件生命周期与过程模型",
+          "weight": 0.2,
+          "minutes": 90,
+          "learningGoal": "能比较瀑布、迭代、敏捷和 DevOps 的适用场景与风险",
+          "how": [
+            "用一张图对齐阶段、交付物和评审点",
+            "为一个受监管项目选择过程模型并说明理由"
+          ],
+          "checkIdeas": ["什么项目不适合纯敏捷", "DevOps 与持续交付的关系"],
+          "keywords": ["瀑布", "敏捷", "DevOps", "生命周期"]
+        },
+        {
+          "id": "topic.requirements",
+          "title": "需求工程",
+          "weight": 0.18,
+          "minutes": 90,
+          "learningGoal": "能完成需求获取、分析、规格说明和变更影响分析",
+          "how": [
+            "把一个模糊需求改写成可验收的用户故事",
+            "画一张需求变更影响链"
+          ],
+          "checkIdeas": [
+            "功能性需求与非功能性需求如何区分",
+            "需求蔓延的早期信号"
+          ],
+          "keywords": ["需求获取", "需求规格", "变更管理", "验收标准"]
+        },
+        {
+          "id": "topic.software-design",
+          "title": "软件设计",
+          "weight": 0.2,
+          "minutes": 120,
+          "learningGoal": "能用模块化、耦合内聚、设计模式和领域建模解释设计决策",
+          "how": [
+            "用 SOLID 重构一个坏味道示例",
+            "为一个业务域画限界上下文草图"
+          ],
+          "checkIdeas": [
+            "高内聚低耦合如何量化观察",
+            "策略模式与工厂模式分别解决什么问题"
+          ],
+          "keywords": ["模块化", "SOLID", "设计模式", "DDD"]
+        },
+        {
+          "id": "topic.testing",
+          "title": "软件测试",
+          "weight": 0.18,
+          "minutes": 90,
+          "learningGoal": "能设计单元、集成、系统和验收测试，并解释覆盖率与质量门禁",
+          "how": ["为一个服务画测试金字塔", "设计一组边界值与异常路径用例"],
+          "checkIdeas": [
+            "覆盖率 100% 是否等于没有缺陷",
+            "契约测试解决什么问题"
+          ],
+          "keywords": ["单元测试", "集成测试", "覆盖率", "契约测试"]
+        },
+        {
+          "id": "topic.maintenance",
+          "title": "软件维护与演化",
+          "weight": 0.12,
+          "minutes": 60,
+          "learningGoal": "能识别遗留系统风险并制定重构、替换或封装策略",
+          "how": ["用绞杀者模式设计一次渐进替换", "列出技术债的利息与偿还顺序"],
+          "checkIdeas": [
+            "什么情况下不应重写遗留系统",
+            "如何安全地做数据库迁移"
+          ],
+          "keywords": ["遗留系统", "重构", "技术债", "绞杀者模式"]
+        },
+        {
+          "id": "topic.project-management",
+          "title": "软件项目管理",
+          "weight": 0.12,
+          "minutes": 90,
+          "learningGoal": "能制定估算、进度、风险和质量计划，并理解 CMMI 的作用",
+          "how": [
+            "为一个 6 个月项目做 WBS 与关键路径",
+            "建立风险登记册并排优先级"
+          ],
+          "checkIdeas": [
+            "关键路径延误一天意味着什么",
+            "CMMI 等级与过程改进的关系"
+          ],
+          "keywords": ["WBS", "关键路径", "风险", "CMMI"]
+        }
+      ]
+    },
+    {
+      "id": "module.architecture-foundation",
+      "title": "架构基础与质量属性",
+      "paper": "shared",
+      "weight": 0.1,
+      "topics": [
+        {
+          "id": "topic.architecture-views",
+          "title": "架构定义与视图",
+          "weight": 0.18,
+          "minutes": 120,
+          "learningGoal": "能用 4+1 视图和利益相关者视角描述一个系统架构",
+          "how": [
+            "为一个电商系统画逻辑、开发、进程、物理视图",
+            "列出每类利益相关者关心的问题"
+          ],
+          "checkIdeas": [
+            "为什么单一架构图无法满足所有读者",
+            "场景视图如何验证其他视图"
+          ],
+          "keywords": ["4+1 视图", "利益相关者", "架构描述"]
+        },
+        {
+          "id": "topic.architecture-styles",
+          "title": "架构风格与模式",
+          "weight": 0.2,
+          "minutes": 150,
+          "learningGoal": "能比较分层、C/S、管道过滤器、事件驱动、微内核和微服务的取舍",
+          "how": [
+            "用统一维度表比较 6 种风格",
+            "为一个消息处理系统选择风格并说明理由"
+          ],
+          "checkIdeas": [
+            "事件驱动架构的主要复杂度在哪里",
+            "分层架构的依赖倒置如何落地"
+          ],
+          "keywords": ["分层", "事件驱动", "微内核", "微服务"]
+        },
+        {
+          "id": "topic.quality-attributes",
+          "title": "质量属性与场景",
+          "weight": 0.2,
+          "minutes": 150,
+          "learningGoal": "能把性能、可用性、安全性、可修改性等质量属性写成可验证的场景",
+          "how": [
+            "按刺激-环境-响应-度量写 5 个质量场景",
+            "区分质量属性与功能需求"
+          ],
+          "checkIdeas": [
+            "可用性 99.99% 对应多少停机时间",
+            "可修改性场景如何度量"
+          ],
+          "keywords": ["质量属性", "质量场景", "可用性", "可修改性"]
+        },
+        {
+          "id": "topic.architecture-tactics",
+          "title": "架构战术",
+          "weight": 0.18,
+          "minutes": 150,
+          "learningGoal": "能针对质量属性选择具体战术并说明副作用",
+          "how": ["为每个质量属性整理 3 个战术", "分析冗余与一致性之间的权衡"],
+          "checkIdeas": [
+            "主动冗余与被动冗余的区别",
+            "缓存如何同时影响性能和一致性"
+          ],
+          "keywords": ["战术", "冗余", "缓存", "限流"]
+        },
+        {
+          "id": "topic.architecture-evaluation",
+          "title": "架构评估",
+          "weight": 0.14,
+          "minutes": 90,
+          "learningGoal": "能解释 ATAM、CBAM、SAAM 的流程、产出和适用边界",
+          "how": ["用 ATAM 的步骤评审一个支付系统", "整理评估报告应包含的证据"],
+          "checkIdeas": [
+            "ATAM 的敏感点与权衡点",
+            "架构评估为什么需要业务方参与"
+          ],
+          "keywords": ["ATAM", "CBAM", "SAAM", "敏感点"]
+        },
+        {
+          "id": "topic.architecture-documentation",
+          "title": "架构文档与决策",
+          "weight": 0.1,
+          "minutes": 60,
+          "learningGoal": "能写出一页可执行的架构决策记录（ADR）",
+          "how": ["为一次数据库选型写 ADR", "把架构图与决策记录关联起来"],
+          "checkIdeas": ["ADR 应记录哪些上下文", "架构文档如何避免过期"],
+          "keywords": ["ADR", "架构文档", "决策记录"]
+        }
+      ]
+    },
+    {
+      "id": "module.layered-web",
+      "title": "层次式架构与 Web 系统",
+      "paper": "case",
+      "weight": 0.08,
+      "topics": [
+        {
+          "id": "topic.presentation-layer",
+          "title": "表现层架构",
+          "weight": 0.16,
+          "minutes": 90,
+          "learningGoal": "能比较 MVC、MVVM、SSR、CSR 和 BFF 的适用场景",
+          "how": ["为一个多端产品设计 BFF 边界", "画一次首屏渲染的时序"],
+          "checkIdeas": ["SSR 与 CSR 各自的性能瓶颈", "BFF 会不会变成新的单体"],
+          "keywords": ["MVC", "MVVM", "SSR", "BFF"]
+        },
+        {
+          "id": "topic.business-layer",
+          "title": "业务层设计",
+          "weight": 0.16,
+          "minutes": 90,
+          "learningGoal": "能在事务脚本、领域模型和服务层之间做取舍",
+          "how": ["用同一个用例分别写事务脚本与领域模型伪代码", "标出事务边界"],
+          "checkIdeas": [
+            "贫血模型什么时候是合理的",
+            "领域服务与应用服务的区别"
+          ],
+          "keywords": ["事务脚本", "领域模型", "应用服务"]
+        },
+        {
+          "id": "topic.data-access-layer",
+          "title": "数据访问层",
+          "weight": 0.18,
+          "minutes": 120,
+          "learningGoal": "能设计 ORM、缓存、读写分离和分库分表的组合方案",
+          "how": ["画一张读写分离与缓存失效链路", "为分库分表选择分片键"],
+          "checkIdeas": [
+            "分片键选错会带来什么问题",
+            "缓存与数据库双写如何保证最终一致"
+          ],
+          "keywords": ["ORM", "缓存", "读写分离", "分库分表"]
+        },
+        {
+          "id": "topic.web-architecture",
+          "title": "Web 系统架构",
+          "weight": 0.18,
+          "minutes": 120,
+          "learningGoal": "能组合负载均衡、反向代理、CDN 和会话管理设计高可用 Web 系统",
+          "how": ["画一个跨地域 Web 请求链路", "设计无状态会话与灰度发布方案"],
+          "checkIdeas": ["四层与七层负载均衡的区别", "CDN 回源风暴如何避免"],
+          "keywords": ["负载均衡", "反向代理", "CDN", "会话"]
+        },
+        {
+          "id": "topic.frontend-backend-integration",
+          "title": "前后端集成",
+          "weight": 0.16,
+          "minutes": 90,
+          "learningGoal": "能在 REST、GraphQL 和 RPC 之间选择，并设计契约与幂等",
+          "how": ["为同一组接口写 REST 与 RPC 契约", "设计一个幂等下单接口"],
+          "checkIdeas": [
+            "GraphQL 的 N+1 问题怎么解",
+            "接口版本演进如何不破坏老客户端"
+          ],
+          "keywords": ["REST", "GraphQL", "RPC", "幂等"]
+        },
+        {
+          "id": "topic.high-concurrency",
+          "title": "高并发设计",
+          "weight": 0.16,
+          "minutes": 120,
+          "learningGoal": "能用限流、降级、熔断、异步和隔离设计高并发系统",
+          "how": ["为一个秒杀场景画流量控制链路", "列出每个保护手段的触发条件"],
+          "checkIdeas": ["熔断与降级的区别", "线程池隔离和信号量隔离怎么选"],
+          "keywords": ["限流", "降级", "熔断", "隔离"]
+        }
+      ]
+    },
+    {
+      "id": "module.distributed-cloud",
+      "title": "分布式与云原生架构",
+      "paper": "case",
+      "weight": 0.1,
+      "topics": [
+        {
+          "id": "topic.distributed-theory",
+          "title": "分布式理论基础",
+          "weight": 0.18,
+          "minutes": 120,
+          "learningGoal": "能解释 CAP、BASE、一致性模型和共识算法的取舍",
+          "how": [
+            "用三个系统例子说明 CAP 选择",
+            "比较 Raft 与 Paxos 的工程差异"
+          ],
+          "checkIdeas": [
+            "为什么分区容忍性不能放弃",
+            "线性一致性与最终一致性的用户可见差异"
+          ],
+          "keywords": ["CAP", "BASE", "一致性", "Raft"]
+        },
+        {
+          "id": "topic.microservices",
+          "title": "微服务架构",
+          "weight": 0.2,
+          "minutes": 150,
+          "learningGoal": "能按业务边界拆分服务，并设计注册发现、网关、配置和治理",
+          "how": ["用限界上下文拆分一个订单域", "画出服务注册与调用链路"],
+          "checkIdeas": [
+            "服务拆得太细会带来什么成本",
+            "服务网格与 API 网关的职责边界"
+          ],
+          "keywords": ["微服务", "限界上下文", "注册发现", "API 网关"]
+        },
+        {
+          "id": "topic.containers",
+          "title": "容器与编排",
+          "weight": 0.16,
+          "minutes": 120,
+          "learningGoal": "能解释容器隔离、Kubernetes 调度、弹性伸缩和发布策略",
+          "how": ["画一次 Pod 调度与探针检查", "比较滚动发布、蓝绿和灰度"],
+          "checkIdeas": [
+            "requests 与 limits 设置不当的后果",
+            "有状态服务上 K8s 的关键难点"
+          ],
+          "keywords": ["Docker", "Kubernetes", "调度", "灰度发布"]
+        },
+        {
+          "id": "topic.service-mesh",
+          "title": "服务网格与可观测性",
+          "weight": 0.14,
+          "minutes": 90,
+          "learningGoal": "能设计日志、指标、追踪和告警体系，并解释 sidecar 的代价",
+          "how": [
+            "为一个请求画 trace 与 log 关联",
+            "列出四个黄金信号对应的指标"
+          ],
+          "checkIdeas": [
+            "服务网格带来的延迟与运维成本",
+            "如何从告警定位到具体实例"
+          ],
+          "keywords": ["服务网格", "sidecar", "trace", "指标"]
+        },
+        {
+          "id": "topic.serverless",
+          "title": "Serverless 与事件驱动",
+          "weight": 0.14,
+          "minutes": 90,
+          "learningGoal": "能判断 FaaS、事件溯源和事件驱动架构的适用边界",
+          "how": ["为一个文件处理流程设计事件链", "列出冷启动与状态管理的限制"],
+          "checkIdeas": ["什么任务不适合 Serverless", "事件溯源如何重建状态"],
+          "keywords": ["FaaS", "事件驱动", "事件溯源", "冷启动"]
+        },
+        {
+          "id": "topic.distributed-consistency",
+          "title": "分布式一致性实践",
+          "weight": 0.18,
+          "minutes": 120,
+          "learningGoal": "能用 Saga、Outbox、幂等和补偿设计跨服务一致性",
+          "how": [
+            "为一个下单-扣库存-支付流程画 Saga",
+            "设计 Outbox 表与投递链路"
+          ],
+          "checkIdeas": ["Saga 与两阶段提交的取舍", "补偿失败后如何人工介入"],
+          "keywords": ["Saga", "Outbox", "幂等", "补偿"]
+        }
+      ]
+    },
+    {
+      "id": "module.data-architecture",
+      "title": "数据架构",
+      "paper": "case",
+      "weight": 0.07,
+      "topics": [
+        {
+          "id": "topic.data-modeling",
+          "title": "数据建模",
+          "weight": 0.22,
+          "minutes": 120,
+          "learningGoal": "能完成概念、逻辑、物理建模，并在范式与维度建模之间取舍",
+          "how": ["为订单域画概念与逻辑模型", "用星型模型重写一个报表查询"],
+          "checkIdeas": ["什么时候应该反范式", "缓慢变化维怎么处理"],
+          "keywords": ["概念模型", "范式", "维度建模", "星型模型"]
+        },
+        {
+          "id": "topic.warehouse",
+          "title": "数据仓库与数据湖",
+          "weight": 0.22,
+          "minutes": 120,
+          "learningGoal": "能设计分层数仓、ETL/ELT 流程和 Lakehouse 架构",
+          "how": ["画 ODS-DWD-DWS-ADS 分层", "比较 ETL 与 ELT 的适用场景"],
+          "checkIdeas": [
+            "数据湖为什么需要元数据与事务",
+            "指标口径不一致如何治理"
+          ],
+          "keywords": ["数据仓库", "数据湖", "ETL", "Lakehouse"]
+        },
+        {
+          "id": "topic.big-data",
+          "title": "大数据架构",
+          "weight": 0.2,
+          "minutes": 120,
+          "learningGoal": "能比较批处理、流处理和 Lambda/Kappa 架构",
+          "how": [
+            "为一个实时风控场景画流处理链路",
+            "比较 Lambda 与 Kappa 的维护成本"
+          ],
+          "checkIdeas": [
+            "Exactly-once 在流处理中如何实现",
+            "流批一体的主要挑战"
+          ],
+          "keywords": ["批处理", "流处理", "Lambda", "Kappa"]
+        },
+        {
+          "id": "topic.data-governance",
+          "title": "数据治理",
+          "weight": 0.18,
+          "minutes": 90,
+          "learningGoal": "能设计元数据、血缘、质量和数据安全治理方案",
+          "how": ["画一张数据血缘链路", "为一个核心指标定义质量规则"],
+          "checkIdeas": ["数据质量问题的责任边界", "敏感数据如何分级与脱敏"],
+          "keywords": ["元数据", "血缘", "数据质量", "数据安全"]
+        },
+        {
+          "id": "topic.distributed-database",
+          "title": "分布式数据库",
+          "weight": 0.18,
+          "minutes": 90,
+          "learningGoal": "能解释分片、复制、分布式事务和一致性读的工程取舍",
+          "how": ["比较主从复制与多主复制", "为分片表设计全局唯一 ID"],
+          "checkIdeas": ["跨分片查询为什么昂贵", "分布式事务的可用性代价"],
+          "keywords": ["分片", "复制", "分布式事务", "全局 ID"]
+        }
+      ]
+    },
+    {
+      "id": "module.security-architecture",
+      "title": "安全架构",
+      "paper": "shared",
+      "weight": 0.07,
+      "topics": [
+        {
+          "id": "topic.threat-modeling",
+          "title": "安全原则与威胁建模",
+          "weight": 0.22,
+          "minutes": 90,
+          "learningGoal": "能用 STRIDE 和攻击面分析识别架构级安全风险",
+          "how": ["为一个登录链路做 STRIDE 分析", "画出信任边界与攻击面"],
+          "checkIdeas": [
+            "最小权限原则如何落到服务账号",
+            "信任边界画错会漏掉什么风险"
+          ],
+          "keywords": ["STRIDE", "威胁建模", "攻击面", "信任边界"]
+        },
+        {
+          "id": "topic.identity-access",
+          "title": "身份与访问管理",
+          "weight": 0.22,
+          "minutes": 90,
+          "learningGoal": "能设计 OAuth2/OIDC、RBAC/ABAC 和零信任访问控制",
+          "how": ["画一次 OIDC 授权码流程", "为一个多租户系统设计权限模型"],
+          "checkIdeas": ["RBAC 与 ABAC 的适用边界", "零信任为什么不等于 VPN"],
+          "keywords": ["OAuth2", "OIDC", "RBAC", "零信任"]
+        },
+        {
+          "id": "topic.data-security",
+          "title": "数据安全",
+          "weight": 0.2,
+          "minutes": 90,
+          "learningGoal": "能设计加密、脱敏、密钥管理和数据合规方案",
+          "how": ["区分传输加密、存储加密和字段级加密", "设计一套密钥轮换流程"],
+          "checkIdeas": [
+            "密钥和密文能否放在一起",
+            "脱敏与加密分别解决什么问题"
+          ],
+          "keywords": ["加密", "脱敏", "密钥管理", "合规"]
+        },
+        {
+          "id": "topic.application-security",
+          "title": "应用安全",
+          "weight": 0.22,
+          "minutes": 90,
+          "learningGoal": "能识别并防护注入、XSS、CSRF、越权和供应链风险",
+          "how": ["为每个 OWASP 风险写一条防护措施", "复盘一个越权漏洞的根因"],
+          "checkIdeas": [
+            "参数化查询为什么能防注入",
+            "前端校验为什么不能替代后端校验"
+          ],
+          "keywords": ["OWASP", "注入", "XSS", "CSRF"]
+        },
+        {
+          "id": "topic.security-operations",
+          "title": "安全运营",
+          "weight": 0.14,
+          "minutes": 60,
+          "learningGoal": "能设计审计、监控、应急响应和漏洞管理流程",
+          "how": ["为一个核心系统列审计事件", "写一份安全事件分级与响应流程"],
+          "checkIdeas": ["审计日志本身如何防篡改", "安全事件复盘应产出什么"],
+          "keywords": ["审计", "应急响应", "漏洞管理", "安全运营"]
+        }
+      ]
+    },
+    {
+      "id": "module.embedded-communication",
+      "title": "嵌入式与通信系统",
+      "paper": "comprehensive",
+      "weight": 0.06,
+      "topics": [
+        {
+          "id": "topic.embedded-architecture",
+          "title": "嵌入式系统架构",
+          "weight": 0.3,
+          "minutes": 120,
+          "learningGoal": "能解释实时性、可靠性、功耗和资源约束下的嵌入式架构取舍",
+          "how": ["比较硬实时与软实时的调度保证", "为一个车载系统做冗余设计"],
+          "checkIdeas": [
+            "实时系统为什么不能用普通 GC",
+            "看门狗与心跳分别防什么"
+          ],
+          "keywords": ["实时系统", "RTOS", "可靠性", "功耗"]
+        },
+        {
+          "id": "topic.embedded-software",
+          "title": "嵌入式软件",
+          "weight": 0.25,
+          "minutes": 90,
+          "learningGoal": "能解释驱动、交叉编译、固件升级和资源受限编程",
+          "how": ["画一次固件升级与回滚流程", "列出一个驱动模块的边界"],
+          "checkIdeas": [
+            "固件升级失败如何保证可恢复",
+            "交叉编译环境的主要风险"
+          ],
+          "keywords": ["驱动", "交叉编译", "固件", "资源受限"]
+        },
+        {
+          "id": "topic.communication-architecture",
+          "title": "通信系统架构",
+          "weight": 0.25,
+          "minutes": 90,
+          "learningGoal": "能解释网络协议、5G、SDN/NFV 在通信系统中的作用",
+          "how": ["画一张 5G 网络切片示意", "比较传统网络与 SDN 的控制方式"],
+          "checkIdeas": ["网络切片解决了什么问题", "NFV 的主要收益与风险"],
+          "keywords": ["5G", "SDN", "NFV", "网络切片"]
+        },
+        {
+          "id": "topic.iot",
+          "title": "物联网架构",
+          "weight": 0.2,
+          "minutes": 90,
+          "learningGoal": "能设计边缘、云端和设备管理协同的 IoT 架构",
+          "how": [
+            "画一个设备接入与边缘处理链路",
+            "比较 MQTT 与 HTTP 的适用场景"
+          ],
+          "checkIdeas": ["边缘计算为什么能降低延迟", "海量设备如何做灰度升级"],
+          "keywords": ["IoT", "边缘计算", "MQTT", "设备管理"]
+        }
+      ]
+    },
+    {
+      "id": "module.case-method",
+      "title": "案例分析",
+      "paper": "case",
+      "weight": 0.1,
+      "topics": [
+        {
+          "id": "topic.case-format",
+          "title": "案例题型与评分",
+          "weight": 0.14,
+          "minutes": 60,
+          "learningGoal": "能识别案例题的必答/选答结构、得分点和时间分配",
+          "how": ["拆解 2 套真题的评分点", "为 90 分钟制定答题时间表"],
+          "checkIdeas": [
+            "选答题如何快速判断该选哪道",
+            "写得多为什么不一定得分高"
+          ],
+          "keywords": ["案例题型", "评分点", "时间分配"]
+        },
+        {
+          "id": "topic.quality-case",
+          "title": "质量属性案例",
+          "weight": 0.2,
+          "minutes": 120,
+          "learningGoal": "能用质量场景和战术回答性能、可用性、安全类案例",
+          "how": ["按场景六要素写 3 个答案", "为每个战术补一条副作用"],
+          "checkIdeas": [
+            "如何把'提高可用性'写成可评分答案",
+            "战术之间的冲突如何取舍"
+          ],
+          "keywords": ["质量场景", "战术", "可用性", "性能"]
+        },
+        {
+          "id": "topic.style-case",
+          "title": "架构风格与选型案例",
+          "weight": 0.18,
+          "minutes": 90,
+          "learningGoal": "能基于业务约束比较架构风格并给出可辩护的选型",
+          "how": ["用决策矩阵比较 3 种风格", "写一段选型理由与风险"],
+          "checkIdeas": [
+            "为什么不能只写'微服务更先进'",
+            "分层与事件驱动如何混合"
+          ],
+          "keywords": ["架构风格", "选型", "决策矩阵"]
+        },
+        {
+          "id": "topic.distributed-case",
+          "title": "分布式与微服务案例",
+          "weight": 0.18,
+          "minutes": 90,
+          "learningGoal": "能回答服务拆分、一致性、幂等和可观测性案例",
+          "how": ["为一个订单履约案例画时序", "列出三个失败场景与补偿"],
+          "checkIdeas": ["跨服务事务如何落地", "服务雪崩的止损顺序"],
+          "keywords": ["微服务", "Saga", "幂等", "可观测性"]
+        },
+        {
+          "id": "topic.data-security-case",
+          "title": "数据与安全案例",
+          "weight": 0.16,
+          "minutes": 90,
+          "learningGoal": "能回答数据架构、安全架构和合规类案例",
+          "how": ["为一个数据平台设计分层与权限", "写一段安全整改方案"],
+          "checkIdeas": ["数据分级如何影响架构", "安全方案如何兼顾体验"],
+          "keywords": ["数据架构", "安全架构", "合规"]
+        },
+        {
+          "id": "topic.case-answer-template",
+          "title": "案例答题模板",
+          "weight": 0.14,
+          "minutes": 60,
+          "learningGoal": "能形成稳定的'结论-理由-方案-风险'答题结构",
+          "how": ["把 3 个答案改写成模板", "做一次 90 分钟限时训练"],
+          "checkIdeas": [
+            "模板会不会导致答案同质化",
+            "如何在有限时间覆盖得分点"
+          ],
+          "keywords": ["答题模板", "结构", "限时训练"]
+        }
+      ]
+    },
+    {
+      "id": "module.essay-method",
+      "title": "论文写作",
+      "paper": "essay",
+      "weight": 0.12,
+      "topics": [
+        {
+          "id": "topic.essay-format",
+          "title": "论文评分与结构",
+          "weight": 0.14,
+          "minutes": 60,
+          "learningGoal": "能解释论文的评分维度、结构和常见失分点",
+          "how": ["拆解 2 篇高分范文的结构", "列出摘要与结尾的必写要素"],
+          "checkIdeas": [
+            "论文为什么容易写成项目介绍",
+            "摘要应该包含哪些量化信息"
+          ],
+          "keywords": ["论文结构", "评分", "摘要"]
+        },
+        {
+          "id": "topic.project-material",
+          "title": "项目素材准备",
+          "weight": 0.22,
+          "minutes": 150,
+          "learningGoal": "能准备 2-3 个可复用的项目故事，覆盖背景、职责、架构和结果",
+          "how": ["为每个项目写一页素材卡", "把项目映射到 6 类常见题目"],
+          "checkIdeas": ["项目太小如何写出架构深度", "如何避免虚构感"],
+          "keywords": ["项目素材", "架构实践", "量化结果"]
+        },
+        {
+          "id": "topic.essay-argument",
+          "title": "论点与论据",
+          "weight": 0.18,
+          "minutes": 90,
+          "learningGoal": "能围绕架构决策写出有论点、有证据、有反思的正文",
+          "how": [
+            "用'问题-方案-权衡-结果'写一段正文",
+            "为每个论点补一条数据或事实"
+          ],
+          "checkIdeas": [
+            "论据不足的典型表现",
+            "如何写出真实的权衡而不是罗列技术"
+          ],
+          "keywords": ["论点", "论据", "权衡", "反思"]
+        },
+        {
+          "id": "topic.essay-topic-bank",
+          "title": "常见题目分类",
+          "weight": 0.18,
+          "minutes": 90,
+          "learningGoal": "能为架构风格、微服务、安全、数据、云原生等题目快速搭提纲",
+          "how": ["为每类题目写一个 5 分钟提纲", "建立可复用段落库"],
+          "checkIdeas": [
+            "遇到陌生题目如何迁移素材",
+            "提纲如何保证覆盖题目要求"
+          ],
+          "keywords": ["题目分类", "提纲", "素材迁移"]
+        },
+        {
+          "id": "topic.essay-timed-writing",
+          "title": "限时写作训练",
+          "weight": 0.18,
+          "minutes": 150,
+          "learningGoal": "能在 120 分钟内完成一篇 2500-3000 字、结构完整的论文",
+          "how": ["做 2 次 120 分钟全文训练", "用评分表自评并二稿"],
+          "checkIdeas": ["时间不够时先保哪一部分", "如何控制字数与段落节奏"],
+          "keywords": ["限时写作", "字数", "自评"]
+        },
+        {
+          "id": "topic.essay-review",
+          "title": "论文修改与自查",
+          "weight": 0.1,
+          "minutes": 60,
+          "learningGoal": "能用检查表发现结构、论据和表达问题",
+          "how": ["建立 10 项论文自查表", "对比一稿与二稿的改进点"],
+          "checkIdeas": ["哪些问题必须重写而不是润色", "如何检查题目回应度"],
+          "keywords": ["修改", "自查", "评分表"]
+        }
+      ]
+    },
+    {
+      "id": "module.mock-exam",
+      "title": "模考与冲刺",
+      "paper": "shared",
+      "weight": 0.12,
+      "topics": [
+        {
+          "id": "topic.comprehensive-mock",
+          "title": "综合知识模考",
+          "weight": 0.24,
+          "minutes": 150,
+          "learningGoal": "能在 150 分钟内完成 75 道选择题并稳定达到 45 分以上",
+          "how": ["按真实时长做 2 套综合卷", "统计各模块正确率"],
+          "checkIdeas": ["错题集中在哪些模块", "时间分配是否合理"],
+          "keywords": ["综合知识", "模考", "正确率"]
+        },
+        {
+          "id": "topic.case-mock",
+          "title": "案例分析模考",
+          "weight": 0.24,
+          "minutes": 90,
+          "learningGoal": "能在 90 分钟内完成案例分析并达到 45 分以上",
+          "how": ["按真实时长做 2 套案例卷", "用评分点自评"],
+          "checkIdeas": ["哪些得分点经常漏写", "选答题策略是否稳定"],
+          "keywords": ["案例分析", "模考", "得分点"]
+        },
+        {
+          "id": "topic.essay-mock",
+          "title": "论文模考",
+          "weight": 0.24,
+          "minutes": 120,
+          "learningGoal": "能在 120 分钟内完成一篇达到 45 分以上的论文",
+          "how": ["按真实时长写 2 篇论文", "按评分表自评并请人复核"],
+          "checkIdeas": ["论文结构是否稳定", "论据是否足够具体"],
+          "keywords": ["论文模考", "评分表", "复核"]
+        },
+        {
+          "id": "topic.error-review",
+          "title": "错题归因与回炉",
+          "weight": 0.16,
+          "minutes": 90,
+          "learningGoal": "能把错题归因到知识点、审题或时间管理，并安排回炉",
+          "how": ["建立错题归因表", "为高频错点安排 3 次间隔复习"],
+          "checkIdeas": ["同一错点为什么反复出现", "回炉后如何验证真的掌握"],
+          "keywords": ["错题", "归因", "间隔复习"]
+        },
+        {
+          "id": "topic.final-week",
+          "title": "考前一周清单",
+          "weight": 0.12,
+          "minutes": 90,
+          "learningGoal": "能执行一份低风险、可完成的考前一周计划",
+          "how": ["列出必看清单与放弃清单", "按考试时间调整作息"],
+          "checkIdeas": ["考前一周最不该做什么", "如何保证考场状态"],
+          "keywords": ["冲刺", "清单", "作息"]
+        }
+      ]
+    }
+  ]
+}

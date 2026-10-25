@@ -76,6 +76,34 @@ const studyPlanDiagnosticSchema = z.object({
   message: z.string().trim().min(1).max(500),
 });
 
+const studyTemplateTopicSchema = z.object({
+  id: idSchema,
+  title: z.string().trim().min(1).max(200),
+  weight: z.number().min(0).max(1),
+  minutes: z.number().int().min(15).max(600),
+  learningGoal: z.string().trim().min(1).max(500),
+  how: z.array(z.string().trim().min(1).max(300)).min(1).max(6),
+  checkIdeas: z.array(z.string().trim().min(1).max(300)).min(1).max(6),
+  keywords: z.array(z.string().trim().min(1).max(60)).max(12).default([]),
+});
+
+const studyTemplateModuleSchema = z.object({
+  id: idSchema,
+  title: z.string().trim().min(1).max(200),
+  paper: studyPaperSchema,
+  weight: z.number().min(0).max(1),
+  topics: z.array(studyTemplateTopicSchema).min(1).max(24),
+});
+
+const studySyllabusTemplateSchema = z.object({
+  id: z.string().trim().min(1).max(120),
+  exam: z.string().trim().min(1).max(200),
+  level: z.enum(["junior", "intermediate", "senior"]),
+  version: z.string().trim().min(1).max(40),
+  source: z.string().trim().min(1).max(500),
+  modules: z.array(studyTemplateModuleSchema).min(1).max(32),
+});
+
 const studyPlanNodeSchema = z.object({
   id: idSchema,
   planId: idSchema,
@@ -281,6 +309,9 @@ export {
   studySessionStatusSchema,
   studySessionWithNodeSchema,
   studyStudyWindowSchema,
+  studySyllabusTemplateSchema,
+  studyTemplateModuleSchema,
+  studyTemplateTopicSchema,
   studyTodaySchema,
 };
 
@@ -307,3 +338,6 @@ export type StudySessionStatus = z.infer<typeof studySessionStatusSchema>;
 export type StudySessionComplete = z.infer<typeof studySessionCompleteSchema>;
 export type StudySessionWithNode = z.infer<typeof studySessionWithNodeSchema>;
 export type StudyToday = z.infer<typeof studyTodaySchema>;
+export type StudySyllabusTemplate = z.infer<typeof studySyllabusTemplateSchema>;
+export type StudyTemplateModule = z.infer<typeof studyTemplateModuleSchema>;
+export type StudyTemplateTopic = z.infer<typeof studyTemplateTopicSchema>;
