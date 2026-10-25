@@ -20,11 +20,13 @@ import {
   studySessionRescheduleSchema,
 } from "@neobuni/contracts";
 import {
+  addLocalDays,
   buildStudyPlanDraft,
   computeStudyProgress,
   countStudyDays,
   diffLocalDays,
   getStudyTemplate,
+  localClockInTimeZone,
   localDateInTimeZone,
   localDateOf,
   localDateTimeInTimeZone,
@@ -287,15 +289,19 @@ const activatePlanForGoal = async (input: {
     return { nodes: plan.nodes, plan: plan.plan, sessions: existing };
   }
 
-  const { localDate } = nowInTimezone(config);
+  const { localDate, now } = nowInTimezone(config);
+  const startDate =
+    localClockInTimeZone(now, config.timezone) > config.studyWindow.end
+      ? addLocalDays(localDate, 1)
+      : localDate;
   const targetDate = config.targetAt.slice(0, 10);
-  const days = Math.max(1, diffLocalDays(localDate, targetDate));
+  const days = Math.max(1, diffLocalDays(startDate, targetDate));
   const studyDays = Math.max(
     1,
     countStudyDays({
       endDate: targetDate,
       restDays: config.restDays,
-      startDate: localDate,
+      startDate,
     })
   );
   const lessonCount = plan.nodes.filter(
@@ -306,7 +312,7 @@ const activatePlanForGoal = async (input: {
     days,
     maxNewPerDay: Math.max(1, Math.ceil(lessonCount / studyDays)),
     nodes: plan.nodes,
-    startDate: localDate,
+    startDate,
   });
 
   if (scheduled.unscheduledLessonIds.length > 0) {
