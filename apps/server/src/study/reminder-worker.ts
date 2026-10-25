@@ -139,16 +139,19 @@ const isWithinReminderWindow = (input: {
   return deltaMs <= input.leadMinutes * 60_000 && deltaMs >= -24 * 60 * 60_000;
 };
 
-const renderReminder = (node: StudyPlanNode, session: StudySession): string =>
-  [
+const renderReminder = (node: StudyPlanNode, session: StudySession): string => {
+  const whatText = node.enrichment?.whatText ?? node.whatText;
+  const howText = node.enrichment?.howText ?? node.howText;
+  return [
     `📚 今天这一步：${node.title}`,
-    node.whatText ? `学什么：${node.whatText}` : null,
-    node.howText ? `怎么学：${node.howText}` : null,
+    whatText ? `学什么：${whatText}` : null,
+    howText ? `怎么学：${howText}` : null,
     `预计 ${session.durationMinutes} 分钟`,
     "打开 Now 开始，或回复「开始今天的学习」。",
   ]
     .filter((line): line is string => line !== null)
     .join("\n");
+};
 
 const deliver = async (
   deps: StudyReminderDeps,

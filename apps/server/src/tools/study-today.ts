@@ -40,11 +40,12 @@ const createStudyTodayTool = (context: ServerToolContext) =>
       primary:
         snapshot.session && snapshot.node
           ? {
-              how: snapshot.node.howText,
+              how: snapshot.node.enrichment?.howText ?? snapshot.node.howText,
               minutes: snapshot.session.durationMinutes,
               scheduledFor: snapshot.session.scheduledFor,
               title: snapshot.node.title,
-              what: snapshot.node.whatText,
+              what:
+                snapshot.node.enrichment?.whatText ?? snapshot.node.whatText,
             }
           : null,
       readiness: snapshot.progress.overallReadiness,

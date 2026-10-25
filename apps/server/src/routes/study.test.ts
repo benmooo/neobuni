@@ -202,6 +202,34 @@ describe("study router", () => {
               { id: "c2", kind: "case", prompt: "Apply", rubric: null },
               { id: "c3", kind: "case", prompt: "Transfer", rubric: null },
             ],
+            enrichment: {
+              checkSpecs: [
+                {
+                  id: "e1",
+                  kind: "recall",
+                  prompt: "Enriched recall",
+                  rubric: null,
+                },
+                {
+                  id: "e2",
+                  kind: "case",
+                  prompt: "Enriched apply",
+                  rubric: "Points",
+                },
+                {
+                  id: "e3",
+                  kind: "case",
+                  prompt: "Enriched transfer",
+                  rubric: "Points",
+                },
+              ],
+              enrichedAt: "2026-10-25T00:00:00.000Z",
+              howText: "Enriched how",
+              objective: "Enriched objective",
+              resources: [],
+              source: "llm",
+              whatText: "Enriched what",
+            },
             estimatedMinutes: 40,
             id: "lesson-1",
             objective: "Explain quality attributes",
@@ -217,9 +245,9 @@ describe("study router", () => {
       studyRouter.checks.submit,
       {
         answers: [
-          { answer: "a1", promptId: "c1" },
-          { answer: "a2", promptId: "c2" },
-          { answer: "a3", promptId: "c3" },
+          { answer: "a1", promptId: "e1" },
+          { answer: "a2", promptId: "e2" },
+          { answer: "a3", promptId: "e3" },
         ],
         sessionId: "session-1",
       },
@@ -235,6 +263,11 @@ describe("study router", () => {
     expect(result.items).toHaveLength(3);
     expect(mocks.upsertStudyMastery).toHaveBeenCalledTimes(1);
     expect(mocks.updateStudySession).toHaveBeenCalledTimes(1);
+    expect(mocks.gradeStudyChecks.mock.calls[0]?.[0].checks).toEqual([
+      expect.objectContaining({ id: "e1" }),
+      expect.objectContaining({ id: "e2" }),
+      expect.objectContaining({ id: "e3" }),
+    ]);
   });
 
   test("rejects a session that belongs to another profile", async () => {

@@ -644,7 +644,8 @@ export const studyRouter = {
         if (!node) {
           throw new ORPCError("NOT_FOUND", { message: "Lesson not found" });
         }
-        if (node.checkSpecs.length === 0) {
+        const checkSpecs = node.enrichment?.checkSpecs ?? node.checkSpecs;
+        if (checkSpecs.length === 0) {
           throw new ORPCError("PRECONDITION_FAILED", {
             message: "This lesson has no checks",
           });
@@ -654,7 +655,7 @@ export const studyRouter = {
           input.answers.map((answer) => [answer.promptId, answer.answer])
         );
         const graded = await gradeStudyChecks({
-          checks: node.checkSpecs.map((spec) => ({
+          checks: checkSpecs.map((spec) => ({
             answer: answers.get(spec.id) ?? "",
             id: spec.id,
             prompt: spec.prompt,
@@ -668,9 +669,7 @@ export const studyRouter = {
         const now = new Date().toISOString();
         const checkRows = await Promise.all(
           graded.grades.map((grade) => {
-            const spec = node.checkSpecs.find(
-              (item) => item.id === grade.promptId
-            );
+            const spec = checkSpecs.find((item) => item.id === grade.promptId);
             return run(
               createStudyCheck({
                 answer: answers.get(grade.promptId) ?? "",
