@@ -32,3 +32,4 @@ export * from "./runtime/surface";
 export * from "./runtime/transcript";
 export * from "./runtime/turn";
 export * from "./runtime/turn-context";
+export * from "./study";

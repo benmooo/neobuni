@@ -41,4 +41,12 @@ export { runtimeSpansTable } from "./runtime-spans";
 export { runtimeTurnsTable } from "./runtime-turns";
 export { schedulesTable } from "./schedules";
 export { soulConfigsTable } from "./soul-configs";
+export {
+  studyChecksTable,
+  studyGoalConfigsTable,
+  studyMasteryTable,
+  studyPlanNodesTable,
+  studyPlansTable,
+  studySessionsTable,
+} from "./study";
 export { taskRunsTable } from "./task-runs";

@@ -13,3 +13,4 @@ export * from "./prompt/compile-system-prompt";
 export * from "./runtime";
 export * from "./soul/protective-evaluator";
 export * from "./soul/soul-runtime";
+export * from "./study";
