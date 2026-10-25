@@ -158,7 +158,7 @@ describe("computeStudyProgress", () => {
       targetAt: "2027-05-23T00:00:00.000Z",
     });
 
-    expect(progress.coverage).toBeCloseTo(1 / 3, 5);
+    expect(progress.coverage).toBeCloseTo(2 / 3, 5);
     expect(progress.mastery).toBeCloseTo(0.5, 5);
     expect(progress.perPaper).toEqual([
       expect.objectContaining({
@@ -170,10 +170,10 @@ describe("computeStudyProgress", () => {
       }),
       expect.objectContaining({
         paper: "case",
-        coverage: 0,
+        coverage: 1,
         mastery: 0.5,
         mockScore: null,
-        readiness: expect.closeTo(0.35, 5),
+        readiness: expect.closeTo(0.65, 5),
       }),
       expect.objectContaining({
         paper: "essay",
@@ -190,7 +190,22 @@ describe("computeStudyProgress", () => {
     expect(progress.streakDays).toBe(1);
     expect(progress.totalMinutes).toBe(40);
     expect(progress.daysRemaining).toBe(209);
-    expect(progress.minutesPerDayNeeded).toBeCloseTo((90 * 1.35) / 209, 5);
+    expect(progress.minutesPerDayNeeded).toBeCloseTo((45 * 1.35) / 209, 5);
+  });
+
+  test("counts mastered lessons as covered after a replan", () => {
+    const progress = computeStudyProgress({
+      checks: [],
+      goalId: "goal-1",
+      mastery: [mastery({ planNodeId: "comprehensive-1", score: 0.7 })],
+      nodes,
+      now: "2026-10-26T09:00:00.000Z",
+      nowLocalDateTime: "2026-10-26T09:00",
+      sessions: [],
+      targetAt: "2027-05-23T00:00:00.000Z",
+    });
+
+    expect(progress.coverage).toBeCloseTo(1 / 3, 5);
   });
 
   test("counts an overdue planned session in the due count", () => {

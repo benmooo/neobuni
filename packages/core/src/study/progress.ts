@@ -111,8 +111,10 @@ const computeStudyProgress = (
   const targetLocalDate = input.targetAt.slice(0, 10);
   const daysRemaining = Math.max(0, diffLocalDays(today, targetLocalDate));
   const totalWeight = studyWeightTotal(input.nodes);
-  const completedLessons = lessons.filter((lesson) =>
-    sessionsByNode.has(lesson.id)
+  const completedLessons = lessons.filter(
+    (lesson) =>
+      sessionsByNode.has(lesson.id) ||
+      (masteryByNode.get(lesson.id)?.score ?? 0) > 0
   );
   const completedWeight = completedLessons.reduce(
     (sum, lesson) => sum + lesson.weight,
@@ -132,7 +134,11 @@ const computeStudyProgress = (
       return [];
     }
     const paperCompletedWeight = paperLessons
-      .filter((lesson) => sessionsByNode.has(lesson.id))
+      .filter(
+        (lesson) =>
+          sessionsByNode.has(lesson.id) ||
+          (masteryByNode.get(lesson.id)?.score ?? 0) > 0
+      )
       .reduce((sum, lesson) => sum + lesson.weight, 0);
     const paperTotalWeight = paperLessons.reduce(
       (sum, lesson) => sum + lesson.weight,
@@ -200,7 +206,9 @@ const computeStudyProgress = (
     0
   );
   const remainingLessons = lessons.filter(
-    (lesson) => !sessionsByNode.has(lesson.id)
+    (lesson) =>
+      !sessionsByNode.has(lesson.id) &&
+      (masteryByNode.get(lesson.id)?.score ?? 0) === 0
   );
   const remainingMinutes = remainingLessons.reduce(
     (sum, lesson) => sum + lesson.estimatedMinutes,

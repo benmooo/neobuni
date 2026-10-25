@@ -282,6 +282,12 @@ const activatePlanForGoal = async (input: {
   }
 
   const nodeIds = new Set(plan.nodes.map((node) => node.id));
+  const masteryRows = await run(listStudyMastery(input.goalId));
+  const masteredNodeIds = new Set(
+    masteryRows
+      .filter((mastery) => mastery.score > 0 && nodeIds.has(mastery.planNodeId))
+      .map((mastery) => mastery.planNodeId)
+  );
   const existing = (await run(listStudySessions(input.goalId))).filter(
     (session) => nodeIds.has(session.planNodeId)
   );
@@ -348,11 +354,45 @@ const activatePlanForGoal = async (input: {
     )
   );
 
+  const reviewSessions = masteryRows.flatMap((mastery) => {
+    if (!(masteredNodeIds.has(mastery.planNodeId) && mastery.nextReviewAt)) {
+      return [];
+    }
+    const node = plan.nodes.find((item) => item.id === mastery.planNodeId);
+    if (!node) {
+      return [];
+    }
+    const reviewDate =
+      mastery.nextReviewAt < startDate ? startDate : mastery.nextReviewAt;
+    return [
+      {
+        actualMinutes: null,
+        completedAt: null,
+        durationMinutes: Math.min(20, node.estimatedMinutes),
+        goalId: input.goalId,
+        notes: "间隔复习",
+        planNodeId: node.id,
+        profileId: input.profileId,
+        rescheduledFrom: null,
+        scheduledFor: `${reviewDate}T${config.studyWindow.start}`,
+        startedAt: null,
+        status: "planned" as const,
+        timezone: config.timezone,
+      },
+    ];
+  });
+  const reviewRows =
+    reviewSessions.length > 0
+      ? await run(createStudySessions(reviewSessions))
+      : [];
+  const allSessions = [...sessions, ...reviewRows];
+
   await run(
     appendEvent(input.profileId, "study.plan_activated", {
       goalId: input.goalId,
       planId: input.planId,
-      sessionCount: sessions.length,
+      sessionCount: allSessions.length,
+      reviewCount: reviewRows.length,
     })
   );
 
@@ -360,7 +400,7 @@ const activatePlanForGoal = async (input: {
   return {
     nodes: activatedView.nodes,
     plan: activatedView.plan,
-    sessions,
+    sessions: allSessions,
   };
 };
 
