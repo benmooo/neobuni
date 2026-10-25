@@ -1,6 +1,11 @@
 import type {
+  Goal,
   StudyCheckResult,
+  StudyGoalConfig,
   StudyGoalCreate,
+  StudyMastery,
+  StudyPlanView,
+  StudySession,
   StudySessionComplete,
   StudySessionReschedule,
 } from "@neobuni/contracts";
@@ -28,6 +33,22 @@ const useStudyToday = (goalId: string | null) =>
     staleTime: 15_000,
   });
 
+interface StudyGoalDetail {
+  config: StudyGoalConfig;
+  goal: Goal;
+  mastery: StudyMastery[];
+  plan: StudyPlanView | null;
+  sessions: StudySession[];
+}
+
+const useStudyGoalDetail = (goalId: string | null) =>
+  useQuery<StudyGoalDetail>({
+    enabled: goalId !== null,
+    queryKey: [...STUDY_QUERY_KEY, "goal", goalId],
+    queryFn: () => api.study.goals.get({ goalId: goalId ?? "" }),
+    staleTime: 15_000,
+  });
+
 const useStudyProgress = (goalId: string | null) =>
   useQuery({
     enabled: goalId !== null,
@@ -40,6 +61,15 @@ const useStartStudyGoal = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: StudyGoalCreate) => api.study.goals.start(input),
+    onSuccess: () => invalidateStudy(queryClient),
+  });
+};
+
+const useUpdateStudyConfig = (goalId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (config: StudyGoalConfig) =>
+      api.study.goals.updateConfig({ config, goalId }),
     onSuccess: () => invalidateStudy(queryClient),
   });
 };
@@ -106,8 +136,10 @@ export {
   useRescheduleStudySession,
   useSkipStudySession,
   useStartStudyGoal,
+  useStudyGoalDetail,
   useStudyGoals,
   useStudyProgress,
   useStudyToday,
   useSubmitStudyChecks,
+  useUpdateStudyConfig,
 };

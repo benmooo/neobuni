@@ -139,12 +139,13 @@ const buildStudyPlanDraft = (
 ): BuildStudyPlanDraftResult => {
   const maxLessonMinutes = input.maxLessonMinutes ?? 45;
   const nodes: StudyPlanNode[] = [];
+  const idOf = (stableId: string) => `${input.planId}:${stableId}`;
   let order = 0;
   let totalMinutes = 0;
   let lessonCount = 0;
 
   for (const module of input.template.modules) {
-    const moduleId = module.id;
+    const moduleId = idOf(module.id);
     nodes.push({
       id: moduleId,
       planId: input.planId,
@@ -166,7 +167,7 @@ const buildStudyPlanDraft = (
     order += 1;
 
     for (const topic of module.topics) {
-      const topicId = topic.id;
+      const topicId = idOf(topic.id);
       nodes.push({
         id: topicId,
         planId: input.planId,
@@ -194,7 +195,7 @@ const buildStudyPlanDraft = (
       for (const [index, durationMinutes] of minutes.entries()) {
         const part = index + 1;
         const count = minutes.length;
-        const lessonId = `lesson.${topic.id}.${part}`;
+        const lessonId = idOf(`lesson.${topic.id}.${part}`);
         const label = partLabel(part, count);
         nodes.push({
           id: lessonId,

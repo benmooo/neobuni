@@ -8,6 +8,7 @@ import { app } from "./app";
 import { startInitiativeWorker } from "./decision/initiative-worker";
 import { ENV } from "./env.server";
 import { startScheduleMaterializer } from "./schedules/materializer";
+import { startStudyReminderWorker } from "./study/reminder-worker";
 import { startTaskRunWorker } from "./task-runs/worker";
 
 await ensureSchema();
@@ -30,6 +31,7 @@ const fibers = [
   Effect.runFork(startTaskRunWorker()),
   Effect.runFork(startActionRunWorker()),
   Effect.runFork(startInitiativeWorker()),
+  Effect.runFork(startStudyReminderWorker()),
 ];
 
 const shutdown = async () => {

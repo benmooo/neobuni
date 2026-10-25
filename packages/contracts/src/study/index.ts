@@ -286,6 +286,10 @@ const studyCheckResultSchema = z.object({
 
 const studyProgressInputSchema = z.object({ goalId: idSchema });
 const studyGoalParamSchema = z.object({ goalId: idSchema });
+const studyGoalConfigUpdateSchema = z.object({
+  goalId: idSchema,
+  config: studyGoalConfigSchema,
+});
 const studyPlanActivateSchema = z.object({
   goalId: idSchema,
   planId: idSchema,
@@ -303,6 +307,7 @@ export {
   studyCheckSubmitSchema,
   studyDiagnosticSeveritySchema,
   studyGoalConfigSchema,
+  studyGoalConfigUpdateSchema,
   studyGoalCreateSchema,
   studyGoalParamSchema,
   studyGradedBySchema,
@@ -340,6 +345,7 @@ export type StudyCheckKind = z.infer<typeof studyCheckKindSchema>;
 export type StudyCheckResult = z.infer<typeof studyCheckResultSchema>;
 export type StudyCheckSpec = z.infer<typeof studyCheckSpecSchema>;
 export type StudyGoalConfig = z.infer<typeof studyGoalConfigSchema>;
+export type StudyGoalConfigUpdate = z.infer<typeof studyGoalConfigUpdateSchema>;
 export type StudyGoalCreate = z.infer<typeof studyGoalCreateSchema>;
 export type StudyGoalParam = z.infer<typeof studyGoalParamSchema>;
 export type StudyPlanActivate = z.infer<typeof studyPlanActivateSchema>;

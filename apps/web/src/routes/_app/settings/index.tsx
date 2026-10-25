@@ -57,6 +57,7 @@ import {
   SummaryChip,
 } from "@/features/settings/shared";
 import { TelegramSection } from "@/features/settings/telegram-section";
+import { StudySettingsSection } from "@/features/study/study-settings-section";
 import { api } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 import { readValidationMessage } from "@/lib/form-errors";
@@ -86,6 +87,7 @@ type SettingsCategoryKey =
   | "buni"
   | "profile"
   | "models"
+  | "study"
   | "integrations";
 
 const THEMES: { key: Theme; label: string; description: string }[] = [
@@ -216,6 +218,11 @@ const SETTINGS_CATEGORIES: Array<{
     key: "models",
     label: "模型与记忆",
     description: "主模型、Embedding、Reasoning",
+  },
+  {
+    key: "study",
+    label: "学习",
+    description: "学习节奏与主动提醒",
   },
   {
     key: "integrations",
@@ -1618,6 +1625,15 @@ function SettingsPage() {
               <ChatProviderSection />
               <MemoryEmbeddingSection />
               <MemoryReasoningSection />
+            </SectionGroup>
+          )}
+
+          {activeCategory === "study" && (
+            <SectionGroup
+              description="学习节奏、休息日、静默时段和提醒渠道。"
+              title="学习"
+            >
+              <StudySettingsSection />
             </SectionGroup>
           )}
 

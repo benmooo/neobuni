@@ -9,6 +9,7 @@ import {
   type StudyToday,
   studyCheckResultSchema,
   studyCheckSubmitSchema,
+  studyGoalConfigUpdateSchema,
   studyGoalCreateSchema,
   studyGoalParamSchema,
   studyPlanActivateSchema,
@@ -184,6 +185,7 @@ const generatePlanForGoal = async (input: {
     input.templateId ?? config.syllabusTemplateId
   );
   const latest = await run(getLatestStudyPlan({ goalId: input.goalId }));
+  const previousMastery = await run(listStudyMastery(input.goalId));
   const version = (latest?.plan.version ?? 0) + 1;
   const planId = crypto.randomUUID();
   const { localDate } = nowInTimezone(config);
@@ -219,6 +221,26 @@ const generatePlanForGoal = async (input: {
       },
     })
   );
+
+  if (latest) {
+    const oldById = new Map(latest.nodes.map((node) => [node.id, node]));
+    const newByStableId = new Map(
+      draft.nodes.map((node) => [node.id.slice(planId.length + 1), node])
+    );
+    const copies = previousMastery.flatMap((item) => {
+      const oldNode = oldById.get(item.planNodeId);
+      if (oldNode?.kind !== "lesson") {
+        return [];
+      }
+      const stableId = oldNode.id.slice(latest.plan.id.length + 1);
+      const newNode = newByStableId.get(stableId);
+      return newNode ? [{ ...item, planNodeId: newNode.id }] : [];
+    });
+    for (const copy of copies) {
+      const { updatedAt: _updatedAt, ...mastery } = copy;
+      await run(upsertStudyMastery(mastery));
+    }
+  }
 
   await run(
     appendEvent(input.profileId, "study.plan_generated", {
@@ -334,11 +356,46 @@ export const studyRouter = {
       return rows.filter((row): row is NonNullable<typeof row> => row !== null);
     }),
 
+    get: protectedProcedure
+      .input(studyGoalParamSchema)
+      .handler(async ({ input, context }) => {
+        const goal = await requireStudyGoal(context.profileId, input.goalId);
+        const config = await requireStudyConfig(input.goalId);
+        const [plan, mastery, sessions] = await Promise.all([
+          run(getLatestStudyPlan({ goalId: input.goalId })),
+          run(listStudyMastery(input.goalId)),
+          run(listStudySessions(input.goalId)),
+        ]);
+        return { config, goal, mastery, plan, sessions };
+      }),
+
     create: protectedProcedure
       .input(studyGoalCreateSchema)
       .handler(({ input, context }) =>
         createStudyGoalRecord({ input, profileId: context.profileId })
       ),
+
+    updateConfig: protectedProcedure
+      .input(studyGoalConfigUpdateSchema)
+      .handler(async ({ input, context }) => {
+        const goal = await requireStudyGoal(context.profileId, input.goalId);
+        const config = await run(
+          upsertStudyGoalConfig({
+            config: input.config,
+            goalId: goal.id,
+            profileId: context.profileId,
+          })
+        );
+        await run(
+          appendEvent(context.profileId, "study.config_updated", {
+            goalId: goal.id,
+            targetAt: config.targetAt,
+            dailyMinutes: config.dailyMinutes,
+            channels: config.channels.length,
+          })
+        );
+        return config;
+      }),
 
     start: protectedProcedure
       .input(studyGoalCreateSchema)
@@ -541,7 +598,7 @@ export const studyRouter = {
           })
         );
 
-        if (!passed && masteryUpdate.nextReviewAt) {
+        if (masteryUpdate.nextReviewAt) {
           const reviewDate = masteryUpdate.nextReviewAt;
           const existingSessions = await run(listStudySessions(session.goalId));
           const alreadyScheduled = existingSessions.some(
@@ -558,7 +615,7 @@ export const studyRouter = {
                   completedAt: null,
                   durationMinutes: Math.min(20, node.estimatedMinutes),
                   goalId: session.goalId,
-                  notes: "检查未通过，自动安排重学",
+                  notes: passed ? "间隔复习" : "检查未通过，自动安排重学",
                   planNodeId: node.id,
                   profileId: context.profileId,
                   rescheduledFrom: null,

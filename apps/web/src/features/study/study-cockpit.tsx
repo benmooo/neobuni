@@ -28,6 +28,7 @@ import { Progress } from "@neobuni/ui/components/progress";
 import { Spinner } from "@neobuni/ui/components/spinner";
 import { Textarea } from "@neobuni/ui/components/textarea";
 import { CheckCircle, Clock, Fire, Target } from "@phosphor-icons/react";
+import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 
 import {
@@ -490,6 +491,12 @@ function StudyDashboard({ goalId }: { goalId: string }) {
       )}
 
       {progress ? <ProgressPanel progress={progress} /> : null}
+
+      <Link params={{ goalId }} to="/study/$goalId">
+        <Button className="w-full" variant="secondary">
+          查看完整计划与热力图
+        </Button>
+      </Link>
 
       {upcoming.length > 0 ? (
         <Card>

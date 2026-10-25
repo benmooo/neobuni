@@ -34,6 +34,9 @@ describe("buildStudyPlanDraft", () => {
     expect(plan.lessonCount).toBe(lessons.length);
     expect(plan.totalMinutes).toBe(6300);
     expect(lessons.length).toBeGreaterThan(62);
+    expect(lessons.every((lesson) => lesson.id.startsWith("plan-1:"))).toBe(
+      true
+    );
   });
 
   test("keeps every lesson small and every topic covered", () => {
