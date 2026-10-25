@@ -2,6 +2,7 @@ import { protectedProcedure, run } from "@neobuni/api";
 import {
   type StudyCheckResult,
   type StudyGoalConfig,
+  type StudyGoalCreate,
   type StudyPlanView,
   type StudySession,
   type StudySessionWithNode,
@@ -42,6 +43,7 @@ import {
   getStudyGoalConfig,
   getStudyPlan,
   getStudySession,
+  listGoals,
   listStudyChecks,
   listStudyMastery,
   listStudySessions,
@@ -126,119 +128,248 @@ const computeProgress = async (input: {
   });
 };
 
+const createStudyGoalRecord = async (input: {
+  profileId: string;
+  input: StudyGoalCreate;
+}) => {
+  const goal = await run(
+    createGoal({
+      profileId: input.profileId,
+      title: input.input.title,
+      desiredOutcome: input.input.desiredOutcome,
+      status: "active",
+      horizon: "project",
+      successCriteria: [
+        {
+          id: crypto.randomUUID(),
+          description: `在 ${input.input.config.targetAt} 前通过考试`,
+          satisfied: false,
+        },
+      ],
+      constraints: [],
+      autonomyMode: input.input.autonomyMode,
+      planVersion: 0,
+      nextReviewAt: null,
+    })
+  );
+
+  const config = await run(
+    upsertStudyGoalConfig({
+      config: input.input.config,
+      goalId: goal.id,
+      profileId: input.profileId,
+    })
+  );
+
+  await run(
+    appendEvent(input.profileId, "study.goal_created", {
+      goalId: goal.id,
+      targetAt: config.targetAt,
+      dailyMinutes: config.dailyMinutes,
+      syllabusTemplateId: config.syllabusTemplateId,
+    })
+  );
+
+  return { config, goal };
+};
+
+const generatePlanForGoal = async (input: {
+  goalId: string;
+  profileId: string;
+  templateId?: string | undefined;
+}) => {
+  await requireStudyGoal(input.profileId, input.goalId);
+  const config = await requireStudyConfig(input.goalId);
+  const template = getStudyTemplate(
+    input.templateId ?? config.syllabusTemplateId
+  );
+  const latest = await run(getLatestStudyPlan({ goalId: input.goalId }));
+  const version = (latest?.plan.version ?? 0) + 1;
+  const planId = crypto.randomUUID();
+  const { localDate } = nowInTimezone(config);
+  const targetDate = config.targetAt.slice(0, 10);
+  const availableMinutes =
+    Math.max(
+      1,
+      countStudyDays({
+        endDate: targetDate,
+        restDays: config.restDays,
+        startDate: localDate,
+      })
+    ) * config.dailyMinutes;
+
+  const draft = buildStudyPlanDraft({
+    availableMinutes,
+    maxLessonMinutes: config.planStyle.maxLessonMinutes,
+    planId,
+    template,
+  });
+
+  const plan = await run(
+    createStudyPlan({
+      nodes: draft.nodes,
+      plan: {
+        diagnostics: draft.diagnostics,
+        goalId: input.goalId,
+        id: planId,
+        profileId: input.profileId,
+        status: "draft",
+        templateId: template.id,
+        version,
+      },
+    })
+  );
+
+  await run(
+    appendEvent(input.profileId, "study.plan_generated", {
+      goalId: input.goalId,
+      planId,
+      version,
+      lessonCount: draft.lessonCount,
+      totalMinutes: draft.totalMinutes,
+      errorCount: draft.diagnostics.filter((item) => item.severity === "error")
+        .length,
+    })
+  );
+
+  return {
+    lessonCount: draft.lessonCount,
+    plan: plan.plan,
+    nodes: plan.nodes,
+    totalMinutes: draft.totalMinutes,
+  };
+};
+
+const activatePlanForGoal = async (input: {
+  goalId: string;
+  planId: string;
+  profileId: string;
+}) => {
+  await requireStudyGoal(input.profileId, input.goalId);
+  const config = await requireStudyConfig(input.goalId);
+  const plan = await run(getStudyPlan(input.planId));
+  if (!plan || plan.plan.goalId !== input.goalId) {
+    throw new ORPCError("NOT_FOUND", { message: "Plan not found" });
+  }
+  if (plan.plan.status === "superseded") {
+    throw new ORPCError("PRECONDITION_FAILED", {
+      message: "A superseded plan cannot be activated",
+    });
+  }
+
+  const nodeIds = new Set(plan.nodes.map((node) => node.id));
+  const existing = (await run(listStudySessions(input.goalId))).filter(
+    (session) => nodeIds.has(session.planNodeId)
+  );
+  if (existing.length > 0) {
+    return { plan, sessions: existing };
+  }
+
+  const { localDate } = nowInTimezone(config);
+  const targetDate = config.targetAt.slice(0, 10);
+  const days = Math.max(1, diffLocalDays(localDate, targetDate));
+  const scheduled = scheduleStudySessions({
+    config,
+    days,
+    nodes: plan.nodes,
+    startDate: localDate,
+  });
+
+  if (scheduled.unscheduledLessonIds.length > 0) {
+    throw new ORPCError("BAD_REQUEST", {
+      message:
+        "The plan does not fit before the target date. Extend the deadline, add daily minutes, or reduce depth.",
+      data: {
+        unscheduledLessonIds: scheduled.unscheduledLessonIds,
+        diagnostics: plan.plan.diagnostics,
+      },
+    });
+  }
+
+  const activated = await run(
+    activateStudyPlan({ goalId: input.goalId, planId: input.planId })
+  );
+  const sessions = await run(
+    createStudySessions(
+      scheduled.sessions.map((session) => ({
+        actualMinutes: null,
+        completedAt: null,
+        durationMinutes: session.durationMinutes,
+        goalId: input.goalId,
+        notes: null,
+        planNodeId: session.planNodeId,
+        profileId: input.profileId,
+        rescheduledFrom: null,
+        scheduledFor: session.scheduledFor,
+        startedAt: null,
+        status: "planned",
+        timezone: session.timezone,
+      }))
+    )
+  );
+
+  await run(
+    appendEvent(input.profileId, "study.plan_activated", {
+      goalId: input.goalId,
+      planId: input.planId,
+      sessionCount: sessions.length,
+    })
+  );
+
+  return { plan: activated ?? plan, sessions };
+};
+
 export const studyRouter = {
   goals: {
+    list: protectedProcedure.handler(async ({ context }) => {
+      const goals = (await run(listGoals(context.profileId))).filter(
+        (goal) => goal.status === "active" || goal.status === "paused"
+      );
+      const rows = await Promise.all(
+        goals.map(async (goal) => {
+          const config = await run(getStudyGoalConfig(goal.id));
+          return config ? { config, goal } : null;
+        })
+      );
+      return rows.filter((row): row is NonNullable<typeof row> => row !== null);
+    }),
+
     create: protectedProcedure
       .input(studyGoalCreateSchema)
+      .handler(({ input, context }) =>
+        createStudyGoalRecord({ input, profileId: context.profileId })
+      ),
+
+    start: protectedProcedure
+      .input(studyGoalCreateSchema)
       .handler(async ({ input, context }) => {
-        const goal = await run(
-          createGoal({
-            profileId: context.profileId,
-            title: input.title,
-            desiredOutcome: input.desiredOutcome,
-            status: "active",
-            horizon: "project",
-            successCriteria: [
-              {
-                id: crypto.randomUUID(),
-                description: `在 ${input.config.targetAt} 前通过考试`,
-                satisfied: false,
-              },
-            ],
-            constraints: [],
-            autonomyMode: input.autonomyMode,
-            planVersion: 0,
-            nextReviewAt: null,
-          })
-        );
-
-        const config = await run(
-          upsertStudyGoalConfig({
-            config: input.config,
-            goalId: goal.id,
-            profileId: context.profileId,
-          })
-        );
-
-        await run(
-          appendEvent(context.profileId, "study.goal_created", {
-            goalId: goal.id,
-            targetAt: config.targetAt,
-            dailyMinutes: config.dailyMinutes,
-            syllabusTemplateId: config.syllabusTemplateId,
-          })
-        );
-
-        return { config, goal };
+        const created = await createStudyGoalRecord({
+          input,
+          profileId: context.profileId,
+        });
+        const generated = await generatePlanForGoal({
+          goalId: created.goal.id,
+          profileId: context.profileId,
+        });
+        const activated = await activatePlanForGoal({
+          goalId: created.goal.id,
+          planId: generated.plan.id,
+          profileId: context.profileId,
+        });
+        return { ...created, ...generated, ...activated };
       }),
   },
 
   plans: {
     generate: protectedProcedure
       .input(studyPlanGenerateSchema)
-      .handler(async ({ input, context }) => {
-        await requireStudyGoal(context.profileId, input.goalId);
-        const config = await requireStudyConfig(input.goalId);
-        const template = getStudyTemplate(
-          input.templateId ?? config.syllabusTemplateId
-        );
-        const latest = await run(getLatestStudyPlan({ goalId: input.goalId }));
-        const version = (latest?.plan.version ?? 0) + 1;
-        const planId = crypto.randomUUID();
-        const { localDate } = nowInTimezone(config);
-        const targetDate = config.targetAt.slice(0, 10);
-        const availableMinutes =
-          Math.max(
-            1,
-            countStudyDays({
-              endDate: targetDate,
-              restDays: config.restDays,
-              startDate: localDate,
-            })
-          ) * config.dailyMinutes;
-
-        const draft = buildStudyPlanDraft({
-          availableMinutes,
-          maxLessonMinutes: config.planStyle.maxLessonMinutes,
-          planId,
-          template,
-        });
-
-        const plan = await run(
-          createStudyPlan({
-            nodes: draft.nodes,
-            plan: {
-              diagnostics: draft.diagnostics,
-              goalId: input.goalId,
-              id: planId,
-              profileId: context.profileId,
-              status: "draft",
-              templateId: template.id,
-              version,
-            },
-          })
-        );
-
-        await run(
-          appendEvent(context.profileId, "study.plan_generated", {
-            goalId: input.goalId,
-            planId,
-            version,
-            lessonCount: draft.lessonCount,
-            totalMinutes: draft.totalMinutes,
-            errorCount: draft.diagnostics.filter(
-              (item) => item.severity === "error"
-            ).length,
-          })
-        );
-
-        return {
-          lessonCount: draft.lessonCount,
-          plan: plan.plan,
-          nodes: plan.nodes,
-          totalMinutes: draft.totalMinutes,
-        };
-      }),
+      .handler(({ input, context }) =>
+        generatePlanForGoal({
+          goalId: input.goalId,
+          profileId: context.profileId,
+          templateId: input.templateId,
+        })
+      ),
 
     get: protectedProcedure
       .input(studyGoalParamSchema)
@@ -249,80 +380,13 @@ export const studyRouter = {
 
     activate: protectedProcedure
       .input(studyPlanActivateSchema)
-      .handler(async ({ input, context }) => {
-        await requireStudyGoal(context.profileId, input.goalId);
-        const config = await requireStudyConfig(input.goalId);
-        const plan = await run(getStudyPlan(input.planId));
-        if (!plan || plan.plan.goalId !== input.goalId) {
-          throw new ORPCError("NOT_FOUND", { message: "Plan not found" });
-        }
-        if (plan.plan.status === "superseded") {
-          throw new ORPCError("PRECONDITION_FAILED", {
-            message: "A superseded plan cannot be activated",
-          });
-        }
-
-        const nodeIds = new Set(plan.nodes.map((node) => node.id));
-        const existing = (await run(listStudySessions(input.goalId))).filter(
-          (session) => nodeIds.has(session.planNodeId)
-        );
-        if (existing.length > 0) {
-          return { plan, sessions: existing };
-        }
-
-        const { localDate } = nowInTimezone(config);
-        const targetDate = config.targetAt.slice(0, 10);
-        const days = Math.max(1, diffLocalDays(localDate, targetDate));
-        const scheduled = scheduleStudySessions({
-          config,
-          days,
-          nodes: plan.nodes,
-          startDate: localDate,
-        });
-
-        if (scheduled.unscheduledLessonIds.length > 0) {
-          throw new ORPCError("BAD_REQUEST", {
-            message:
-              "The plan does not fit before the target date. Extend the deadline, add daily minutes, or reduce depth.",
-            data: {
-              unscheduledLessonIds: scheduled.unscheduledLessonIds,
-              diagnostics: plan.plan.diagnostics,
-            },
-          });
-        }
-
-        const activated = await run(
-          activateStudyPlan({ goalId: input.goalId, planId: input.planId })
-        );
-        const sessions = await run(
-          createStudySessions(
-            scheduled.sessions.map((session) => ({
-              actualMinutes: null,
-              completedAt: null,
-              durationMinutes: session.durationMinutes,
-              goalId: input.goalId,
-              notes: null,
-              planNodeId: session.planNodeId,
-              profileId: context.profileId,
-              rescheduledFrom: null,
-              scheduledFor: session.scheduledFor,
-              startedAt: null,
-              status: "planned",
-              timezone: session.timezone,
-            }))
-          )
-        );
-
-        await run(
-          appendEvent(context.profileId, "study.plan_activated", {
-            goalId: input.goalId,
-            planId: input.planId,
-            sessionCount: sessions.length,
-          })
-        );
-
-        return { plan: activated ?? plan, sessions };
-      }),
+      .handler(({ input, context }) =>
+        activatePlanForGoal({
+          goalId: input.goalId,
+          planId: input.planId,
+          profileId: context.profileId,
+        })
+      ),
   },
 
   today: protectedProcedure

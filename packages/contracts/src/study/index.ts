@@ -357,6 +357,9 @@ export type StudyProgress = z.infer<typeof studyProgressSchema>;
 export type StudySession = z.infer<typeof studySessionSchema>;
 export type StudySessionStatus = z.infer<typeof studySessionStatusSchema>;
 export type StudySessionComplete = z.infer<typeof studySessionCompleteSchema>;
+export type StudySessionReschedule = z.infer<
+  typeof studySessionRescheduleSchema
+>;
 export type StudySessionWithNode = z.infer<typeof studySessionWithNodeSchema>;
 export type StudyToday = z.infer<typeof studyTodaySchema>;
 export type StudySyllabusTemplate = z.infer<typeof studySyllabusTemplateSchema>;

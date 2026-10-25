@@ -14,6 +14,7 @@ import { ArrowsClockwise, CheckCircle, Target } from "@phosphor-icons/react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
+import { StudyCockpit } from "@/features/study/study-cockpit";
 import {
   useCompleteSuggestedCommitment,
   useCreateActiveGoal,
@@ -138,6 +139,7 @@ function NowPage() {
       />
       <div className="flex-1 overflow-y-auto px-4 pb-4">
         <div className="mt-4 flex flex-col gap-4">
+          <StudyCockpit />
           {overview.isLoading ? (
             <div className="flex h-32 items-center justify-center">
               <Spinner />
