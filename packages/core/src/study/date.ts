@@ -64,9 +64,31 @@ export {
   compareLocalDateTime,
   dayOfWeek,
   diffLocalDays,
+  localClockInTimeZone,
+  localDateInTimeZone,
   localDateOf,
+  localDateTimeInTimeZone,
   localDateTimeToEpoch,
   parseLocalDate,
   toLocalDate,
   toLocalDateTime,
 };
+
+const localDateInTimeZone = (instant: Date, timeZone: string): string =>
+  new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(instant);
+
+const localClockInTimeZone = (instant: Date, timeZone: string): string =>
+  new Intl.DateTimeFormat("en-GB", {
+    timeZone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(instant);
+
+const localDateTimeInTimeZone = (instant: Date, timeZone: string): string =>
+  `${localDateInTimeZone(instant, timeZone)}T${localClockInTimeZone(instant, timeZone)}`;

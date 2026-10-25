@@ -23,6 +23,7 @@ export * from "./repos/runtime-spans";
 export * from "./repos/runtime-turns";
 export * from "./repos/schedules";
 export * from "./repos/soul-config";
+export * from "./repos/study";
 export * from "./repos/task-runs";
 export * from "./repos/vec-knowledge-chunks";
 export * from "./repos/vec-memories";

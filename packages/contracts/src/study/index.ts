@@ -153,6 +153,7 @@ const studySessionSchema = z.object({
   completedAt: isoDateTimeSchema.nullable(),
   actualMinutes: z.number().int().min(0).max(480).nullable(),
   rescheduledFrom: localDateTimeSchema.nullable(),
+  notes: z.string().max(4000).nullable(),
   createdAt: isoDateTimeSchema,
   updatedAt: isoDateTimeSchema,
 });
@@ -275,6 +276,11 @@ const studyCheckResultSchema = z.object({
 });
 
 const studyProgressInputSchema = z.object({ goalId: idSchema });
+const studyGoalParamSchema = z.object({ goalId: idSchema });
+const studyPlanActivateSchema = z.object({
+  goalId: idSchema,
+  planId: idSchema,
+});
 
 export {
   localDateSchema,
@@ -288,11 +294,13 @@ export {
   studyDiagnosticSeveritySchema,
   studyGoalConfigSchema,
   studyGoalCreateSchema,
+  studyGoalParamSchema,
   studyGradedBySchema,
   studyMasterySchema,
   studyNodeKindSchema,
   studyPaperReadinessSchema,
   studyPaperSchema,
+  studyPlanActivateSchema,
   studyPlanDiagnosticSchema,
   studyPlanGenerateSchema,
   studyPlanNodeSchema,
@@ -322,6 +330,8 @@ export type StudyCheckResult = z.infer<typeof studyCheckResultSchema>;
 export type StudyCheckSpec = z.infer<typeof studyCheckSpecSchema>;
 export type StudyGoalConfig = z.infer<typeof studyGoalConfigSchema>;
 export type StudyGoalCreate = z.infer<typeof studyGoalCreateSchema>;
+export type StudyGoalParam = z.infer<typeof studyGoalParamSchema>;
+export type StudyPlanActivate = z.infer<typeof studyPlanActivateSchema>;
 export type StudyMastery = z.infer<typeof studyMasterySchema>;
 export type StudyNodeKind = z.infer<typeof studyNodeKindSchema>;
 export type StudyPaper = z.infer<typeof studyPaperSchema>;

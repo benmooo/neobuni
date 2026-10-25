@@ -128,6 +128,22 @@ const scheduleStudySessions = (
   return { sessions: scheduled, unscheduledLessonIds: unscheduled };
 };
 
+const countStudyDays = (input: {
+  endDate: string;
+  restDays: number[];
+  startDate: string;
+}): number => {
+  let count = 0;
+  let cursor = input.startDate;
+  while (cursor <= input.endDate) {
+    if (!input.restDays.includes(dayOfWeek(cursor))) {
+      count += 1;
+    }
+    cursor = addLocalDays(cursor, 1);
+  }
+  return count;
+};
+
 const compareSessions = (left: StudySession, right: StudySession): number =>
   compareLocalDateTime(left.scheduledFor, right.scheduledFor) ||
   left.createdAt.localeCompare(right.createdAt);
@@ -175,6 +191,7 @@ export type {
 };
 export {
   compareSessions,
+  countStudyDays,
   groupSessionsByLocalDate,
   isStudySessionDue,
   scheduleStudySessions,

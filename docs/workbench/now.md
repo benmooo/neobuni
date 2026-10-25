@@ -23,14 +23,15 @@ Port（buni → neobuni）已经完成并且健康：90 个测试文件 / 277 �
 - 确认四项范围决策：默认 2027-05 / 90 分钟 / 6 天；Jev 归档；P1 先行；学习提醒走独立确定性推送。
 - **P1 完成（2026-10-25）**：Jev / shadow / release gate / evaluation replay 归档到 `experiments/decision-os/`；契约、DB repo、API、设置页与 Now 首屏同步收敛；测试 238 个全绿，typecheck 与 Ultracite 通过。
 - **P2 完成（2026-10-25）**：新增 `study_*` 契约与 6 张表（`study_goal_configs`、`study_plans`、`study_plan_nodes`、`study_sessions`、`study_checks`、`study_mastery`）+ drizzle 迁移；`packages/core/src/study` 实现计划校验、会话排期、掌握度更新、进度/就绪度计算；新增 20 个单测，全量 258 个测试绿。
-- **P3-1 完成（2026-10-25）**：自编「系统架构设计师」主题表 v0，11 模块 / 62 主题 / 6300 分钟，含科目归属、权重、学习目标、怎么学、检查角度；模板契约与 6 个一致性测试；全量 264 个测试绿。
+- **P3-1 完成（2026-10-25）**：自编「系统架构设计师」主题表 v0，11 模块 / 62 主题 / 6300 分钟，含科目归属、权重、学习目标、怎么学、检查角度；模板契约与 6 个一致性测试。
+- **P3-2 / P4-1 完成（2026-10-25）**：确定性展开为 150 个左右小课（全部 ≤45 分钟、覆盖 62 个 topic）；新增 study repos、`study.goals.create`、`plans.generate/get/activate`、`today`、`progress`、`sessions.complete/skip/reschedule`；本地库已应用迁移；全量 279 个测试绿。
 
 ## Next Exact Step
 
-1. **P3-2 确定性展开**：把模板 module/topic 展开成 `StudyPlanNode` lesson（按 30–45 分钟切分，保留 syllabusRefs、prerequisites、checkSpecs 骨架）。
-2. 用 `validateStudyPlan` 校验展开结果：覆盖全部 62 个 topic、单课 ≤45 分钟、每课 3 个检查、无前置环。
-3. 再接 LLM 生成 lesson 的 what/how 与检查题（严格 Zod），最后加生成 job 与 API。
-4. 跑 `bun run test`，保持 264+ 全绿。
+1. **P4-2 检查闭环**：实现 `study.checks.submit`，3 题判分（回忆/应用/迁移），`updateStudyMastery` 写回，未通过安排次日复习。
+2. **P3-3 LLM 增强**：用 reasoning provider 把确定性 lesson 的 what/how 和检查题改写得更具体，严格 Zod 校验，失败回退到确定性版本。
+3. **P5 UI**：先做 Now 的"今天这一步"卡片 + 开始/完成/检查，再做学习详情页与就绪度仪表盘。
+4. 跑 `bun run test`，保持 279+ 全绿。
 
 ## Reopen These Files
 

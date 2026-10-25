@@ -150,13 +150,29 @@ const validateStudyPlan = (
     }
   }
 
-  const lessonParents = new Set(
-    lessons
-      .map((lesson) => lesson.parentId)
-      .filter((id): id is string => id !== null)
+  const lessonAncestors = new Set<string>();
+  const parentById = new Map(
+    input.nodes.map((node) => [node.id, node.parentId])
   );
+  for (const lesson of lessons) {
+    let cursor = lesson.parentId;
+    while (cursor) {
+      lessonAncestors.add(cursor);
+      cursor = parentById.get(cursor) ?? null;
+    }
+  }
+
   for (const node of input.nodes) {
-    if (node.kind !== "lesson" && !lessonParents.has(node.id)) {
+    if (node.parentId && !nodeIds.has(node.parentId)) {
+      diagnostics.push(
+        error(
+          "unknown_parent",
+          `Unknown parent node: ${node.parentId}`,
+          node.id
+        )
+      );
+    }
+    if (node.kind !== "lesson" && !lessonAncestors.has(node.id)) {
       diagnostics.push(
         warning(
           "empty_container",

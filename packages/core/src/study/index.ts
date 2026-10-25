@@ -1,4 +1,5 @@
 export * from "./date";
+export * from "./expand-template";
 export * from "./mastery";
 export * from "./plan";
 export * from "./progress";
