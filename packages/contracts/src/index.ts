@@ -5,6 +5,7 @@ export * from "./core-layer/soul";
 export * from "./decision";
 export * from "./execution-layer/durable-run";
 export * from "./execution-layer/schedule";
+export * from "./execution-layer/study-tools";
 export * from "./execution-layer/task-run";
 export * from "./execution-layer/task-run-query";
 export * from "./execution-layer/tools";

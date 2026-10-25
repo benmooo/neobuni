@@ -23,6 +23,8 @@ const executionToolNames = [
   "send_chat_message",
   "send_feishu_message",
   "send_qq_message",
+  "study_progress",
+  "study_today",
   "summarize_page",
   "update_schedule",
 ] as const;
