@@ -167,6 +167,26 @@ describe("scheduleStudySessions", () => {
     expect(result.unscheduledLessonIds).toHaveLength(8);
   });
 
+  test("respects an explicit max new lessons per day", () => {
+    const result = scheduleStudySessions({
+      config: config(),
+      days: 3,
+      maxNewPerDay: 1,
+      nodes: Array.from({ length: 6 }, (_, index) =>
+        lesson({ id: `lesson-${index}`, order: index })
+      ),
+      startDate: "2026-10-26",
+    });
+
+    expect(result.sessions).toHaveLength(3);
+    expect(result.unscheduledLessonIds).toHaveLength(3);
+    expect(result.sessions.map((item) => item.scheduledFor)).toEqual([
+      "2026-10-26T20:00",
+      "2026-10-27T20:00",
+      "2026-10-28T20:00",
+    ]);
+  });
+
   test("does not schedule a lesson twice when it is already in progress", () => {
     const result = scheduleStudySessions({
       config: config(),

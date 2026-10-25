@@ -35,6 +35,7 @@ interface ScheduleStudySessionsInput {
   config: StudyGoalConfig;
   days: number;
   existingSessions?: Pick<StudySession, "planNodeId" | "status">[];
+  maxNewPerDay?: number;
   nodes: StudyPlanNode[];
   startDate: string;
 }
@@ -76,8 +77,12 @@ const scheduleStudySessions = (
     let budget = input.config.dailyMinutes;
     let offsetMinutes = 0;
     let placedToday = 0;
+    const dailyCap = input.maxNewPerDay ?? Number.POSITIVE_INFINITY;
 
     for (const lesson of remaining) {
+      if (placedToday >= dailyCap) {
+        break;
+      }
       if (completedOrScheduled.has(lesson.id)) {
         continue;
       }

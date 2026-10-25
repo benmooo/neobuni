@@ -290,9 +290,21 @@ const activatePlanForGoal = async (input: {
   const { localDate } = nowInTimezone(config);
   const targetDate = config.targetAt.slice(0, 10);
   const days = Math.max(1, diffLocalDays(localDate, targetDate));
+  const studyDays = Math.max(
+    1,
+    countStudyDays({
+      endDate: targetDate,
+      restDays: config.restDays,
+      startDate: localDate,
+    })
+  );
+  const lessonCount = plan.nodes.filter(
+    (node) => node.kind === "lesson"
+  ).length;
   const scheduled = scheduleStudySessions({
     config,
     days,
+    maxNewPerDay: Math.max(1, Math.ceil(lessonCount / studyDays)),
     nodes: plan.nodes,
     startDate: localDate,
   });
