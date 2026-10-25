@@ -65,7 +65,7 @@ function ChatView({
   const queryClient = useQueryClient();
   const [renameOpen, setRenameOpen] = useState(false);
   const showRuntimeInspector = import.meta.env.DEV;
-  const { messages, send, isLoading, stop, setMessages, toolProgress } =
+  const { messages, send, isLoading, stop, setMessages, toolProgress, error } =
     usePersistentChat(conversationId, initialDbMessages);
   const prevIsLoadingRef = useRef(false);
 
@@ -192,6 +192,7 @@ function ChatView({
         <AssistantUiThread
           aiName={aiName}
           avatarUri={avatarUri}
+          error={error}
           toolProgress={toolProgress}
           uiRenderSpec={latestUiRenderSpec}
           userName={userName}

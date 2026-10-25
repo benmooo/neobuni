@@ -32,6 +32,7 @@ import {
 interface Props {
   aiName: string;
   avatarUri: string;
+  error?: Error | null;
   toolProgress?: string | null;
   uiRenderSpec?: UiRenderSpec | null;
   userName: string;
@@ -254,6 +255,7 @@ function AssistantUiThread({
   userName,
   uiRenderSpec = null,
   toolProgress = null,
+  error = null,
 }: Props) {
   const isEmpty = useAuiState((state) => state.thread.isEmpty);
 
@@ -303,6 +305,12 @@ function AssistantUiThread({
           >
             <div className="pointer-events-auto relative">
               <ScrollToLatestMessage />
+
+              {error ? (
+                <Alert className="mx-4 mb-2" variant="destructive">
+                  <AlertDescription>{error.message}</AlertDescription>
+                </Alert>
+              ) : null}
 
               <AssistantUiComposer uiRenderSpec={uiRenderSpec} />
             </div>
