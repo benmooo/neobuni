@@ -1,0 +1,1 @@
+ALTER TABLE `study_plan_nodes` ADD `enrichment_json` text;

@@ -31,6 +31,7 @@ import {
   listStudyChecks,
   listStudyMastery,
   listStudySessions,
+  updateStudyNodeEnrichment,
   updateStudySession,
   upsertStudyGoalConfig,
   upsertStudyMastery,
@@ -162,6 +163,56 @@ describe("study repositories", () => {
     expect(latest?.plan.status).toBe("draft");
     expect(latest?.nodes.length).toBe(draft.nodes.length);
     expect(latest?.plan.diagnostics).toEqual(draft.diagnostics);
+
+    const lesson = latest?.nodes.find((node) => node.kind === "lesson");
+    expect(lesson).toBeDefined();
+    if (lesson) {
+      const enrichment = {
+        checkSpecs: [
+          {
+            answerKey: "A",
+            id: "c1",
+            kind: "recall" as const,
+            prompt: "Recall",
+            rubric: null,
+          },
+          {
+            answerKey: null,
+            id: "c2",
+            kind: "case" as const,
+            prompt: "Apply",
+            rubric: "Points",
+          },
+          {
+            answerKey: null,
+            id: "c3",
+            kind: "case" as const,
+            prompt: "Transfer",
+            rubric: "Points",
+          },
+        ],
+        enrichedAt: "2026-10-25T00:00:00.000Z",
+        howText: "Refined how",
+        objective: "Refined objective",
+        resources: [],
+        source: "llm" as const,
+        whatText: "Refined what",
+      };
+      const updated = await runRepo(
+        updateStudyNodeEnrichment({
+          enrichment,
+          planNodeId: lesson.id,
+        })
+      );
+      expect(updated?.enrichment).toMatchObject({
+        objective: "Refined objective",
+        source: "llm",
+      });
+      const reread = await runRepo(getStudyPlan(planId));
+      expect(
+        reread?.nodes.find((node) => node.id === lesson.id)?.enrichment
+      ).toMatchObject({ whatText: "Refined what" });
+    }
 
     const activated = await runRepo(
       activateStudyPlan({ goalId: goal.id, planId })

@@ -12,6 +12,7 @@ import {
   studyGoalConfigUpdateSchema,
   studyGoalCreateSchema,
   studyGoalParamSchema,
+  studyLessonEnrichSchema,
   studyPlanActivateSchema,
   studyPlanGenerateSchema,
   studyProgressInputSchema,
@@ -50,12 +51,14 @@ import {
   listStudyChecks,
   listStudyMastery,
   listStudySessions,
+  updateStudyNodeEnrichment,
   updateStudySession,
   upsertStudyGoalConfig,
   upsertStudyMastery,
 } from "@neobuni/db";
 import { ORPCError } from "@orpc/server";
 
+import { enrichStudyLesson } from "../study/enrichment-service";
 import { gradeStudyChecks } from "../study/grading-service";
 
 const requireStudyGoal = async (profileId: string, goalId: string) => {
@@ -507,6 +510,59 @@ export const studyRouter = {
           profileId: context.profileId,
         })
       ),
+  },
+
+  lessons: {
+    enrich: protectedProcedure
+      .input(studyLessonEnrichSchema)
+      .handler(async ({ input, context }) => {
+        const goal = await requireStudyGoal(context.profileId, input.goalId);
+        const plan = await run(getLatestStudyPlan({ goalId: input.goalId }));
+        if (!plan) {
+          throw new ORPCError("NOT_FOUND", { message: "Plan not found" });
+        }
+        const node = plan.nodes.find((item) => item.id === input.planNodeId);
+        if (!node) {
+          throw new ORPCError("NOT_FOUND", { message: "Lesson not found" });
+        }
+        if (node.kind !== "lesson") {
+          throw new ORPCError("BAD_REQUEST", {
+            message: "Only lessons can be refined",
+          });
+        }
+        if (node.enrichment && !input.force) {
+          return { enrichment: node.enrichment, node };
+        }
+        const enrichment = await enrichStudyLesson({
+          desiredOutcome: goal.desiredOutcome,
+          goalTitle: goal.title,
+          node,
+          profileId: context.profileId,
+        });
+        if (!enrichment) {
+          throw new ORPCError("PRECONDITION_FAILED", {
+            message:
+              "Configure a reasoning provider to refine lessons, then try again.",
+          });
+        }
+        const updated = await run(
+          updateStudyNodeEnrichment({
+            enrichment,
+            planNodeId: node.id,
+          })
+        );
+        if (!updated) {
+          throw new ORPCError("NOT_FOUND", { message: "Lesson not found" });
+        }
+        await run(
+          appendEvent(context.profileId, "study.lesson_enriched", {
+            goalId: input.goalId,
+            planId: plan.plan.id,
+            planNodeId: node.id,
+          })
+        );
+        return { enrichment, node: updated };
+      }),
   },
 
   today: protectedProcedure

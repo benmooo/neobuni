@@ -89,6 +89,7 @@ const studyPlanNodesTable = sqliteTable(
     syllabusRefsJson: text("syllabus_refs_json").notNull(),
     prerequisitesJson: text("prerequisites_json").notNull(),
     checkSpecsJson: text("check_specs_json").notNull(),
+    enrichmentJson: text("enrichment_json"),
     createdAt: text("created_at").notNull(),
   },
   (table) => [

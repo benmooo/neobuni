@@ -30,14 +30,15 @@ Port（buni → neobuni）已经完成并且健康：90 个测试文件 / 277 �
 - **P5/P6 完成（2026-10-25）**：新增 `/study/$goalId` 旅程页（三科就绪度、掌握度热力图、完整计划树、最近学习）、Settings > 学习（节奏、休息日、静默时段、提醒渠道、重新生成排期）、确定性 reminder worker（提前 60 分钟、每天最多 2 条、静默时段、幂等、reschedule 后重发）、`study_today` / `study_progress` 聊天工具。
 - **端到端集成测试（2026-10-25）**：真实 DB 上跑通创建目标 → 生成/排期 → 读取今天 → 提交检查 → 掌握度 → 间隔复习；全量 291 个测试绿。
 - **节奏优化（2026-10-25）**：新增 `maxNewPerDay`，把 150 节课按考试日均匀铺开，避免 70 天学完、后面空窗。
-- **重排连续性（2026-10-25）**：重新生成计划时按稳定 key 继承掌握度；已掌握课程不再重排为新 lesson；覆盖率/剩余时间把 mastery 计入；重排时补回间隔复习 session。全量 292 个测试绿。
+- **重排连续性（2026-10-25）**：重新生成计划时按稳定 key 继承掌握度；已掌握课程不再重排为新 lesson；覆盖率/剩余时间把 mastery 计入；重排时补回间隔复习 session。
+- **LLM 内容细化（2026-10-25）**：`study.lessons.enrich` 按需把一节课的 what/how 与 3 道检查题改写得具体、可执行；结果缓存在 `study_plan_nodes.enrichment_json`；严格 Zod 校验，provider 缺失或失败时回退确定性内容；Now 增加"用 AI 细化这节课"与 AI 徽标。全量 296 个测试绿。
 
 ## Next Exact Step
 
-1. **真实环境试跑**：在 Now 创建学习目标，完成一节检查，配置一个提醒渠道，观察 `study.reminder_sent` 事件与推送。
-2. **P3-3 LLM 增强（可选）**：用 reasoning provider 改写 lesson 的 what/how 与检查题，严格 Zod 校验，失败回退到确定性版本。
-3. **收尾**：给 Study 相关接口补 OpenAPI 描述；把 `experiments/decision-os/` 与旧 docs 的归档说明补齐。
-4. 跑 `bun run test`，保持 291+ 全绿。
+1. **真实环境试跑**：在 Now 创建学习目标，点"用 AI 细化这节课"，完成检查，配置一个提醒渠道，观察 `study.reminder_sent` 事件与推送。
+2. **收尾**：给 Study 相关接口补 OpenAPI 描述；把 `experiments/decision-os/` 与旧 docs 的归档说明补齐。
+3. **可选**：把"考考我"做成聊天里的持久化检查工具（复用 `gradeStudyChecks`）。
+4. 跑 `bun run test`，保持 296+ 全绿。
 
 ## Reopen These Files
 

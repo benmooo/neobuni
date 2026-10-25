@@ -1,15 +1,7 @@
-import {
-  getMemoryReasoningProviderConfig,
-  getProviderConfig,
-  runRepo,
-} from "@neobuni/db";
 import { z } from "zod";
 
-import { toOpenAICompatibleConfig } from "../digest/memory-provider-config";
-import {
-  createChatCompletion,
-  type OpenAICompatibleConfig,
-} from "../providers/openai-compatible-client";
+import { createChatCompletion } from "../providers/openai-compatible-client";
+import { resolveStudyReasoningConfig } from "./reasoning-config";
 
 interface StudyCheckToGrade {
   answer: string;
@@ -85,16 +77,6 @@ const fallbackResult = (checks: StudyCheckToGrade[]): StudyGradeResult => ({
   gradedBy: "deterministic",
 });
 
-const resolveGradingConfig = async (
-  profileId: string
-): Promise<OpenAICompatibleConfig | null> => {
-  const [reasoning, chat] = await Promise.all([
-    runRepo(getMemoryReasoningProviderConfig(profileId)),
-    runRepo(getProviderConfig(profileId)),
-  ]);
-  return toOpenAICompatibleConfig(reasoning) ?? toOpenAICompatibleConfig(chat);
-};
-
 const gradeStudyChecks = async (input: {
   checks: StudyCheckToGrade[];
   lessonTitle: string;
@@ -105,7 +87,7 @@ const gradeStudyChecks = async (input: {
     return { grades: [], gradedBy: "deterministic" };
   }
 
-  const config = await resolveGradingConfig(input.profileId);
+  const config = await resolveStudyReasoningConfig(input.profileId);
   if (!config) {
     return fallbackResult(input.checks);
   }

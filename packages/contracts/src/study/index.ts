@@ -104,7 +104,18 @@ const studySyllabusTemplateSchema = z.object({
   modules: z.array(studyTemplateModuleSchema).min(1).max(32),
 });
 
+const studyLessonEnrichmentSchema = z.object({
+  objective: z.string().trim().min(1).max(2000),
+  whatText: z.string().trim().min(1).max(8000),
+  howText: z.string().trim().min(1).max(4000),
+  checkSpecs: z.array(studyCheckSpecSchema).min(3).max(3),
+  resources: z.array(z.string().trim().min(1).max(500)).max(8).default([]),
+  enrichedAt: isoDateTimeSchema,
+  source: z.literal("llm"),
+});
+
 const studyPlanNodeSchema = z.object({
+  enrichment: studyLessonEnrichmentSchema.nullable().optional(),
   id: idSchema,
   planId: idSchema,
   parentId: idSchema.nullable(),
@@ -286,6 +297,12 @@ const studyCheckResultSchema = z.object({
 
 const studyProgressInputSchema = z.object({ goalId: idSchema });
 const studyGoalParamSchema = z.object({ goalId: idSchema });
+const studyLessonEnrichSchema = z.object({
+  force: z.boolean().default(false),
+  goalId: idSchema,
+  planNodeId: idSchema,
+});
+
 const studyGoalConfigUpdateSchema = z.object({
   goalId: idSchema,
   config: studyGoalConfigSchema,
@@ -311,6 +328,8 @@ export {
   studyGoalCreateSchema,
   studyGoalParamSchema,
   studyGradedBySchema,
+  studyLessonEnrichmentSchema,
+  studyLessonEnrichSchema,
   studyMasterySchema,
   studyNodeKindSchema,
   studyPaperReadinessSchema,
@@ -349,6 +368,8 @@ export type StudyGoalConfigUpdate = z.infer<typeof studyGoalConfigUpdateSchema>;
 export type StudyGoalCreate = z.infer<typeof studyGoalCreateSchema>;
 export type StudyGoalParam = z.infer<typeof studyGoalParamSchema>;
 export type StudyPlanActivate = z.infer<typeof studyPlanActivateSchema>;
+export type StudyLessonEnrich = z.infer<typeof studyLessonEnrichSchema>;
+export type StudyLessonEnrichment = z.infer<typeof studyLessonEnrichmentSchema>;
 export type StudyMastery = z.infer<typeof studyMasterySchema>;
 export type StudyNodeKind = z.infer<typeof studyNodeKindSchema>;
 export type StudyPaper = z.infer<typeof studyPaperSchema>;

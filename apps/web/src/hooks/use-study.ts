@@ -3,6 +3,7 @@ import type {
   StudyCheckResult,
   StudyGoalConfig,
   StudyGoalCreate,
+  StudyLessonEnrich,
   StudyMastery,
   StudyPlanView,
   StudySession,
@@ -117,6 +118,14 @@ const useRescheduleStudySession = () => {
   });
 };
 
+const useEnrichStudyLesson = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: StudyLessonEnrich) => api.study.lessons.enrich(input),
+    onSuccess: () => invalidateStudy(queryClient),
+  });
+};
+
 const useSubmitStudyChecks = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -132,6 +141,7 @@ export {
   STUDY_QUERY_KEY,
   useActivateStudyPlan,
   useCompleteStudySession,
+  useEnrichStudyLesson,
   useGenerateStudyPlan,
   useRescheduleStudySession,
   useSkipStudySession,

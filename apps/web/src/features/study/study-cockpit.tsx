@@ -32,6 +32,7 @@ import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 
 import {
+  useEnrichStudyLesson,
   useSkipStudySession,
   useStartStudyGoal,
   useStudyGoals,
@@ -230,44 +231,74 @@ function ProgressPanel({
 }
 
 function SessionCard({
+  goalId,
   node,
   session,
   onComplete,
   onSkip,
 }: {
+  goalId: string;
   node: StudyPlanNode;
   session: StudySession;
   onComplete: () => void;
   onSkip: () => void;
 }) {
+  const enrich = useEnrichStudyLesson();
+  const enrichment = node.enrichment;
+  const whatText = enrichment?.whatText ?? node.whatText;
+  const howText = enrichment?.howText ?? node.howText;
+
   return (
     <Card>
       <CardHeader>
         <div className="flex items-start justify-between gap-2">
           <CardTitle className="text-base">{node.title}</CardTitle>
-          <Badge variant="secondary">
-            {PAPER_LABELS[node.paper]} · {session.durationMinutes} 分钟
-          </Badge>
+          <div className="flex flex-col items-end gap-1">
+            <Badge variant="secondary">
+              {PAPER_LABELS[node.paper]} · {session.durationMinutes} 分钟
+            </Badge>
+            {enrichment ? <Badge variant="outline">AI 细化</Badge> : null}
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        {node.whatText ? (
+        {whatText ? (
           <div>
             <p className="font-medium text-sm">学什么</p>
-            <p className="text-muted-foreground text-sm">{node.whatText}</p>
+            <p className="whitespace-pre-line text-muted-foreground text-sm">
+              {whatText}
+            </p>
           </div>
         ) : null}
-        {node.howText ? (
+        {howText ? (
           <div>
             <p className="font-medium text-sm">怎么学</p>
-            <p className="text-muted-foreground text-sm">{node.howText}</p>
+            <p className="whitespace-pre-line text-muted-foreground text-sm">
+              {howText}
+            </p>
           </div>
+        ) : null}
+        {enrich.isError ? (
+          <p className="text-destructive text-sm">
+            细化失败：{messageOf(enrich.error)}
+          </p>
         ) : null}
         <div className="flex flex-wrap gap-2">
           <Button onClick={onComplete}>完成并检查</Button>
           <Button onClick={onSkip} variant="secondary">
             今天跳过
           </Button>
+          {enrichment ? null : (
+            <Button
+              disabled={enrich.isPending}
+              onClick={() =>
+                enrich.mutate({ force: false, goalId, planNodeId: node.id })
+              }
+              variant="ghost"
+            >
+              {enrich.isPending ? "细化中…" : "用 AI 细化这节课"}
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -454,12 +485,14 @@ function StudyDashboard({ goalId }: { goalId: string }) {
     <div className="space-y-3">
       {primary ? (
         <SessionCard
+          goalId={goalId}
           node={primary.node}
           onComplete={() => {
             setCheckForm({
               node: primary.node,
               session: primary.session,
-              specs: primary.node.checkSpecs,
+              specs:
+                primary.node.enrichment?.checkSpecs ?? primary.node.checkSpecs,
             });
           }}
           onSkip={() => skip.mutate(primary.session.id)}

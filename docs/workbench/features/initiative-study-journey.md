@@ -395,7 +395,7 @@ Goal 创建扩展：`goals.create({ kind: "study_exam", targetAt, domainConfig, 
 | P0 | 本设计 + 范围确认（删除 vs 归档 Jev、是否保留 Telegram 试点） | 决策记录写入本文件 |
 | P1 | Decision OS 瘦身：契约收敛、Jev/shadow/gates 移出运行时、Now 去掉无关卡片 | ✅ done（2026-10-25）：Jev/shadow/gates 已归档到 `experiments/decision-os/`；`decisionEvaluation`、Jev provider 设置、Now 的 Telegram 草稿与决策健康面板已移除；`bun run check-types`、`bun run test`、Ultracite 全绿 |
 | P2 | Study 领域：schema + 纯 core（planner/scheduler/mastery）+ 单测 | ✅ done（2026-10-25）：`study_*` 契约、6 张表 + 迁移、`packages/core/src/study`（校验/排期/掌握度/进度），新增 20 个单测，全量 258 个测试绿 |
-| P3 | 计划生成：模板 + 结构化抽取 + 校验器 + job | 🟡 in progress：模板 v0 + 确定性展开（150 个左右小课）+ 持久化 + API + 按考试日均匀铺排已完成；LLM lesson 内容增强待做 |
+| P3 | 计划生成：模板 + 结构性展开 + 校验器 + job | ✅ done（2026-10-25）：模板 v0 + 确定性展开 + 持久化/API + 按考试日均匀铺排 + 按需 LLM 内容细化（缓存、Zod 校验、失败回退） |
 | P4 | 会话/检查/进度 API + repo 集成测试 | ✅ backend done（2026-10-25）：today / progress / session / check 判分 / mastery 写回 / 间隔复习；repo 集成测试、router 测试与真实 DB 端到端测试通过 |
 | P5 | Now 驾驶舱 + Goal 详情 + 设置 | ✅ done（2026-10-25）：Now 驾驶舱、`/study/$goalId` 旅程页、Settings > 学习（节奏/休息日/静默时段/提醒渠道/重新排期） |
 | P6 | 主动推送 + 聊天工具 | ✅ done（2026-10-25）：确定性 reminder worker（提前 60 分钟、每天最多 2 条、静默时段、幂等、reschedule 后重发）+ `study_today` / `study_progress` 聊天工具 |

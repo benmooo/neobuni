@@ -263,6 +263,9 @@ function PlanTree({
                             <span className="min-w-0 flex-1 truncate">
                               {lesson.title}
                             </span>
+                            {lesson.enrichment ? (
+                              <Badge variant="outline">AI</Badge>
+                            ) : null}
                             <span className="text-muted-foreground text-xs">
                               {lesson.estimatedMinutes} 分钟
                               {mastery

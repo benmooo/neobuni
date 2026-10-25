@@ -1,6 +1,7 @@
 import {
   type StudyCheck,
   type StudyGoalConfig,
+  type StudyLessonEnrichment,
   type StudyMastery,
   type StudyPlan,
   type StudyPlanNode,
@@ -63,6 +64,9 @@ const toStudyPlanNode = (
   syllabusRefs: parseJson(row.syllabusRefsJson, []),
   prerequisites: parseJson(row.prerequisitesJson, []),
   checkSpecs: parseJson(row.checkSpecsJson, []),
+  enrichment: row.enrichmentJson
+    ? parseJson<StudyLessonEnrichment | null>(row.enrichmentJson, null)
+    : null,
 });
 
 const toStudySession = (
@@ -305,6 +309,31 @@ const activateStudyPlan = Effect.fnUntraced(function* (input: {
   return yield* getStudyPlan(input.planId);
 });
 
+const updateStudyNodeEnrichment = Effect.fnUntraced(function* (input: {
+  enrichment: StudyLessonEnrichment;
+  planNodeId: string;
+}) {
+  const row = yield* fromPromise("updateStudyNodeEnrichment", () =>
+    db
+      .select()
+      .from(studyPlanNodesTable)
+      .where(eq(studyPlanNodesTable.id, input.planNodeId))
+      .limit(1)
+      .then((rows) => rows[0] ?? null)
+  );
+  if (!row) {
+    return null;
+  }
+  const enrichmentJson = JSON.stringify(input.enrichment);
+  yield* fromPromise("updateStudyNodeEnrichment", () =>
+    db
+      .update(studyPlanNodesTable)
+      .set({ enrichmentJson })
+      .where(eq(studyPlanNodesTable.id, input.planNodeId))
+  );
+  return toStudyPlanNode({ ...row, enrichmentJson });
+});
+
 const createStudySessions = Effect.fnUntraced(function* (
   inputs: Array<
     Omit<StudySession, "id" | "createdAt" | "updatedAt"> & { id?: string }
@@ -513,6 +542,7 @@ export {
   listStudyChecks,
   listStudyMastery,
   listStudySessions,
+  updateStudyNodeEnrichment,
   updateStudySession,
   upsertStudyGoalConfig,
   upsertStudyMastery,
