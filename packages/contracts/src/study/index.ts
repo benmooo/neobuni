@@ -264,12 +264,21 @@ const studyCheckSubmitSchema = z.object({
   answers: z.array(studyCheckAnswerSchema).min(1).max(10),
 });
 
+const studyCheckGradeItemSchema = z.object({
+  promptId: idSchema,
+  score: z.number().min(0).max(1),
+  passed: z.boolean(),
+  feedback: z.string().max(8000),
+  missingPoints: z.array(z.string().max(500)).max(16).default([]),
+});
+
 const studyCheckResultSchema = z.object({
-  checkId: idSchema,
-  score: z.number().min(0),
+  checkIds: z.array(idSchema).min(1),
+  score: z.number().min(0).max(1),
   maxScore: z.number().positive(),
   passed: z.boolean(),
   feedback: z.string().max(8000).nullable(),
+  items: z.array(studyCheckGradeItemSchema).min(1),
   mastery: z.number().min(0).max(1),
   nextReviewAt: localDateSchema.nullable(),
   needsReteach: z.boolean(),
@@ -286,6 +295,7 @@ export {
   localDateSchema,
   localDateTimeSchema,
   studyCheckAnswerSchema,
+  studyCheckGradeItemSchema,
   studyCheckKindSchema,
   studyCheckResultSchema,
   studyCheckSchema,
@@ -325,6 +335,7 @@ export {
 
 export type StudyCheck = z.infer<typeof studyCheckSchema>;
 export type StudyCheckAnswer = z.infer<typeof studyCheckAnswerSchema>;
+export type StudyCheckGradeItem = z.infer<typeof studyCheckGradeItemSchema>;
 export type StudyCheckKind = z.infer<typeof studyCheckKindSchema>;
 export type StudyCheckResult = z.infer<typeof studyCheckResultSchema>;
 export type StudyCheckSpec = z.infer<typeof studyCheckSpecSchema>;

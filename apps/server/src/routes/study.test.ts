@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   activateStudyPlan: vi.fn(),
   appendEvent: vi.fn(),
   createGoal: vi.fn(),
+  createStudyCheck: vi.fn(),
   createStudyPlan: vi.fn(),
   createStudySessions: vi.fn(),
   getGoal: vi.fn(),
@@ -15,11 +16,13 @@ const mocks = vi.hoisted(() => ({
   getStudyGoalConfig: vi.fn(),
   getStudyPlan: vi.fn(),
   getStudySession: vi.fn(),
+  gradeStudyChecks: vi.fn(),
   listStudyChecks: vi.fn(),
   listStudyMastery: vi.fn(),
   listStudySessions: vi.fn(),
   updateStudySession: vi.fn(),
   upsertStudyGoalConfig: vi.fn(),
+  upsertStudyMastery: vi.fn(),
 }));
 
 vi.mock("@neobuni/db", async (importOriginal) => {
@@ -29,6 +32,7 @@ vi.mock("@neobuni/db", async (importOriginal) => {
     activateStudyPlan: mocks.activateStudyPlan,
     appendEvent: mocks.appendEvent,
     createGoal: mocks.createGoal,
+    createStudyCheck: mocks.createStudyCheck,
     createStudyPlan: mocks.createStudyPlan,
     createStudySessions: mocks.createStudySessions,
     getGoal: mocks.getGoal,
@@ -41,8 +45,13 @@ vi.mock("@neobuni/db", async (importOriginal) => {
     listStudySessions: mocks.listStudySessions,
     updateStudySession: mocks.updateStudySession,
     upsertStudyGoalConfig: mocks.upsertStudyGoalConfig,
+    upsertStudyMastery: mocks.upsertStudyMastery,
   };
 });
+
+vi.mock("../study/grading-service", () => ({
+  gradeStudyChecks: mocks.gradeStudyChecks,
+}));
 
 const { studyRouter } = await import("../routers/study");
 
@@ -93,6 +102,40 @@ beforeEach(() => {
   mocks.listStudyChecks.mockReturnValue(Effect.succeed([]));
   mocks.listStudyMastery.mockReturnValue(Effect.succeed([]));
   mocks.listStudySessions.mockReturnValue(Effect.succeed([]));
+  mocks.createStudyCheck.mockImplementation((input: { prompt: string }) =>
+    Effect.succeed({ id: `check-${input.prompt}` })
+  );
+  mocks.createStudySessions.mockReturnValue(Effect.succeed([]));
+  mocks.upsertStudyMastery.mockImplementation(
+    (input: Record<string, unknown>) => Effect.succeed(input)
+  );
+  mocks.updateStudySession.mockReturnValue(Effect.succeed({}));
+  mocks.gradeStudyChecks.mockResolvedValue({
+    grades: [
+      {
+        feedback: "Good",
+        missingPoints: [],
+        passed: true,
+        promptId: "c1",
+        score: 0.8,
+      },
+      {
+        feedback: "Good",
+        missingPoints: [],
+        passed: true,
+        promptId: "c2",
+        score: 0.7,
+      },
+      {
+        feedback: "Gap",
+        missingPoints: ["x"],
+        passed: false,
+        promptId: "c3",
+        score: 0.4,
+      },
+    ],
+    gradedBy: "llm",
+  });
 });
 
 describe("study router", () => {
@@ -136,6 +179,62 @@ describe("study router", () => {
     expect(result.lessonCount).toBeGreaterThan(62);
     expect(result.nodes.length).toBeGreaterThan(result.lessonCount);
     expect(result.totalMinutes).toBe(6300);
+  });
+
+  test("grades checks, writes mastery and completes the session", async () => {
+    mocks.getStudySession.mockReturnValue(
+      Effect.succeed({
+        durationMinutes: 40,
+        goalId: "goal-1",
+        id: "session-1",
+        planNodeId: "lesson-1",
+        profileId: "profile-1",
+        startedAt: null,
+        status: "planned",
+      })
+    );
+    mocks.getLatestStudyPlan.mockReturnValue(
+      Effect.succeed({
+        nodes: [
+          {
+            checkSpecs: [
+              { id: "c1", kind: "recall", prompt: "Recall", rubric: null },
+              { id: "c2", kind: "case", prompt: "Apply", rubric: null },
+              { id: "c3", kind: "case", prompt: "Transfer", rubric: null },
+            ],
+            estimatedMinutes: 40,
+            id: "lesson-1",
+            objective: "Explain quality attributes",
+            title: "Quality attributes",
+          },
+        ],
+        plan: { goalId: "goal-1", status: "active" },
+      })
+    );
+    mocks.getStudyGoalConfig.mockReturnValue(Effect.succeed(config));
+
+    const result = await call(
+      studyRouter.checks.submit,
+      {
+        answers: [
+          { answer: "a1", promptId: "c1" },
+          { answer: "a2", promptId: "c2" },
+          { answer: "a3", promptId: "c3" },
+        ],
+        sessionId: "session-1",
+      },
+      { context: createTestContext() }
+    );
+
+    expect(result).toMatchObject({
+      maxScore: 1,
+      needsReteach: false,
+      passed: true,
+    });
+    expect(result.checkIds).toHaveLength(3);
+    expect(result.items).toHaveLength(3);
+    expect(mocks.upsertStudyMastery).toHaveBeenCalledTimes(1);
+    expect(mocks.updateStudySession).toHaveBeenCalledTimes(1);
   });
 
   test("rejects a session that belongs to another profile", async () => {

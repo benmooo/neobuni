@@ -1,10 +1,13 @@
 import { protectedProcedure, run } from "@neobuni/api";
 import {
+  type StudyCheckResult,
   type StudyGoalConfig,
   type StudyPlanView,
   type StudySession,
   type StudySessionWithNode,
   type StudyToday,
+  studyCheckResultSchema,
+  studyCheckSubmitSchema,
   studyGoalCreateSchema,
   studyGoalParamSchema,
   studyPlanActivateSchema,
@@ -21,14 +24,17 @@ import {
   diffLocalDays,
   getStudyTemplate,
   localDateInTimeZone,
+  localDateOf,
   localDateTimeInTimeZone,
   scheduleStudySessions,
   selectNextStudySession,
+  updateStudyMastery,
 } from "@neobuni/core";
 import {
   activateStudyPlan,
   appendEvent,
   createGoal,
+  createStudyCheck,
   createStudyPlan,
   createStudySessions,
   getGoal,
@@ -41,8 +47,11 @@ import {
   listStudySessions,
   updateStudySession,
   upsertStudyGoalConfig,
+  upsertStudyMastery,
 } from "@neobuni/db";
 import { ORPCError } from "@orpc/server";
+
+import { gradeStudyChecks } from "../study/grading-service";
 
 const requireStudyGoal = async (profileId: string, goalId: string) => {
   const goal = await run(getGoal(goalId));
@@ -370,6 +379,182 @@ export const studyRouter = {
       }
       return computeProgress({ config, goalId: input.goalId, plan });
     }),
+
+  checks: {
+    submit: protectedProcedure
+      .input(studyCheckSubmitSchema)
+      .handler(async ({ input, context }): Promise<StudyCheckResult> => {
+        const session = await run(getStudySession(input.sessionId));
+        if (!session || session.profileId !== context.profileId) {
+          throw new ORPCError("NOT_FOUND", { message: "Session not found" });
+        }
+        const config = await requireStudyConfig(session.goalId);
+        const plan = await run(
+          getLatestStudyPlan({ goalId: session.goalId, status: "active" })
+        );
+        if (!plan) {
+          throw new ORPCError("PRECONDITION_FAILED", {
+            message: "The study plan is not active yet",
+          });
+        }
+        const node = plan.nodes.find((item) => item.id === session.planNodeId);
+        if (!node) {
+          throw new ORPCError("NOT_FOUND", { message: "Lesson not found" });
+        }
+        if (node.checkSpecs.length === 0) {
+          throw new ORPCError("PRECONDITION_FAILED", {
+            message: "This lesson has no checks",
+          });
+        }
+
+        const answers = new Map(
+          input.answers.map((answer) => [answer.promptId, answer.answer])
+        );
+        const graded = await gradeStudyChecks({
+          checks: node.checkSpecs.map((spec) => ({
+            answer: answers.get(spec.id) ?? "",
+            id: spec.id,
+            prompt: spec.prompt,
+            rubric: spec.rubric,
+          })),
+          lessonTitle: node.title,
+          objective: node.objective ?? node.title,
+          profileId: context.profileId,
+        });
+
+        const now = new Date().toISOString();
+        const checkRows = await Promise.all(
+          graded.grades.map((grade) => {
+            const spec = node.checkSpecs.find(
+              (item) => item.id === grade.promptId
+            );
+            return run(
+              createStudyCheck({
+                answer: answers.get(grade.promptId) ?? "",
+                feedback: grade.feedback,
+                goalId: session.goalId,
+                gradedBy: graded.gradedBy,
+                kind: spec?.kind ?? "recall",
+                maxScore: 1,
+                passed: grade.passed,
+                planNodeId: node.id,
+                profileId: context.profileId,
+                prompt: spec?.prompt ?? grade.promptId,
+                rubric: spec?.rubric ?? null,
+                score: grade.score,
+                sessionId: session.id,
+              })
+            );
+          })
+        );
+
+        const aggregate =
+          graded.grades.reduce((sum, grade) => sum + grade.score, 0) /
+          graded.grades.length;
+        const passedCount = graded.grades.filter(
+          (grade) => grade.passed
+        ).length;
+        const passed = passedCount >= 2;
+        const existingMastery = (
+          await run(listStudyMastery(session.goalId))
+        ).find((item) => item.planNodeId === node.id);
+        const masteryUpdate = updateStudyMastery({
+          assessedAt: now,
+          current: existingMastery
+            ? {
+                attempts: existingMastery.attempts,
+                confidence: existingMastery.confidence,
+                score: existingMastery.score,
+              }
+            : null,
+          score: aggregate,
+        });
+        await run(
+          upsertStudyMastery({
+            goalId: session.goalId,
+            planNodeId: node.id,
+            ...masteryUpdate,
+          })
+        );
+
+        if (!passed && masteryUpdate.nextReviewAt) {
+          const reviewDate = masteryUpdate.nextReviewAt;
+          const existingSessions = await run(listStudySessions(session.goalId));
+          const alreadyScheduled = existingSessions.some(
+            (item) =>
+              item.planNodeId === node.id &&
+              item.status === "planned" &&
+              localDateOf(item.scheduledFor) === reviewDate
+          );
+          if (!alreadyScheduled) {
+            await run(
+              createStudySessions([
+                {
+                  actualMinutes: null,
+                  completedAt: null,
+                  durationMinutes: Math.min(20, node.estimatedMinutes),
+                  goalId: session.goalId,
+                  notes: "检查未通过，自动安排重学",
+                  planNodeId: node.id,
+                  profileId: context.profileId,
+                  rescheduledFrom: null,
+                  scheduledFor: `${reviewDate}T${config.studyWindow.start}`,
+                  startedAt: null,
+                  status: "planned",
+                  timezone: config.timezone,
+                },
+              ])
+            );
+          }
+        }
+
+        if (session.status !== "completed") {
+          await run(
+            updateStudySession({
+              sessionId: session.id,
+              patch: {
+                actualMinutes: session.durationMinutes,
+                completedAt: now,
+                startedAt: session.startedAt ?? now,
+                status: "completed",
+              },
+            })
+          );
+        }
+
+        const feedback = graded.grades
+          .map((grade) => grade.feedback)
+          .join("\n");
+        await run(
+          appendEvent(context.profileId, "study.check_submitted", {
+            goalId: session.goalId,
+            sessionId: session.id,
+            planNodeId: node.id,
+            score: aggregate,
+            passed,
+            gradedBy: graded.gradedBy,
+          })
+        );
+
+        return studyCheckResultSchema.parse({
+          checkIds: checkRows.map((row) => row.id),
+          feedback,
+          items: graded.grades.map((grade) => ({
+            feedback: grade.feedback,
+            missingPoints: grade.missingPoints,
+            passed: grade.passed,
+            promptId: grade.promptId,
+            score: grade.score,
+          })),
+          mastery: masteryUpdate.score,
+          maxScore: 1,
+          needsReteach: !passed || masteryUpdate.needsReteach,
+          nextReviewAt: masteryUpdate.nextReviewAt,
+          passed,
+          score: aggregate,
+        });
+      }),
+  },
 
   sessions: {
     complete: protectedProcedure

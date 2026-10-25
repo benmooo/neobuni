@@ -396,7 +396,7 @@ Goal 创建扩展：`goals.create({ kind: "study_exam", targetAt, domainConfig, 
 | P1 | Decision OS 瘦身：契约收敛、Jev/shadow/gates 移出运行时、Now 去掉无关卡片 | ✅ done（2026-10-25）：Jev/shadow/gates 已归档到 `experiments/decision-os/`；`decisionEvaluation`、Jev provider 设置、Now 的 Telegram 草稿与决策健康面板已移除；`bun run check-types`、`bun run test`、Ultracite 全绿 |
 | P2 | Study 领域：schema + 纯 core（planner/scheduler/mastery）+ 单测 | ✅ done（2026-10-25）：`study_*` 契约、6 张表 + 迁移、`packages/core/src/study`（校验/排期/掌握度/进度），新增 20 个单测，全量 258 个测试绿 |
 | P3 | 计划生成：模板 + 结构化抽取 + 校验器 + job | 🟡 in progress：模板 v0 + 确定性展开（150 个左右小课）+ 持久化 + API 已完成；LLM lesson 内容生成与异步 job 待做 |
-| P4 | 会话/检查/进度 API + repo 集成测试 | 🟡 in progress：today / progress / session complete/skip/reschedule + repo 集成测试已完成；检查题判分与 mastery 更新待做 |
+| P4 | 会话/检查/进度 API + repo 集成测试 | ✅ backend done（2026-10-25）：today / progress / session / check 判分 / mastery 写回 / 未通过次日复习；repo 集成测试与 router 测试通过 |
 | P5 | Now 驾驶舱 + Goal 详情 + 设置 | 移动端可完成"今天这一步"全流程 |
 | P6 | 主动推送 + 聊天工具 | 到点只推一次；漏学给出最小重排；静默时段不推 |
 | P7 | 端到端种子 + 验收 | 用 mock provider 跑通 7 天学习循环；真实 provider 手动 smoke |
