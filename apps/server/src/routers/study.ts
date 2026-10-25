@@ -529,7 +529,10 @@ export const studyRouter = {
         nowLocalDateTime,
         sessions,
       });
-      const primary = next ? withNode(next, nodesById) : null;
+      const primary =
+        next && localDateOf(next.scheduledFor) <= localDate
+          ? withNode(next, nodesById)
+          : null;
       const upcoming = sessions
         .filter(
           (session) =>
