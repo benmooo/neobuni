@@ -1,7 +1,6 @@
 import {
   type AutonomyMode,
   actionRunSchema,
-  decisionEvaluationReportSchema,
   goalSchema,
   type NowOverview,
   nowOverviewSchema,
@@ -46,15 +45,6 @@ const useActionRun = (actionRunId: string | null) =>
       query.state.data?.status === "cancelled"
         ? false
         : 2000,
-  });
-const useDecisionEvaluation = () =>
-  useQuery({
-    queryKey: [...GOALS_QUERY_KEY, "decision-evaluation"],
-    queryFn: async () =>
-      decisionEvaluationReportSchema.parse(
-        await api.goals.decisionEvaluation()
-      ),
-    staleTime: 30_000,
   });
 const useCreateActiveGoal = () => {
   const queryClient = useQueryClient();
@@ -254,7 +244,6 @@ export {
   useCreateActiveGoal,
   useCreateCommitment,
   useCreateTelegramDraft,
-  useDecisionEvaluation,
   useDecisionFeedback,
   useEvaluateNextAction,
   useGoals,

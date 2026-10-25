@@ -63,7 +63,6 @@ const runtimeConfigSchema = z.object({
     chat: runtimeProviderSummarySchema,
     memoryEmbedding: runtimeProviderSummarySchema,
     memoryReasoning: runtimeProviderSummarySchema,
-    decisionJev: runtimeProviderSummarySchema,
   }),
 });
 

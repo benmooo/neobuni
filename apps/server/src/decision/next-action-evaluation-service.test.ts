@@ -3,30 +3,10 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   recordDecisionTrace: vi.fn(),
-  decide: vi.fn(),
 }));
 
 vi.mock("@neobuni/db", () => ({
   recordDecisionTrace: mocks.recordDecisionTrace,
-}));
-vi.mock("./jev-provider-config", () => ({
-  getConfiguredJevProvider: async () => ({ decide: mocks.decide }),
-  getJevRuntimeConfig: async () => ({
-    metadata: {
-      timeoutMs: 3000,
-      maxRetries: 1,
-      retrievalShadowEnabled: true,
-      graphV2ShadowEnabled: false,
-      evidenceRelevanceShadowEnabled: false,
-      retrievalRoutingEnabled: true,
-      retrievalConfidenceThreshold: 0.85,
-      retrievalMinComparedPairs: 0,
-      retrievalMinAgreementRate: 0,
-      retrievalMaxAverageLatencyMs: 3000,
-      retrievalMaxProviderErrorRate: 0.05,
-      nextActionShadowEnabled: true,
-    },
-  }),
 }));
 
 mocks.recordDecisionTrace.mockImplementation((input: Record<string, unknown>) =>
@@ -34,27 +14,6 @@ mocks.recordDecisionTrace.mockImplementation((input: Record<string, unknown>) =>
     ...(input.decision as Record<string, unknown>),
   })
 );
-mocks.decide.mockResolvedValue({
-  providerId: "jev",
-  providerVersion: "jev-1.14.0",
-  latencyMs: 1,
-  answers: [
-    {
-      questionId: "initiative.best_candidate.v1",
-      kind: "choice",
-      selectedValue: "commitment:blocked",
-      probabilities: { "commitment:blocked": 0.8 },
-      confidence: 0.8,
-    },
-    {
-      questionId: "initiative.interruption_value.v1",
-      kind: "score",
-      selectedValue: 0.7,
-      probabilities: {},
-      confidence: 0.8,
-    },
-  ],
-});
 
 const { recordNextActionEvaluation } = await import(
   "./next-action-evaluation-service"
@@ -78,11 +37,10 @@ const goal = {
 
 afterEach(() => {
   mocks.recordDecisionTrace.mockClear();
-  mocks.decide.mockClear();
 });
 
 describe("recordNextActionEvaluation", () => {
-  test("persists the heuristic and Jev judgments side by side without changing the selected action", async () => {
+  test("selects the highest-priority commitment and records an advisory trace", async () => {
     const result = await Effect.runPromise(
       recordNextActionEvaluation({
         profileId: "profile-1",
@@ -106,29 +64,46 @@ describe("recordNextActionEvaluation", () => {
         trigger: "explicit_now_evaluation",
       })
     );
+
     expect(result.suggestedAction?.id).toBe("commitment:blocked");
-    expect(mocks.decide).toHaveBeenCalledTimes(1);
-    expect(mocks.recordDecisionTrace.mock.calls[0]?.[0]).toMatchObject({
+    expect(mocks.recordDecisionTrace).toHaveBeenCalledTimes(1);
+    const recorded = mocks.recordDecisionTrace.mock.calls[0]?.[0] as {
       decision: {
-        route: "suggest",
-        policyResult: {
-          reasons: ["advisory_next_action_only", "jev_shadow_observed"],
-        },
-      },
-      judgments: [
-        { provider: "heuristic", selectedValue: "commitment:blocked" },
-        {
-          provider: "heuristic",
-          questionId: "initiative.interruption_value.v1",
-          selectedValue: 0.75,
-        },
-        { provider: "jev", selectedValue: "commitment:blocked" },
-        {
-          provider: "jev",
-          questionId: "initiative.interruption_value.v1",
-          selectedValue: 0.7,
-        },
-      ],
-    });
+        route: string;
+        policyResult: { reasons: string[] };
+      };
+      candidates: unknown[];
+      judgments?: unknown;
+    };
+    expect(recorded.decision.route).toBe("suggest");
+    expect(recorded.decision.policyResult.reasons).toEqual([
+      "advisory_next_action_only",
+    ]);
+    expect(recorded.candidates).toHaveLength(1);
+    expect(recorded).not.toHaveProperty("judgments");
+  });
+
+  test("stays silent when there is no eligible commitment", async () => {
+    const result = await Effect.runPromise(
+      recordNextActionEvaluation({
+        profileId: "profile-1",
+        goals: [goal],
+        commitments: [],
+        goalId: "goal-1",
+        trigger: "scheduled_goal_review",
+      })
+    );
+
+    expect(result.suggestedAction).toBeNull();
+    const recorded = mocks.recordDecisionTrace.mock.calls[0]?.[0] as {
+      decision: {
+        route: string;
+        policyResult: { reasons: string[] };
+      };
+    };
+    expect(recorded.decision.route).toBe("stay_silent");
+    expect(recorded.decision.policyResult.reasons).toEqual([
+      "no_eligible_candidate",
+    ]);
   });
 });

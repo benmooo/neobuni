@@ -32,7 +32,8 @@
       "!**/.source",
       "!**/convex/_generated",
       "!**/.agents",
-      "!**/src/env.ts"
+      "!**/src/env.ts",
+      "!experiments"
     ]
   },
   "formatter": {

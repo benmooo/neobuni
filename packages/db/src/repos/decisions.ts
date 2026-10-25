@@ -1,6 +1,5 @@
 import type {
   Decision,
-  DecisionAnswer,
   DecisionCandidate,
   DecisionFeedback,
   PolicyResult,
@@ -11,7 +10,6 @@ import { db, fromPromise } from "../client";
 import {
   decisionCandidatesTable,
   decisionFeedbackTable,
-  decisionJudgmentsTable,
   decisionsTable,
 } from "../schema";
 
@@ -29,13 +27,6 @@ const recordDecisionTrace = Effect.fnUntraced(function* (input: {
     createdAt?: string;
   };
   candidates: DecisionCandidate[];
-  judgments: Array<
-    DecisionAnswer & {
-      provider: "heuristic" | "jev" | "system_two" | "policy";
-      providerVersion: string;
-      latencyMs?: number | null;
-    }
-  >;
 }) {
   const createdAt = input.decision.createdAt ?? new Date().toISOString();
   const decisionId = input.decision.id ?? crypto.randomUUID();
@@ -67,25 +58,6 @@ const recordDecisionTrace = Effect.fnUntraced(function* (input: {
           reversibility: candidate.reversibility,
           authority: candidate.authority,
           eligible: candidate.eligible ? 1 : 0,
-          createdAt,
-        }))
-      )
-    );
-  }
-  if (input.judgments.length > 0) {
-    yield* fromPromise("recordDecisionTrace", () =>
-      db.insert(decisionJudgmentsTable).values(
-        input.judgments.map((judgment) => ({
-          id: crypto.randomUUID(),
-          decisionId,
-          provider: judgment.provider,
-          providerVersion: judgment.providerVersion,
-          questionId: judgment.questionId,
-          kind: judgment.kind,
-          selectedValueJson: JSON.stringify(judgment.selectedValue),
-          probabilitiesJson: JSON.stringify(judgment.probabilities),
-          confidence: judgment.confidence,
-          latencyMs: judgment.latencyMs ?? null,
           createdAt,
         }))
       )
@@ -127,7 +99,7 @@ const getDecisionTrace = Effect.fnUntraced(function* (decisionId: string) {
   if (!decision) {
     return null;
   }
-  const [candidates, judgments, feedback] = yield* Effect.all(
+  const [candidates, feedback] = yield* Effect.all(
     [
       fromPromise("getDecisionTrace", () =>
         db
@@ -135,13 +107,6 @@ const getDecisionTrace = Effect.fnUntraced(function* (decisionId: string) {
           .from(decisionCandidatesTable)
           .where(eq(decisionCandidatesTable.decisionId, decisionId))
           .orderBy(asc(decisionCandidatesTable.createdAt))
-      ),
-      fromPromise("getDecisionTrace", () =>
-        db
-          .select()
-          .from(decisionJudgmentsTable)
-          .where(eq(decisionJudgmentsTable.decisionId, decisionId))
-          .orderBy(asc(decisionJudgmentsTable.createdAt))
       ),
       fromPromise("getDecisionTrace", () =>
         db
@@ -180,26 +145,6 @@ const getDecisionTrace = Effect.fnUntraced(function* (decisionId: string) {
         candidate.reversibility as DecisionCandidate["reversibility"],
       authority: candidate.authority as DecisionCandidate["authority"],
       eligible: candidate.eligible === 1,
-    })),
-    judgments: judgments.map((judgment) => ({
-      provider: judgment.provider as
-        | "heuristic"
-        | "jev"
-        | "system_two"
-        | "policy",
-      providerVersion: judgment.providerVersion,
-      questionId: judgment.questionId,
-      kind: judgment.kind as DecisionAnswer["kind"],
-      selectedValue: parseJson<DecisionAnswer["selectedValue"]>(
-        judgment.selectedValueJson,
-        false
-      ),
-      probabilities: parseJson<DecisionAnswer["probabilities"]>(
-        judgment.probabilitiesJson,
-        {}
-      ),
-      confidence: judgment.confidence,
-      latencyMs: judgment.latencyMs,
     })),
     feedback: feedback.map((item) => ({
       id: item.id,

@@ -9,7 +9,7 @@ const providerConfigsTable = sqliteTable("provider_configs", {
       onDelete: "cascade",
       onUpdate: "cascade",
     }),
-  slot: text("slot").notNull(), // "chat" | "memory_embedding" | "memory_reasoning" | "decision_jev"
+  slot: text("slot").notNull(), // "chat" | "memory_embedding" | "memory_reasoning"
   provider: text("provider").notNull(),
   protocol: text("protocol").notNull().default(""),
   model: text("model").notNull(),

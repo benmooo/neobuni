@@ -5,7 +5,7 @@ import { Effect } from "effect";
 import { db, fromPromise } from "../client";
 import { providerConfigsTable } from "../schema";
 
-type Slot = "chat" | "memory_embedding" | "memory_reasoning" | "decision_jev";
+type Slot = "chat" | "memory_embedding" | "memory_reasoning";
 
 const deriveProtocol = (
   provider: ProviderVendor,
@@ -181,12 +181,6 @@ const getMemoryReasoningProviderConfig = Effect.fnUntraced(function* (
   return yield* getProviderConfigBySlot(profileId, "memory_reasoning");
 });
 
-const getDecisionJevProviderConfig = Effect.fnUntraced(function* (
-  profileId: string
-) {
-  return yield* getProviderConfigBySlot(profileId, "decision_jev");
-});
-
 const upsertProviderConfig = Effect.fnUntraced(function* (
   profileId: string,
   slot: Slot,
@@ -258,7 +252,6 @@ const upsertProviderConfig = Effect.fnUntraced(function* (
 });
 
 export {
-  getDecisionJevProviderConfig,
   getMemoryEmbeddingProviderConfig,
   getMemoryReasoningProviderConfig,
   getProviderConfig,

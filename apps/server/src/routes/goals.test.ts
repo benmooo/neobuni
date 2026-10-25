@@ -17,12 +17,10 @@ const mocks = vi.hoisted(() => ({
   getActionProposal: vi.fn(),
   getActionRun: vi.fn(),
   getActionRunByProposal: vi.fn(),
-  getDecisionJevProviderConfig: vi.fn(),
   getDecisionTrace: vi.fn(),
   getGoal: vi.fn(),
   listCommitments: vi.fn(),
   listDecisionTracesByGoal: vi.fn(),
-  listDecisionTracesByProfile: vi.fn(),
   listGoals: vi.fn(),
   recordDecisionFeedback: vi.fn(),
   recordDecisionTrace: vi.fn(),
@@ -49,12 +47,10 @@ vi.mock("@neobuni/db", async (importOriginal) => {
     getActionProposal: mocks.getActionProposal,
     getActionRun: mocks.getActionRun,
     getActionRunByProposal: mocks.getActionRunByProposal,
-    getDecisionJevProviderConfig: mocks.getDecisionJevProviderConfig,
     getDecisionTrace: mocks.getDecisionTrace,
     getGoal: mocks.getGoal,
     listCommitments: mocks.listCommitments,
     listDecisionTracesByGoal: mocks.listDecisionTracesByGoal,
-    listDecisionTracesByProfile: mocks.listDecisionTracesByProfile,
     listGoals: mocks.listGoals,
     recordDecisionFeedback: mocks.recordDecisionFeedback,
     recordDecisionTrace: mocks.recordDecisionTrace,
@@ -116,7 +112,6 @@ beforeEach(() => {
   mocks.listGoals.mockReturnValue(Effect.succeed([]));
   mocks.listCommitments.mockReturnValue(Effect.succeed([]));
   mocks.listDecisionTracesByGoal.mockReturnValue(Effect.succeed([]));
-  mocks.listDecisionTracesByProfile.mockReturnValue(Effect.succeed([]));
   mocks.createCommitment.mockReturnValue(
     Effect.succeed({ id: "commitment-1" })
   );
@@ -135,7 +130,6 @@ beforeEach(() => {
       ...(input.patch as Record<string, unknown>),
     })
   );
-  mocks.getDecisionJevProviderConfig.mockReturnValue(Effect.succeed(null));
   mocks.getDecisionTrace.mockReturnValue(Effect.succeed(null));
   mocks.createActionProposal.mockImplementation(
     (input: Record<string, unknown>) =>
@@ -286,33 +280,6 @@ describe("goal routes", () => {
       nextReviewAt: "2026-10-22T00:00:00.000Z",
     });
     expect(result.openCommitments).toHaveLength(1);
-  });
-
-  test("returns a read-only evaluation summary from persisted decision traces", async () => {
-    mocks.listDecisionTracesByProfile.mockReturnValueOnce(
-      Effect.succeed([] as never)
-    );
-
-    const result = await call(
-      extrasRouter.goals.decisionEvaluation,
-      undefined,
-      {
-        context: createTestContext(),
-      }
-    );
-
-    expect(result).toMatchObject({
-      totalDecisions: 0,
-      agreementRate: null,
-      retrievalRoutingSummary: {
-        totalDecisions: 0,
-        agreementRate: null,
-      },
-      initiativeInterruptionSummary: {
-        totalDecisions: 0,
-        agreementRate: null,
-      },
-    });
   });
 
   test("records a next-action trace only after an explicit evaluation request", async () => {

@@ -45,7 +45,6 @@ import { DiscordSection } from "@/features/settings/discord-section";
 import { FeishuSection } from "@/features/settings/feishu-section";
 import {
   ChatProviderSection,
-  JevDecisionSection,
   MemoryEmbeddingSection,
   MemoryReasoningSection,
 } from "@/features/settings/provider-sections";
@@ -1613,13 +1612,12 @@ function SettingsPage() {
 
           {activeCategory === "models" && (
             <SectionGroup
-              description="聊天主链、记忆、以及 Jev 结构化决策的 provider 设置。"
+              description="聊天主链与记忆的 provider 设置。"
               title="模型与记忆"
             >
               <ChatProviderSection />
               <MemoryEmbeddingSection />
               <MemoryReasoningSection />
-              <JevDecisionSection />
             </SectionGroup>
           )}
 

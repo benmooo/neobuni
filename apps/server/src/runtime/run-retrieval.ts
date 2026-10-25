@@ -1,7 +1,5 @@
 import type { TurnContext } from "@neobuni/contracts";
 import { planTurnRetrieval, type RetrievedEvidence } from "@neobuni/core";
-import { runRepo } from "@neobuni/db";
-import { evaluateRetrievalDecision } from "../decision/retrieval-shadow-service";
 import { recallGraphMemory } from "../memory/graph-memory-store";
 import { recallKnowledge } from "../memory/knowledge-store";
 import { recallMemories } from "../memory/temporal-memory-store";
@@ -44,17 +42,7 @@ const runRetrieval = async (input: {
   const allowMemoryRecall = input.allowMemoryRecall ?? true;
   const { retrievalSignals, retrievalPlan: heuristicRetrievalPlan } =
     planTurnRetrieval(input.turnContext);
-  const { retrievalPlan, appliedQuestionIds } = await runRepo(
-    evaluateRetrievalDecision({
-      profileId: input.profileId,
-      latestUserText: input.turnContext.input.latestUserText,
-      retrievalPlan: heuristicRetrievalPlan,
-      trigger: "chat_retrieval",
-    })
-  ).catch(() => ({
-    retrievalPlan: heuristicRetrievalPlan,
-    appliedQuestionIds: [],
-  }));
+  const retrievalPlan = heuristicRetrievalPlan;
   const temporalMode = retrievalPlan.activation.temporal.mode;
   const temporalStrategy = allowMemoryRecall
     ? temporalMode === "prefetch"
@@ -77,7 +65,6 @@ const runRetrieval = async (input: {
     signals: retrievalSignals,
     temporalActivation: retrievalPlan.activation.temporal,
     heuristicTemporalActivation: heuristicRetrievalPlan.activation.temporal,
-    jevAppliedQuestionIds: appliedQuestionIds,
     temporalQuery: retrievalPlan.queries.temporal,
     toolFallbackAvailable: Boolean(input.embeddingConfig),
     allowMemoryRecall,

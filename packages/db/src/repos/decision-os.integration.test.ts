@@ -145,23 +145,11 @@ describe("Decision OS repositories", () => {
             eligible: true,
           },
         ],
-        judgments: [
-          {
-            provider: "heuristic",
-            providerVersion: "baseline-v1",
-            questionId: "initiative.interruption_value",
-            kind: "score",
-            selectedValue: 3,
-            probabilities: { low: 0.1, high: 0.9 },
-            confidence: 0.9,
-          },
-        ],
       })
     );
     const trace = await runRepo(getDecisionTrace(decision.id));
     expect(trace?.decision.policyResult.reasons).toEqual(["not_reversible"]);
     expect(trace?.candidates).toHaveLength(1);
-    expect(trace?.judgments).toHaveLength(1);
     await runRepo(
       recordDecisionFeedback({
         decisionId: decision.id,

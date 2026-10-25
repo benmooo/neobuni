@@ -120,74 +120,13 @@ const providerConfigSchema = providerConfigInputSchema.safeExtend({
   updatedAt: z.string().datetime(),
 });
 
-const decisionJevProviderConfigInputSchema = z.object({
-  provider: z.literal("openrouter"),
-  protocol: z.literal("openai"),
-  model: z.string().trim().min(1).max(120),
-  apiKey: z.string().trim().min(1).max(400),
-  baseUrl: z.url().max(500),
-  enabled: z.boolean().default(true),
-  metadata: z
-    .object({
-      timeoutMs: z.number().int().min(500).max(30_000).default(3000),
-      maxRetries: z.number().int().min(0).max(3).default(1),
-      retrievalShadowEnabled: z.boolean().default(false),
-      graphV2ShadowEnabled: z.boolean().default(false),
-      evidenceRelevanceShadowEnabled: z.boolean().default(false),
-      retrievalRoutingEnabled: z.boolean().default(false),
-      retrievalConfidenceThreshold: z.number().min(0).max(1).default(0.85),
-      retrievalMinComparedPairs: z
-        .number()
-        .int()
-        .min(0)
-        .max(10_000)
-        .default(20),
-      retrievalMinAgreementRate: z.number().min(0).max(1).default(0.85),
-      retrievalMaxAverageLatencyMs: z
-        .number()
-        .int()
-        .min(1)
-        .max(30_000)
-        .default(3000),
-      retrievalMaxProviderErrorRate: z.number().min(0).max(1).default(0.05),
-      nextActionShadowEnabled: z.boolean().default(false),
-    })
-    .default({
-      timeoutMs: 3000,
-      maxRetries: 1,
-      retrievalShadowEnabled: false,
-      graphV2ShadowEnabled: false,
-      evidenceRelevanceShadowEnabled: false,
-      retrievalRoutingEnabled: false,
-      retrievalConfidenceThreshold: 0.85,
-      retrievalMinComparedPairs: 20,
-      retrievalMinAgreementRate: 0.85,
-      retrievalMaxAverageLatencyMs: 3000,
-      retrievalMaxProviderErrorRate: 0.05,
-      nextActionShadowEnabled: false,
-    }),
-});
-
-const decisionJevProviderConfigUpdateInputSchema =
-  decisionJevProviderConfigInputSchema.extend({
-    apiKey: z.string().trim().max(400),
-  });
-
 export {
-  decisionJevProviderConfigInputSchema,
-  decisionJevProviderConfigUpdateInputSchema,
   providerConfigInputSchema,
   providerConfigSchema,
   providerProtocolSchema,
   providerVendorSchema,
 };
 
-export type DecisionJevProviderConfigInput = z.infer<
-  typeof decisionJevProviderConfigInputSchema
->;
-export type DecisionJevProviderConfigUpdateInput = z.infer<
-  typeof decisionJevProviderConfigUpdateInputSchema
->;
 export type ProviderConfig = z.infer<typeof providerConfigSchema>;
 export type ProviderConfigInput = z.infer<typeof providerConfigInputSchema>;
 export type ProviderProtocol = z.infer<typeof providerProtocolSchema>;

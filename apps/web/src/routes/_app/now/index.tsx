@@ -8,13 +8,6 @@ import {
   CardTitle,
 } from "@neobuni/ui/components/card";
 import { Input } from "@neobuni/ui/components/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@neobuni/ui/components/select";
 import { Spinner } from "@neobuni/ui/components/spinner";
 import { Textarea } from "@neobuni/ui/components/textarea";
 import { ArrowsClockwise, CheckCircle, Target } from "@phosphor-icons/react";
@@ -22,19 +15,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import {
-  useActionRun,
   useCompleteSuggestedCommitment,
-  useConfirmActionReceipt,
-  useConfirmTelegramSend,
   useCreateActiveGoal,
   useCreateCommitment,
-  useCreateTelegramDraft,
-  useDecisionEvaluation,
   useDecisionFeedback,
   useEvaluateNextAction,
   useGoals,
   useNowOverview,
-  useTelegramChannelTargets,
   useUpdateCommitmentStatus,
   useUpdateGoalStatus,
 } from "@/hooks/use-goals";
@@ -62,7 +49,6 @@ const formatReviewAt = (value: string | null) => {
 function NowPage() {
   const overview = useNowOverview();
   const goals = useGoals();
-  const decisionEvaluation = useDecisionEvaluation();
   const evaluate = useEvaluateNextAction();
   const feedback = useDecisionFeedback();
   const completeCommitment = useCompleteSuggestedCommitment();
@@ -70,10 +56,6 @@ function NowPage() {
   const createCommitment = useCreateCommitment();
   const updateGoalStatus = useUpdateGoalStatus();
   const updateCommitmentStatus = useUpdateCommitmentStatus();
-  const createTelegramDraft = useCreateTelegramDraft();
-  const confirmTelegramSend = useConfirmTelegramSend();
-  const confirmActionReceipt = useConfirmActionReceipt();
-  const telegramChannelTargets = useTelegramChannelTargets();
   const [goalTitle, setGoalTitle] = useState("");
   const [goalOutcome, setGoalOutcome] = useState("");
   const [goalFormError, setGoalFormError] = useState<string | null>(null);
@@ -82,20 +64,6 @@ function NowPage() {
   const [commitmentFormError, setCommitmentFormError] = useState<string | null>(
     null
   );
-  const [telegramTargetAlias, setTelegramTargetAlias] = useState("");
-  const [telegramText, setTelegramText] = useState("");
-  const [telegramDraft, setTelegramDraft] = useState<{
-    proposalId: string;
-    targetAlias: string;
-    text: string;
-  } | null>(null);
-  const [telegramActionRunId, setTelegramActionRunId] = useState<string | null>(
-    null
-  );
-  const [telegramFormError, setTelegramFormError] = useState<string | null>(
-    null
-  );
-  const telegramActionRun = useActionRun(telegramActionRunId);
   const evaluatedSuggestion = evaluate.data?.suggestedAction ?? null;
   const suggestedAction =
     evaluatedSuggestion ?? overview.data?.suggestedAction ?? null;
@@ -150,27 +118,6 @@ function NowPage() {
       }
     );
   };
-  const submitTelegramDraft = () => {
-    const targetAlias = telegramTargetAlias.trim();
-    const text = telegramText.trim();
-    if (!(targetAlias && text)) {
-      setTelegramFormError("请填写 Telegram 目标别名和消息内容。");
-      return;
-    }
-    setTelegramFormError(null);
-    createTelegramDraft.mutate(
-      {
-        targetAlias,
-        text,
-        expectedOutcome: "指定 Telegram 频道收到消息，并等待用户确认。",
-      },
-      {
-        onSuccess: ({ proposal }) =>
-          setTelegramDraft({ proposalId: proposal.id, targetAlias, text }),
-      }
-    );
-  };
-
   return (
     <div className="flex h-screen flex-col">
       <PageHeader
@@ -215,177 +162,6 @@ function NowPage() {
                       Buni
                       会围绕活跃目标生成可解释建议；执行仍需要你的明确授权。
                     </p>
-                  </CardContent>
-                </Card>
-              </section>
-              <section className="space-y-2">
-                <p className="font-medium text-sm">Telegram 草稿</p>
-                <Card size="sm">
-                  <CardContent className="space-y-2 py-3">
-                    <Select
-                      disabled={
-                        telegramChannelTargets.isLoading ||
-                        createTelegramDraft.isPending ||
-                        Boolean(telegramDraft)
-                      }
-                      onValueChange={(value) =>
-                        setTelegramTargetAlias(value ?? "")
-                      }
-                      value={telegramTargetAlias}
-                    >
-                      <SelectTrigger aria-label="Telegram 指定频道">
-                        <SelectValue placeholder="选择已配置的 Telegram 频道" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {telegramChannelTargets.data?.map((target) => (
-                          <SelectItem key={target.alias} value={target.alias}>
-                            {target.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Textarea
-                      aria-label="Telegram 消息内容"
-                      disabled={
-                        createTelegramDraft.isPending || Boolean(telegramDraft)
-                      }
-                      onChange={(event) => setTelegramText(event.target.value)}
-                      placeholder="准备发送的每日摘要"
-                      value={telegramText}
-                    />
-                    {telegramChannelTargets.isError ? (
-                      <p className="text-destructive text-sm">
-                        无法读取允许的 Telegram 频道：
-                        {failureMessage(telegramChannelTargets.error)}
-                      </p>
-                    ) : null}
-                    {!telegramChannelTargets.isLoading &&
-                    (telegramChannelTargets.data?.length ?? 0) === 0 ? (
-                      <p className="text-muted-foreground text-sm">
-                        请先在设置中启用并配置一个 Telegram channel 目标。
-                      </p>
-                    ) : null}
-                    {telegramFormError ? (
-                      <p className="text-destructive text-sm">
-                        {telegramFormError}
-                      </p>
-                    ) : null}
-                    {createTelegramDraft.isError ? (
-                      <p className="text-destructive text-sm">
-                        草稿创建失败：
-                        {failureMessage(createTelegramDraft.error)}
-                      </p>
-                    ) : null}
-                    {telegramDraft ? (
-                      <div className="space-y-2">
-                        <Badge variant="secondary">草稿已创建，尚未发送</Badge>
-                        <div className="flex flex-wrap gap-2">
-                          <Button
-                            disabled={
-                              confirmTelegramSend.isPending ||
-                              Boolean(telegramActionRunId)
-                            }
-                            onClick={() =>
-                              confirmTelegramSend.mutate(telegramDraft, {
-                                onSuccess: ({ id }) =>
-                                  setTelegramActionRunId(id),
-                              })
-                            }
-                            size="sm"
-                          >
-                            {confirmTelegramSend.isPending
-                              ? "发送中…"
-                              : "确认发送"}
-                          </Button>
-                          <Button
-                            disabled={confirmTelegramSend.isPending}
-                            onClick={() => setTelegramDraft(null)}
-                            size="sm"
-                            variant="ghost"
-                          >
-                            放弃草稿
-                          </Button>
-                        </div>
-                        {confirmTelegramSend.isError ? (
-                          <p className="text-destructive text-sm">
-                            未发送：{failureMessage(confirmTelegramSend.error)}
-                          </p>
-                        ) : null}
-                        {telegramActionRunId ? (
-                          <div className="space-y-2">
-                            {telegramActionRun.isLoading ? (
-                              <p className="text-muted-foreground text-sm">
-                                正在读取发送状态…
-                              </p>
-                            ) : null}
-                            {telegramActionRun.isError ? (
-                              <p className="text-destructive text-sm">
-                                无法读取发送状态：
-                                {failureMessage(telegramActionRun.error)}
-                              </p>
-                            ) : null}
-                            {telegramActionRun.data?.status === "queued" ||
-                            telegramActionRun.data?.status === "claimed" ||
-                            telegramActionRun.data?.status === "running" ? (
-                              <p className="text-muted-foreground text-sm">
-                                已确认执行，正在等待 Telegram 平台处理。
-                              </p>
-                            ) : null}
-                            {telegramActionRun.data?.status === "failed" ? (
-                              <p className="text-destructive text-sm">
-                                Telegram
-                                发送失败；请检查频道配置后重新创建草稿。
-                              </p>
-                            ) : null}
-                            {telegramActionRun.data?.receipt?.status ===
-                            "external_unconfirmed" ? (
-                              <>
-                                <p className="text-muted-foreground text-sm">
-                                  Telegram
-                                  已返回平台回执。核实指定频道收到消息后，再确认结果。
-                                </p>
-                                <Button
-                                  disabled={confirmActionReceipt.isPending}
-                                  onClick={() =>
-                                    confirmActionReceipt.mutate(
-                                      telegramActionRunId
-                                    )
-                                  }
-                                  size="sm"
-                                  variant="secondary"
-                                >
-                                  {confirmActionReceipt.isPending
-                                    ? "确认中…"
-                                    : "确认频道已收到"}
-                                </Button>
-                              </>
-                            ) : null}
-                            {telegramActionRun.data?.receipt?.status ===
-                            "external_confirmed" ? (
-                              <Badge variant="secondary">频道收据已确认</Badge>
-                            ) : null}
-                            {confirmActionReceipt.isError ? (
-                              <p className="text-destructive text-sm">
-                                收据未确认：
-                                {failureMessage(confirmActionReceipt.error)}
-                              </p>
-                            ) : null}
-                          </div>
-                        ) : null}
-                      </div>
-                    ) : (
-                      <Button
-                        disabled={
-                          createTelegramDraft.isPending ||
-                          telegramChannelTargets.isLoading ||
-                          (telegramChannelTargets.data?.length ?? 0) === 0
-                        }
-                        onClick={submitTelegramDraft}
-                        size="sm"
-                      >
-                        {createTelegramDraft.isPending ? "创建中…" : "创建草稿"}
-                      </Button>
-                    )}
                   </CardContent>
                 </Card>
               </section>
@@ -501,102 +277,6 @@ function NowPage() {
                 ) : (
                   <p className="text-muted-foreground text-sm">
                     当前没有可建议的下一步。
-                  </p>
-                )}
-              </section>
-              <section className="space-y-2">
-                <p className="font-medium text-sm">决策健康</p>
-                {decisionEvaluation.isError ? (
-                  <p className="text-muted-foreground text-sm">
-                    决策评估暂不可用。
-                  </p>
-                ) : decisionEvaluation.data ? (
-                  <Card size="sm">
-                    <CardContent className="space-y-1 py-3 text-muted-foreground text-sm">
-                      <p>
-                        检索路由已记录{" "}
-                        {
-                          decisionEvaluation.data.retrievalRoutingSummary
-                            .totalDecisions
-                        }{" "}
-                        次决策， 其中{" "}
-                        {
-                          decisionEvaluation.data.retrievalRoutingSummary
-                            .comparedJudgmentPairs
-                        }{" "}
-                        组可比较结果；Graph v2 shadow 不计入此发布门。
-                      </p>
-                      <p>
-                        Jev 与基线一致率：
-                        {decisionEvaluation.data.retrievalRoutingSummary
-                          .agreementRate === null
-                          ? "样本不足"
-                          : `${Math.round(decisionEvaluation.data.retrievalRoutingSummary.agreementRate * 100)}%`}
-                        。
-                      </p>
-                      <p>
-                        Jev 平均延迟：
-                        {decisionEvaluation.data.retrievalRoutingSummary
-                          .averageJevLatencyMs === null
-                          ? "暂无"
-                          : `${Math.round(decisionEvaluation.data.retrievalRoutingSummary.averageJevLatencyMs)} ms`}
-                        。
-                      </p>
-                      <p>
-                        Jev provider 错误率：
-                        {decisionEvaluation.data.retrievalRoutingSummary
-                          .jevProviderErrorRate === null
-                          ? "暂无有效尝试"
-                          : `${Math.round(decisionEvaluation.data.retrievalRoutingSummary.jevProviderErrorRate * 100)}%`}
-                        （
-                        {
-                          decisionEvaluation.data.retrievalRoutingSummary
-                            .jevProviderErrorDecisionCount
-                        }
-                        /
-                        {
-                          decisionEvaluation.data.retrievalRoutingSummary
-                            .jevAttemptedDecisionCount
-                        }
-                        ）。
-                      </p>
-                      <p>
-                        Retrieval 路由：
-                        {decisionEvaluation.data.releaseGates.retrieval.passed
-                          ? "已通过当前发布门槛"
-                          : `仍使用确定性回退（${decisionEvaluation.data.releaseGates.retrieval.reasons.join("、")}）`}
-                        。
-                      </p>
-                      <p>
-                        Jev 安全回退：
-                        {decisionEvaluation.data.decisionReasonsByKind
-                          .jev_provider_error ?? 0}{" "}
-                        次 provider 错误，
-                        {decisionEvaluation.data.decisionReasonsByKind
-                          .jev_provider_unavailable ?? 0}{" "}
-                        次配置不可用。
-                      </p>
-                      <p>
-                        主动打扰评估已记录{" "}
-                        {
-                          decisionEvaluation.data.initiativeInterruptionSummary
-                            .totalDecisions
-                        }{" "}
-                        次；
-                        {
-                          decisionEvaluation.data.initiativeInterruptionSummary
-                            .comparedJudgmentPairs
-                        }{" "}
-                        组 Jev 与基线可比较结果。
-                      </p>
-                      <p>
-                        主动打扰评估仅用于观察：不会发送通知或改变当前建议。
-                      </p>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <p className="text-muted-foreground text-sm">
-                    正在读取决策指标…
                   </p>
                 )}
               </section>

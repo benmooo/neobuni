@@ -40,12 +40,6 @@ const decisionRouteSchema = z.enum([
   "execute",
   "use_system_two",
 ]);
-const decisionProviderKindSchema = z.enum([
-  "heuristic",
-  "jev",
-  "system_two",
-  "policy",
-]);
 const decisionFeedbackKindSchema = z.enum([
   "accepted",
   "dismissed",
@@ -148,13 +142,6 @@ const decisionCandidateSchema = z.object({
   reversibility: actionReversibilitySchema,
   authority: authorityLevelSchema,
   eligible: z.boolean(),
-});
-const decisionAnswerSchema = z.object({
-  questionId: z.string().trim().min(1).max(256),
-  kind: z.enum(["choice", "score", "noul"]),
-  selectedValue: z.union([z.string(), z.number(), z.boolean()]),
-  probabilities: z.record(z.string(), z.number().min(0).max(1)),
-  confidence: z.number().min(0).max(1).nullable(),
 });
 const policyResultSchema = z.object({
   permitted: z.boolean(),
@@ -278,12 +265,10 @@ export {
   commitmentOwnerSchema,
   commitmentSchema,
   commitmentStatusSchema,
-  decisionAnswerSchema,
   decisionCandidateSchema,
   decisionFeedbackKindSchema,
   decisionFeedbackSchema,
   decisionKindSchema,
-  decisionProviderKindSchema,
   decisionRouteSchema,
   decisionSchema,
   goalConstraintSchema,
@@ -298,7 +283,6 @@ export type Goal = z.infer<typeof goalSchema>;
 export type Commitment = z.infer<typeof commitmentSchema>;
 export type Decision = z.infer<typeof decisionSchema>;
 export type DecisionCandidate = z.infer<typeof decisionCandidateSchema>;
-export type DecisionAnswer = z.infer<typeof decisionAnswerSchema>;
 export type DecisionFeedback = z.infer<typeof decisionFeedbackSchema>;
 export type ActionProposal = z.infer<typeof actionProposalSchema>;
 export type ActionAuthorization = z.infer<typeof actionAuthorizationSchema>;
@@ -310,120 +294,6 @@ export type PolicyResult = z.infer<typeof policyResultSchema>;
 export type DecisionRoute = z.infer<typeof decisionRouteSchema>;
 export type AutonomyMode = z.infer<typeof autonomyModeSchema>;
 export type TelegramChannelTarget = z.infer<typeof telegramChannelTargetSchema>;
-
-const decisionQuestionKindSchema = z.enum(["choice", "score", "noul"]);
-const decisionQuestionSchema = z.object({
-  id: z.string().trim().min(1).max(256),
-  kind: decisionQuestionKindSchema,
-  instructions: z.string().trim().min(1).max(4000),
-  criteria: z.record(z.string(), z.unknown()).optional(),
-});
-const decisionRequestSchema = z.object({
-  decisionId: idSchema,
-  state: z.record(z.string(), z.unknown()),
-  questions: z.array(decisionQuestionSchema).min(1).max(128),
-});
-const decisionProviderResultSchema = z.object({
-  providerId: z.string().trim().min(1).max(128),
-  providerVersion: z.string().trim().min(1).max(128),
-  answers: z.array(decisionAnswerSchema),
-  latencyMs: z.number().int().nonnegative(),
-});
-const decisionEvaluationFixtureSchema = z
-  .object({
-    id: z.string().trim().min(1).max(256),
-    familyId: z.string().trim().min(1).max(256),
-    language: z.enum(["zh", "en", "mixed"]),
-    reviewStatus: z.enum(["draft", "reviewed"]),
-    reviewedBy: z.string().trim().min(1).max(256).nullable(),
-    reviewedAt: isoDateTimeSchema.nullable(),
-    reviewRationale: z.string().trim().min(1).max(4000).nullable(),
-    projection: z.record(z.string(), z.unknown()),
-    expected: z.object({
-      selectedValue: z.union([z.string(), z.number(), z.boolean()]),
-      fallbackExpected: z.boolean(),
-      scoreTolerance: z.number().min(0).max(1).nullable().default(null),
-    }),
-    coverage: z
-      .array(
-        z.enum(["positive", "negative", "ambiguous", "stale", "injection"])
-      )
-      .min(1),
-  })
-  .superRefine((fixture, ctx) => {
-    if (fixture.reviewStatus === "draft") {
-      if (
-        fixture.reviewedBy === null &&
-        fixture.reviewedAt === null &&
-        fixture.reviewRationale === null
-      ) {
-        return;
-      }
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["reviewStatus"],
-        message: "Draft fixtures cannot carry review evidence",
-      });
-      return;
-    }
-    if (
-      fixture.reviewedBy !== null &&
-      fixture.reviewedAt !== null &&
-      fixture.reviewRationale !== null
-    ) {
-      return;
-    }
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ["reviewStatus"],
-      message: "Reviewed fixtures require reviewer, timestamp, and rationale",
-    });
-  });
-const decisionEvaluationReplayItemSchema = z.object({
-  fixtureId: z.string().trim().min(1).max(256),
-  familyId: z.string().trim().min(1).max(256),
-  language: z.enum(["zh", "en", "mixed"]),
-  reviewStatus: z.enum(["draft", "reviewed"]),
-  expectedValue: z.union([z.string(), z.number(), z.boolean()]),
-  providerValue: z.union([z.string(), z.number(), z.boolean()]),
-  matchedExpected: z.boolean(),
-  providerVersion: z.string().trim().min(1).max(128),
-  latencyMs: z.number().int().nonnegative(),
-});
-const decisionEvaluationReplayReportSchema = z.object({
-  generatedAt: isoDateTimeSchema,
-  providerId: z.string().trim().min(1).max(128),
-  includedReviewStatuses: z.array(z.enum(["draft", "reviewed"])).min(1),
-  items: z.array(decisionEvaluationReplayItemSchema),
-  reviewedItemCount: z.number().int().nonnegative(),
-  reviewedMatchRate: z.number().min(0).max(1).nullable(),
-  draftItemCount: z.number().int().nonnegative(),
-  draftMatchRate: z.number().min(0).max(1).nullable(),
-});
-
-export {
-  decisionEvaluationFixtureSchema,
-  decisionEvaluationReplayItemSchema,
-  decisionEvaluationReplayReportSchema,
-  decisionProviderResultSchema,
-  decisionQuestionKindSchema,
-  decisionQuestionSchema,
-  decisionRequestSchema,
-};
-export type DecisionQuestion = z.infer<typeof decisionQuestionSchema>;
-export type DecisionRequest = z.infer<typeof decisionRequestSchema>;
-export type DecisionProviderResult = z.infer<
-  typeof decisionProviderResultSchema
->;
-export type DecisionEvaluationFixture = z.infer<
-  typeof decisionEvaluationFixtureSchema
->;
-export type DecisionEvaluationReplayItem = z.infer<
-  typeof decisionEvaluationReplayItemSchema
->;
-export type DecisionEvaluationReplayReport = z.infer<
-  typeof decisionEvaluationReplayReportSchema
->;
 
 const goalCreateSchema = goalSchema
   .omit({ id: true, profileId: true, createdAt: true, updatedAt: true })
@@ -561,45 +431,9 @@ const nowOverviewSchema = z.object({
   suggestedAction: decisionCandidateSchema.nullable(),
   suggestedDecisionId: idSchema.nullable(),
 });
-const decisionEvaluationSummarySchema = z.object({
-  totalDecisions: z.number().int().nonnegative(),
-  totalJudgments: z.number().int().nonnegative(),
-  judgmentsByProvider: z.record(z.string(), z.number().int().nonnegative()),
-  comparedJudgmentPairs: z.number().int().nonnegative(),
-  matchingJudgmentPairs: z.number().int().nonnegative(),
-  agreementRate: z.number().min(0).max(1).nullable(),
-  averageJevLatencyMs: z.number().nonnegative().nullable(),
-  feedbackByKind: z.record(z.string(), z.number().int().nonnegative()),
-  decisionReasonsByKind: z.record(z.string(), z.number().int().nonnegative()),
-  jevAttemptedDecisionCount: z.number().int().nonnegative(),
-  jevProviderErrorDecisionCount: z.number().int().nonnegative(),
-  jevProviderErrorRate: z.number().min(0).max(1).nullable(),
-});
-const decisionReleaseGateSchema = z.object({
-  passed: z.boolean(),
-  reasons: z.array(z.string().trim().min(1)).max(32),
-});
-const decisionEvaluationReportSchema = decisionEvaluationSummarySchema.extend({
-  retrievalRoutingSummary: decisionEvaluationSummarySchema,
-  initiativeInterruptionSummary: decisionEvaluationSummarySchema,
-  releaseGates: z.object({ retrieval: decisionReleaseGateSchema }),
-});
 
-export {
-  decisionEvaluationReportSchema,
-  decisionEvaluationSummarySchema,
-  decisionReleaseGateSchema,
-  goalPromptContextSchema,
-  nowOverviewSchema,
-};
+export { goalPromptContextSchema, nowOverviewSchema };
 export type GoalPromptContext = z.infer<typeof goalPromptContextSchema>;
 export type NowOverview = z.infer<typeof nowOverviewSchema>;
-export type DecisionEvaluationSummary = z.infer<
-  typeof decisionEvaluationSummarySchema
->;
-export type DecisionReleaseGate = z.infer<typeof decisionReleaseGateSchema>;
-export type DecisionEvaluationReport = z.infer<
-  typeof decisionEvaluationReportSchema
->;
 export type GoalUpdate = z.infer<typeof goalUpdateSchema>;
 export type CommitmentUpdate = z.infer<typeof commitmentUpdateSchema>;

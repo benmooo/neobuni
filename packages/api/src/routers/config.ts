@@ -1,9 +1,5 @@
 import {
   agentConfigInputSchema,
-  type DecisionJevProviderConfigInput,
-  type DecisionJevProviderConfigUpdateInput,
-  decisionJevProviderConfigInputSchema,
-  decisionJevProviderConfigUpdateInputSchema,
   type ProviderConfig,
   providerConfigInputSchema,
   soulConfigInputSchema,
@@ -11,7 +7,6 @@ import {
 import {
   getAgentConfig,
   getDatabaseRuntimeStatus,
-  getDecisionJevProviderConfig,
   getMemoryEmbeddingProviderConfig,
   getMemoryReasoningProviderConfig,
   getProviderConfig,
@@ -20,8 +15,6 @@ import {
   upsertProviderConfig,
   upsertSoulConfig,
 } from "@neobuni/db";
-import { ORPCError } from "@orpc/server";
-
 import { protectedProcedure } from "../index";
 import { run } from "../run";
 
@@ -31,11 +24,6 @@ import { run } from "../run";
 // `GET/PUT /config/messaging/discord`, and `GET/PUT /config/messaging/telegram`
 // need the messaging integration modules from `apps/server/src/integrations`
 // (they fall back to environment-configured defaults before hitting the DB).
-
-type PublicJevProviderConfig = Omit<ProviderConfig, "apiKey"> & {
-  apiKey: "";
-  hasApiKey: boolean;
-};
 
 const summarizeProviderConfig = (config: ProviderConfig | null) => {
   if (!config) {
@@ -61,42 +49,14 @@ const summarizeProviderConfig = (config: ProviderConfig | null) => {
   };
 };
 
-const toPublicJevProviderConfig = (
-  config: ProviderConfig | null
-): PublicJevProviderConfig | null =>
-  config
-    ? {
-        ...config,
-        apiKey: "",
-        hasApiKey: config.apiKey.trim().length > 0,
-      }
-    : null;
-
-const resolveJevProviderConfigInput = (input: {
-  existing: ProviderConfig | null;
-  update: DecisionJevProviderConfigUpdateInput;
-}): DecisionJevProviderConfigInput =>
-  decisionJevProviderConfigInputSchema.parse({
-    ...input.update,
-    apiKey:
-      input.update.apiKey.trim().length > 0
-        ? input.update.apiKey
-        : (input.existing?.apiKey ?? ""),
-  });
-
 export const configRouter = {
   runtime: protectedProcedure.handler(async ({ context }) => {
-    const [
-      chatConfig,
-      memoryEmbeddingConfig,
-      memoryReasoningConfig,
-      decisionJevConfig,
-    ] = await Promise.all([
-      run(getProviderConfig(context.profileId)),
-      run(getMemoryEmbeddingProviderConfig(context.profileId)),
-      run(getMemoryReasoningProviderConfig(context.profileId)),
-      run(getDecisionJevProviderConfig(context.profileId)),
-    ]);
+    const [chatConfig, memoryEmbeddingConfig, memoryReasoningConfig] =
+      await Promise.all([
+        run(getProviderConfig(context.profileId)),
+        run(getMemoryEmbeddingProviderConfig(context.profileId)),
+        run(getMemoryReasoningProviderConfig(context.profileId)),
+      ]);
 
     return {
       profileId: context.profileId,
@@ -105,7 +65,6 @@ export const configRouter = {
         chat: summarizeProviderConfig(chatConfig),
         memoryEmbedding: summarizeProviderConfig(memoryEmbeddingConfig),
         memoryReasoning: summarizeProviderConfig(memoryReasoningConfig),
-        decisionJev: summarizeProviderConfig(decisionJevConfig),
       },
     };
   }),
@@ -144,46 +103,6 @@ export const configRouter = {
       .handler(({ input, context }) =>
         run(upsertProviderConfig(context.profileId, "chat", input))
       ),
-
-    jev: {
-      get: protectedProcedure.handler(async ({ context }) =>
-        toPublicJevProviderConfig(
-          await run(getDecisionJevProviderConfig(context.profileId))
-        )
-      ),
-
-      update: protectedProcedure
-        .input(decisionJevProviderConfigUpdateInputSchema)
-        .handler(async ({ input, context }) => {
-          const existing = await run(
-            getDecisionJevProviderConfig(context.profileId)
-          );
-          const inputResult = decisionJevProviderConfigInputSchema.safeParse({
-            ...input,
-            apiKey:
-              input.apiKey.trim().length > 0
-                ? input.apiKey
-                : (existing?.apiKey ?? ""),
-          });
-
-          if (!inputResult.success) {
-            throw new ORPCError("BAD_REQUEST", {
-              message:
-                "首次保存 Jev 配置需要 OpenRouter API Key；后续留空会保留已保存的密钥。",
-            });
-          }
-
-          const config = await run(
-            upsertProviderConfig(
-              context.profileId,
-              "decision_jev",
-              resolveJevProviderConfigInput({ existing, update: input })
-            )
-          );
-
-          return toPublicJevProviderConfig(config);
-        }),
-    },
 
     memoryEmbedding: {
       get: protectedProcedure.handler(({ context }) =>

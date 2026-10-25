@@ -23,7 +23,6 @@ const getProviderConfig = (...args: Parameters<typeof getProviderConfigFx>) =>
 const listMessages = (...args: Parameters<typeof listMessagesFx>) =>
   runRepo(listMessagesFx(...args));
 
-import { recordEvidenceRelevanceShadow } from "../decision/evidence-relevance-shadow-service";
 import { runManualDigest } from "../digest/digest-pipeline";
 import { getDigestThreshold } from "../digest/memory-provider-config";
 import { createChatToolSet, createExecutionTools } from "../tools";
@@ -400,15 +399,6 @@ const createChatTurnStream = async ({
     goalContext: loadedContext.goalContext,
   });
 
-  const evidenceRelevanceShadow = await runRepo(
-    recordEvidenceRelevanceShadow({
-      profileId,
-      latestUserText,
-      evidence: kernelResult.fusedEvidence,
-      trigger: "chat_evidence_relevance",
-    })
-  ).catch(() => ({ status: "failed" as const, evidenceIds: [] as string[] }));
-
   const evidenceFusionSpan = await observer.startSpan("evidence_fusion", {
     stores: retrieval.retrievalPlan.stores,
   });
@@ -421,10 +411,6 @@ const createChatTurnStream = async ({
     knowledgeInputCount:
       retrieval.retrievedEvidence.knowledgeEvidence?.length ?? 0,
     fusedCount: kernelResult.fusedEvidence.length,
-    evidenceRelevanceShadow: {
-      status: evidenceRelevanceShadow.status,
-      evidenceIds: evidenceRelevanceShadow.evidenceIds,
-    },
     returnedItems: kernelResult.fusedEvidence.map((item) => ({
       id: item.id,
       store: item.store,

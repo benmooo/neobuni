@@ -33,20 +33,10 @@ import { z } from "zod";
 import { protectedProcedure } from "../index";
 import { run } from "../run";
 
-// TODO(server): `GET /goals/now` needs `buildNextActionCandidates` and
-// `selectHeuristicNextAction` from `@neobuni/core`, which is not a dependency
-// of `@neobuni/api`.
-// TODO(server): `GET /goals/decision-evaluation` needs the decision evaluation
-// helpers from `@neobuni/core` plus `getJevRuntimeConfig` and
-// `createRetrievalReleaseGateConfig` from `apps/server/src/decision`.
-// TODO(server): `POST /goals/next-action-evaluations` needs
-// `recordNextActionEvaluation` from `apps/server/src/decision`.
-// TODO(server): `GET /goals/telegram-targets` and `POST /goals/telegram-drafts`
-// need the Telegram integration module (`getEffectiveTelegramConfig`) from
-// `apps/server/src/integrations`.
-// TODO(server): `POST /goals/action-proposals/:proposalId/action-runs` needs
-// `isActionAuthorizedForExecution` and `isProposalInputBoundToCandidate` from
-// `@neobuni/core`, which is not a dependency of `@neobuni/api`.
+// Procedures that need modules from `apps/server` (schedule planning, memory
+// pipelines, integrations, decision services) live in
+// `apps/server/src/routers/extras.ts` and are merged over this router. This file
+// intentionally depends only on `@neobuni/db` and `@neobuni/contracts`.
 
 const commitmentParamSchema = goalParamSchema.extend({
   commitmentId: z.string().min(1),

@@ -18,7 +18,6 @@ import { memoriesRouter } from "@neobuni/api/routers/memories";
 import { schedulesRouter } from "@neobuni/api/routers/schedules";
 import {
   actionRunCreateSchema,
-  decisionJevProviderConfigInputSchema,
   discordMessagingConfigInputSchema,
   feishuConfigInputSchema,
   knowledgeDocumentCreateSchema,
@@ -34,12 +33,9 @@ import {
 } from "@neobuni/contracts";
 import {
   buildNextActionCandidates,
-  evaluateDecisionReleaseGate,
   isActionAuthorizedForExecution,
   isProposalInputBoundToCandidate,
-  routableRetrievalQuestionIds,
   selectHeuristicNextAction,
-  summarizeDecisionEvaluation,
 } from "@neobuni/core";
 import {
   appendEvent,
@@ -51,7 +47,6 @@ import {
   getActionProposal,
   getActionRunByProposal,
   getConversation,
-  getDecisionJevProviderConfig,
   getDecisionTrace,
   getGoal,
   getMemoryEmbeddingProviderConfig,
@@ -60,7 +55,6 @@ import {
   getSchedule,
   listCommitments,
   listDecisionTracesByGoal,
-  listDecisionTracesByProfile,
   listGoals,
   listMemories,
   recordDecisionTrace,
@@ -70,7 +64,6 @@ import { ORPCError } from "@orpc/server";
 import { z } from "zod";
 
 import { recordNextActionEvaluation } from "../decision/next-action-evaluation-service";
-import { createRetrievalReleaseGateConfig } from "../decision/retrieval-release-config";
 import { runManualDigest } from "../digest/digest-pipeline";
 import { toOpenAICompatibleConfig } from "../digest/memory-provider-config";
 import {
@@ -475,48 +468,6 @@ export const extrasRouter = {
       };
     }),
 
-    decisionEvaluation: protectedProcedure.handler(async ({ context }) => {
-      const [traces, jevConfigRecord] = await Promise.all([
-        run(listDecisionTracesByProfile(context.profileId)),
-        run(getDecisionJevProviderConfig(context.profileId)),
-      ]);
-      const parsedJevConfig = jevConfigRecord
-        ? decisionJevProviderConfigInputSchema.safeParse(jevConfigRecord)
-        : null;
-      const jevMetadata = parsedJevConfig?.success
-        ? parsedJevConfig.data.metadata
-        : null;
-      const retrievalRoutingSummary = summarizeDecisionEvaluation(
-        traces.filter((trace) => trace.decision.kind === "memory_retrieval"),
-        { questionIds: routableRetrievalQuestionIds }
-      );
-      const initiativeInterruptionSummary = summarizeDecisionEvaluation(
-        traces,
-        {
-          questionIds: ["initiative.interruption_value.v1"],
-        }
-      );
-
-      return {
-        ...summarizeDecisionEvaluation(traces),
-        retrievalRoutingSummary,
-        initiativeInterruptionSummary,
-        releaseGates: {
-          retrieval: evaluateDecisionReleaseGate({
-            summary: retrievalRoutingSummary,
-            ...createRetrievalReleaseGateConfig({
-              minComparedPairs: jevMetadata?.retrievalMinComparedPairs ?? 20,
-              minAgreementRate: jevMetadata?.retrievalMinAgreementRate ?? 0.85,
-              maxAverageJevLatencyMs:
-                jevMetadata?.retrievalMaxAverageLatencyMs ?? 3000,
-              maxProviderErrorRate:
-                jevMetadata?.retrievalMaxProviderErrorRate ?? 0.05,
-            }),
-          }),
-        },
-      };
-    }),
-
     nextActionEvaluations: protectedProcedure
       .input(nextActionEvaluationCreateSchema)
       .handler(async ({ input, context }) => {
@@ -641,7 +592,6 @@ export const extrasRouter = {
                 eligible: true,
               },
             ],
-            judgments: [],
           })
         );
 

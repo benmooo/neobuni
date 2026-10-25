@@ -8,10 +8,14 @@ export default defineConfig({
       "@": resolve(import.meta.dirname, "apps/web/src"),
     },
   },
+  test: {
+    include: ["apps/**/*.test.ts", "packages/**/*.test.ts"],
+  },
   lint: {
     ignorePatterns: [
       "node_modules/**",
       "**/node_modules/**",
+      "experiments/**",
       "apps/web/dist/**",
       "apps/web/.tanstack/**",
       "apps/web/src/routeTree.gen.ts",
@@ -30,6 +34,7 @@ export default defineConfig({
     ignorePatterns: [
       "node_modules/**",
       "**/node_modules/**",
+      "experiments/**",
       "apps/web/dist/**",
       "apps/web/.tanstack/**",
       "apps/web/src/routeTree.gen.ts",
