@@ -32,7 +32,6 @@ import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 
 import {
-  useCompleteStudySession,
   useSkipStudySession,
   useStartStudyGoal,
   useStudyGoals,
@@ -235,13 +234,11 @@ function SessionCard({
   session,
   onComplete,
   onSkip,
-  pending,
 }: {
   node: StudyPlanNode;
   session: StudySession;
   onComplete: () => void;
   onSkip: () => void;
-  pending: boolean;
 }) {
   return (
     <Card>
@@ -267,10 +264,8 @@ function SessionCard({
           </div>
         ) : null}
         <div className="flex flex-wrap gap-2">
-          <Button disabled={pending} onClick={onComplete}>
-            {pending ? "提交中…" : "完成并检查"}
-          </Button>
-          <Button disabled={pending} onClick={onSkip} variant="secondary">
+          <Button onClick={onComplete}>完成并检查</Button>
+          <Button onClick={onSkip} variant="secondary">
             今天跳过
           </Button>
         </div>
@@ -426,7 +421,6 @@ function CheckDialog({
 
 function StudyDashboard({ goalId }: { goalId: string }) {
   const today = useStudyToday(goalId);
-  const complete = useCompleteStudySession();
   const skip = useSkipStudySession();
   const [checkForm, setCheckForm] = useState<{
     node: StudyPlanNode;
@@ -467,13 +461,8 @@ function StudyDashboard({ goalId }: { goalId: string }) {
               session: primary.session,
               specs: primary.node.checkSpecs,
             });
-            void complete.mutateAsync({
-              actualMinutes: primary.session.durationMinutes,
-              sessionId: primary.session.id,
-            });
           }}
           onSkip={() => skip.mutate(primary.session.id)}
-          pending={complete.isPending}
           session={primary.session}
         />
       ) : (

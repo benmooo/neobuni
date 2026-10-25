@@ -281,7 +281,8 @@ const runStudyReminderSweep = async (
             !events.some(
               (event) =>
                 event.type === "study.reminder_sent" &&
-                event.payload.sessionId === session.id
+                event.payload.sessionId === session.id &&
+                event.payload.scheduledFor === session.scheduledFor
             )
         )
         .sort((left, right) =>
@@ -314,6 +315,7 @@ const runStudyReminderSweep = async (
               goalId: goal.id,
               sessionId: session.id,
               planNodeId: node.id,
+              scheduledFor: session.scheduledFor,
               channels: studyConfig.channels.length,
               delivered: result.delivered,
               errors: result.errors,

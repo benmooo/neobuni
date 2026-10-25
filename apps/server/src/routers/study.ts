@@ -284,7 +284,7 @@ const activatePlanForGoal = async (input: {
     (session) => nodeIds.has(session.planNodeId)
   );
   if (existing.length > 0) {
-    return { plan, sessions: existing };
+    return { nodes: plan.nodes, plan: plan.plan, sessions: existing };
   }
 
   const { localDate } = nowInTimezone(config);
@@ -338,7 +338,12 @@ const activatePlanForGoal = async (input: {
     })
   );
 
-  return { plan: activated ?? plan, sessions };
+  const activatedView = activated ?? plan;
+  return {
+    nodes: activatedView.nodes,
+    plan: activatedView.plan,
+    sessions,
+  };
 };
 
 export const studyRouter = {

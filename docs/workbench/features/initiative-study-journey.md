@@ -397,11 +397,11 @@ Goal 创建扩展：`goals.create({ kind: "study_exam", targetAt, domainConfig, 
 | P2 | Study 领域：schema + 纯 core（planner/scheduler/mastery）+ 单测 | ✅ done（2026-10-25）：`study_*` 契约、6 张表 + 迁移、`packages/core/src/study`（校验/排期/掌握度/进度），新增 20 个单测，全量 258 个测试绿 |
 | P3 | 计划生成：模板 + 结构化抽取 + 校验器 + job | 🟡 in progress：模板 v0 + 确定性展开（150 个左右小课）+ 持久化 + API 已完成；LLM lesson 内容生成与异步 job 待做 |
 | P4 | 会话/检查/进度 API + repo 集成测试 | ✅ backend done（2026-10-25）：today / progress / session / check 判分 / mastery 写回 / 未通过次日复习；repo 集成测试与 router 测试通过 |
-| P5 | Now 驾驶舱 + Goal 详情 + 设置 | 🟡 in progress：Now 已接学习驾驶舱（一步开始、今天这一步、完成并检查、三科就绪度、未来安排）；学习详情页与 Settings 待做 |
-| P6 | 主动推送 + 聊天工具 | 到点只推一次；漏学给出最小重排；静默时段不推 |
+| P5 | Now 驾驶舱 + Goal 详情 + 设置 | ✅ done（2026-10-25）：Now 驾驶舱、`/study/$goalId` 旅程页、Settings > 学习（节奏/休息日/静默时段/提醒渠道/重新排期） |
+| P6 | 主动推送 + 聊天工具 | ✅ done（2026-10-25）：确定性 reminder worker（提前 60 分钟、每天最多 2 条、静默时段、幂等、reschedule 后重发）+ `study_today` / `study_progress` 聊天工具 |
 | P7 | 端到端种子 + 验收 | 用 mock provider 跑通 7 天学习循环；真实 provider 手动 smoke |
 
-预计 3–4 周（单人）。
+预计 3–4 周（单人）。截至 2026-10-25，除 LLM 内容增强外，垂直切片已端到端可运行。
 
 ### 8.1 垂直切片验收清单
 

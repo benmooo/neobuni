@@ -155,7 +155,7 @@ describe("runStudyReminderSweep", () => {
           id: "event-1",
           profileId: "profile-1",
           type: "study.reminder_sent",
-          payload: { sessionId: "session-1" },
+          payload: { scheduledFor: "2026-10-26T20:30", sessionId: "session-1" },
           createdAt: "2026-10-26T12:00:00.000Z",
         },
       ],
