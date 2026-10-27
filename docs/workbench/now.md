@@ -4,7 +4,7 @@ title: "Current Focus"
 
 # Current Focus
 
-Updated At: 2026-10-27 10:20 Asia/Shanghai
+Updated At: 2026-10-27 11:50 Asia/Shanghai
 Active Feature: opencode-go-provider (implemented) / initiative-study-journey
 Status: awaiting-live-smoke
 
@@ -36,6 +36,7 @@ Port（buni → neobuni）已经完成并且健康：90 个测试文件 / 277 �
 - **OpenCode provider 联调（2026-10-25）**：真实试跑发现三个问题并修复——① Go 有独立端点命名空间 `/inference/go/...`，指向 Console 路径会 402；② `enrichStudyLesson` 把"没有 provider"和"provider 调用失败"都返回 null，掩盖了真实错误，现在分为 `missing_provider` / `provider_error` 并在 API 层返回 `BAD_GATEWAY` 携带真实信息；③ 推理模型的 `reasoning_content` 计入 `max_tokens`，冗长 prompt 导致 JSON 截断，现在 prompt 有明确字数上限、`maxTokens` 提到 3000、并对拒绝 temperature 的模型（如 kimi-k2.7-code）自动重试。实测：细化 11.3s 成功、判分 4.3s（LLM 0.85 分）。默认模型改为 `deepseek-v4.1-flash`。全量 314 个测试绿。
 - **OpenCode provider（2026-10-25）**：新增 `opencode` vendor（OpenAI 协议、Base URL `https://opencode.ai/inference/openai/v1`）、`glm-5.3-flash` 默认模型、模型目录拉取（`config.providerModels`）、`User-Agent` / `x-opencode-session` 头、study 侧稳定 session id；无迁移。全量 310 个测试绿，typecheck 与 Ultracite 通过。
 - **聊天检查工具（2026-10-27）**：新增 `study_quiz`（返回今日课程的 3 道题，不暴露 rubric/答案）+ `study_quiz_submit`（判分并持久化）；提交逻辑抽到 `study/check-service.ts`，REST 与聊天共用同一套 check 写入、掌握度更新、session 完成与间隔复习。全量 307 个测试绿。
+- **Study OpenAPI（2026-10-27）**：15 个 study 过程补齐 `method` / `path` / `summary` / `description` / `tags`，从默认 `POST /study/x/y` 收敛为 `/study/goals`、`/study/goals/{goalId}/today`、`/study/sessions/{sessionId}/checks` 等 REST 路径；新增 `routes/study.openapi.test.ts` 锁定生成结果。RPC 客户端路径不受影响。全量 309 个测试绿。
 
 ## Next Exact Step
 
@@ -43,8 +44,9 @@ Port（buni → neobuni）已经完成并且健康：90 个测试文件 / 277 �
    本地库里的 `base_url` 已修正为 `https://opencode.ai/inference/go/openai/v1`。
    细节与实测数据见 `docs/workbench/features/opencode-go-provider.md`。
 2. **真实环境试跑**：在 Now 创建学习目标，点"用 AI 细化这节课"，完成检查，配置一个提醒渠道，观察 `study.reminder_sent` 事件与推送。
-3. **收尾**：给 Study 相关接口补 OpenAPI 描述；把 `experiments/decision-os/` 与旧 docs 的归档说明补齐。
-4. 跑 `bun run test`，保持 310+ 全绿。
+3. **推广 OpenAPI 约定**：把 `.route(...)` 用到其余 router（`goals` / `config` / `extras` 等约 87 个 procedure），沿用 `study.openapi.test.ts` 的断言方式。
+4. **归档说明**：补齐 `experiments/decision-os/` 与旧 docs 的归档说明。
+5. 跑 `bun run test`，保持 309+ 全绿。
 
 ## Reopen These Files
 

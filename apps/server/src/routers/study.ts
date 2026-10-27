@@ -406,20 +406,39 @@ const activatePlanForGoal = async (input: {
 
 export const studyRouter = {
   goals: {
-    list: protectedProcedure.handler(async ({ context }) => {
-      const goals = (await run(listGoals(context.profileId))).filter(
-        (goal) => goal.status === "active" || goal.status === "paused"
-      );
-      const rows = await Promise.all(
-        goals.map(async (goal) => {
-          const config = await run(getStudyGoalConfig(goal.id));
-          return config ? { config, goal } : null;
-        })
-      );
-      return rows.filter((row): row is NonNullable<typeof row> => row !== null);
-    }),
+    list: protectedProcedure
+      .route({
+        method: "GET",
+        path: "/study/goals",
+        summary: "List study goals",
+        description:
+          "Return active and paused goals that have a study configuration.",
+        tags: ["Study"],
+      })
+      .handler(async ({ context }) => {
+        const goals = (await run(listGoals(context.profileId))).filter(
+          (goal) => goal.status === "active" || goal.status === "paused"
+        );
+        const rows = await Promise.all(
+          goals.map(async (goal) => {
+            const config = await run(getStudyGoalConfig(goal.id));
+            return config ? { config, goal } : null;
+          })
+        );
+        return rows.filter(
+          (row): row is NonNullable<typeof row> => row !== null
+        );
+      }),
 
     get: protectedProcedure
+      .route({
+        method: "GET",
+        path: "/study/goals/{goalId}",
+        summary: "Get a study goal",
+        description:
+          "Return one study goal with its configuration, latest plan, mastery, and sessions.",
+        tags: ["Study"],
+      })
       .input(studyGoalParamSchema)
       .handler(async ({ input, context }) => {
         const goal = await requireStudyGoal(context.profileId, input.goalId);
@@ -433,12 +452,28 @@ export const studyRouter = {
       }),
 
     create: protectedProcedure
+      .route({
+        method: "POST",
+        path: "/study/goals",
+        summary: "Create a study goal",
+        description:
+          "Create a study goal plus its study configuration without generating a plan.",
+        tags: ["Study"],
+      })
       .input(studyGoalCreateSchema)
       .handler(({ input, context }) =>
         createStudyGoalRecord({ input, profileId: context.profileId })
       ),
 
     updateConfig: protectedProcedure
+      .route({
+        method: "PATCH",
+        path: "/study/goals/{goalId}/config",
+        summary: "Update study configuration",
+        description:
+          "Update the target date, daily minutes, study window, rest days, quiet hours, reminder channels, or plan style.",
+        tags: ["Study"],
+      })
       .input(studyGoalConfigUpdateSchema)
       .handler(async ({ input, context }) => {
         const goal = await requireStudyGoal(context.profileId, input.goalId);
@@ -461,6 +496,14 @@ export const studyRouter = {
       }),
 
     start: protectedProcedure
+      .route({
+        method: "POST",
+        path: "/study/goals/start",
+        summary: "Start a study journey",
+        description:
+          "Create a study goal, generate its first plan, and activate the schedule in one call.",
+        tags: ["Study"],
+      })
       .input(studyGoalCreateSchema)
       .handler(async ({ input, context }) => {
         const created = await createStudyGoalRecord({
@@ -482,6 +525,14 @@ export const studyRouter = {
 
   plans: {
     generate: protectedProcedure
+      .route({
+        method: "POST",
+        path: "/study/goals/{goalId}/plan/generate",
+        summary: "Generate a study plan",
+        description:
+          "Generate a new draft plan version and carry mastery over by stable lesson key.",
+        tags: ["Study"],
+      })
       .input(studyPlanGenerateSchema)
       .handler(({ input, context }) =>
         generatePlanForGoal({
@@ -492,6 +543,13 @@ export const studyRouter = {
       ),
 
     get: protectedProcedure
+      .route({
+        method: "GET",
+        path: "/study/goals/{goalId}/plan",
+        summary: "Get the latest study plan",
+        description: "Return the latest plan version with its full node tree.",
+        tags: ["Study"],
+      })
       .input(studyGoalParamSchema)
       .handler(async ({ input, context }) => {
         await requireStudyGoal(context.profileId, input.goalId);
@@ -499,6 +557,14 @@ export const studyRouter = {
       }),
 
     activate: protectedProcedure
+      .route({
+        method: "POST",
+        path: "/study/goals/{goalId}/plan/activate",
+        summary: "Activate a study plan",
+        description:
+          "Activate a draft plan and schedule its sessions. Fails when the plan cannot fit before the target date.",
+        tags: ["Study"],
+      })
       .input(studyPlanActivateSchema)
       .handler(({ input, context }) =>
         activatePlanForGoal({
@@ -511,6 +577,14 @@ export const studyRouter = {
 
   lessons: {
     enrich: protectedProcedure
+      .route({
+        method: "POST",
+        path: "/study/goals/{goalId}/lessons/{planNodeId}/enrich",
+        summary: "Refine a lesson with AI",
+        description:
+          "Rewrite one lesson's what/how and checks with the reasoning provider. Results are cached unless force is true.",
+        tags: ["Study"],
+      })
       .input(studyLessonEnrichSchema)
       .handler(async ({ input, context }) => {
         const goal = await requireStudyGoal(context.profileId, input.goalId);
@@ -569,6 +643,14 @@ export const studyRouter = {
   },
 
   today: protectedProcedure
+    .route({
+      method: "GET",
+      path: "/study/goals/{goalId}/today",
+      summary: "Get today's study step",
+      description:
+        "Return today's primary session, the upcoming sessions, and current progress.",
+      tags: ["Study"],
+    })
     .input(studyGoalParamSchema)
     .handler(async ({ input, context }): Promise<StudyToday> => {
       await requireStudyGoal(context.profileId, input.goalId);
@@ -615,6 +697,14 @@ export const studyRouter = {
     }),
 
   progress: protectedProcedure
+    .route({
+      method: "GET",
+      path: "/study/goals/{goalId}/progress",
+      summary: "Get study progress",
+      description:
+        "Return coverage, mastery, per-paper readiness, and pace for the latest plan.",
+      tags: ["Study"],
+    })
     .input(studyProgressInputSchema)
     .handler(async ({ input, context }) => {
       await requireStudyGoal(context.profileId, input.goalId);
@@ -627,18 +717,35 @@ export const studyRouter = {
     }),
 
   checks: {
-    submit: protectedProcedure.input(studyCheckSubmitSchema).handler(
-      ({ input, context }): Promise<StudyCheckResult> =>
-        submitStudyCheck({
-          answers: input.answers,
-          profileId: context.profileId,
-          sessionId: input.sessionId,
-        })
-    ),
+    submit: protectedProcedure
+      .route({
+        method: "POST",
+        path: "/study/sessions/{sessionId}/checks",
+        summary: "Submit study checks",
+        description:
+          "Grade the lesson's checks, persist the results, update mastery, complete the session, and schedule the next review. Questions without an answer count as unattempted.",
+        tags: ["Study"],
+      })
+      .input(studyCheckSubmitSchema)
+      .handler(
+        ({ input, context }): Promise<StudyCheckResult> =>
+          submitStudyCheck({
+            answers: input.answers,
+            profileId: context.profileId,
+            sessionId: input.sessionId,
+          })
+      ),
   },
 
   sessions: {
     complete: protectedProcedure
+      .route({
+        method: "POST",
+        path: "/study/sessions/{sessionId}/complete",
+        summary: "Complete a study session",
+        description: "Mark a session complete without grading checks.",
+        tags: ["Study"],
+      })
       .input(studySessionCompleteSchema)
       .handler(async ({ input, context }) => {
         const session = await run(getStudySession(input.sessionId));
@@ -664,6 +771,13 @@ export const studyRouter = {
       }),
 
     skip: protectedProcedure
+      .route({
+        method: "POST",
+        path: "/study/sessions/{sessionId}/skip",
+        summary: "Skip a study session",
+        description: "Mark a session as skipped.",
+        tags: ["Study"],
+      })
       .input(studySessionIdSchema)
       .handler(async ({ input, context }) => {
         const session = await run(getStudySession(input.sessionId));
@@ -679,6 +793,13 @@ export const studyRouter = {
       }),
 
     reschedule: protectedProcedure
+      .route({
+        method: "PATCH",
+        path: "/study/sessions/{sessionId}",
+        summary: "Reschedule a study session",
+        description: "Move a session to a new local date-time.",
+        tags: ["Study"],
+      })
       .input(studySessionRescheduleSchema)
       .handler(async ({ input, context }) => {
         const session = await run(getStudySession(input.sessionId));
