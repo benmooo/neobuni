@@ -24,6 +24,8 @@ const executionToolNames = [
   "send_feishu_message",
   "send_qq_message",
   "study_progress",
+  "study_quiz",
+  "study_quiz_submit",
   "study_today",
   "summarize_page",
   "update_schedule",

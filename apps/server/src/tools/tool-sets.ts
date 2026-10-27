@@ -27,6 +27,8 @@ import { createSendChatMessageTool } from "./send-chat-message";
 import { createSendFeishuMessageTool } from "./send-feishu-message";
 import { createSendQqMessageTool } from "./send-qq-message";
 import { createStudyProgressTool } from "./study-progress";
+import { createStudyQuizTool } from "./study-quiz";
+import { createStudyQuizSubmitTool } from "./study-quiz-submit";
 import { createStudyTodayTool } from "./study-today";
 import { createSummarizePageTool } from "./summarize-page";
 import type { ServerToolContext } from "./types";
@@ -68,6 +70,8 @@ const createExecutionTools = (context: ServerToolContext) => [
   createSendQqMessageTool(context),
   createStudyTodayTool(context),
   createStudyProgressTool(context),
+  createStudyQuizTool(context),
+  createStudyQuizSubmitTool(context),
   createSummarizePageTool(context),
   createUpdateScheduleTool(context),
 ];

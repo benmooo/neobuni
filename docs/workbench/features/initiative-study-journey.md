@@ -352,7 +352,8 @@ type InitiativeDecision = {
 聊天工具（薄封装，复用同一 service）：
 
 - `study_today`：今天学什么、怎么学、多久
-- `study_check`：考我 / 提交答案 / 判分
+- `study_quiz`：考我（返回今日课程的检查题，不含 rubric/答案）
+- `study_quiz_submit`：提交答案并判分（写回 check、掌握度、完成 session、安排复习）
 - `study_progress`：我学得怎么样、哪里最弱
 - `study_reschedule`：今天没空，帮我挪一下
 
@@ -398,7 +399,7 @@ Goal 创建扩展：`goals.create({ kind: "study_exam", targetAt, domainConfig, 
 | P3 | 计划生成：模板 + 结构性展开 + 校验器 + job | ✅ done（2026-10-25）：模板 v0 + 确定性展开 + 持久化/API + 按考试日均匀铺排 + 按需 LLM 内容细化（缓存、Zod 校验、失败回退） |
 | P4 | 会话/检查/进度 API + repo 集成测试 | ✅ backend done（2026-10-25）：today / progress / session / check 判分 / mastery 写回 / 间隔复习；repo 集成测试、router 测试与真实 DB 端到端测试通过 |
 | P5 | Now 驾驶舱 + Goal 详情 + 设置 | ✅ done（2026-10-25）：Now 驾驶舱、`/study/$goalId` 旅程页、Settings > 学习（节奏/休息日/静默时段/提醒渠道/重新排期） |
-| P6 | 主动推送 + 聊天工具 | ✅ done（2026-10-25）：确定性 reminder worker（提前 60 分钟、每天最多 2 条、静默时段、幂等、reschedule 后重发）+ `study_today` / `study_progress` 聊天工具 |
+| P6 | 主动推送 + 聊天工具 | ✅ done（2026-10-25）：确定性 reminder worker（提前 60 分钟、每天最多 2 条、静默时段、幂等、reschedule 后重发）+ `study_today` / `study_progress` 聊天工具；2026-10-27 补 `study_quiz` / `study_quiz_submit`，与 REST 共用 `study/check-service.ts` |
 | P7 | 端到端种子 + 验收 | 用 mock provider 跑通 7 天学习循环；真实 provider 手动 smoke |
 
 预计 3–4 周（单人）。截至 2026-10-25，除 LLM 内容增强外，垂直切片已端到端可运行。
