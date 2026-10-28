@@ -533,18 +533,24 @@ export const studyRouter = {
         if (node.enrichment && !input.force) {
           return { enrichment: node.enrichment, node };
         }
-        const enrichment = await enrichStudyLesson({
+        const outcome = await enrichStudyLesson({
           desiredOutcome: goal.desiredOutcome,
           goalTitle: goal.title,
           node,
           profileId: context.profileId,
         });
-        if (!enrichment) {
+        if (outcome.status === "missing_provider") {
           throw new ORPCError("PRECONDITION_FAILED", {
             message:
               "Configure a reasoning provider to refine lessons, then try again.",
           });
         }
+        if (outcome.status === "provider_error") {
+          throw new ORPCError("BAD_GATEWAY", {
+            message: `Reasoning provider failed: ${outcome.message}`,
+          });
+        }
+        const { enrichment } = outcome;
         const updated = await run(
           updateStudyNodeEnrichment({
             enrichment,

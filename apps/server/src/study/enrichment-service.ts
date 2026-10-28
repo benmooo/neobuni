@@ -32,12 +32,16 @@ const ENRICHMENT_SYSTEM_PROMPT = `You are an expert coach for the Chinese 系统
 
 Rewrite ONE 30-45 minute lesson so it is concrete, exam-oriented, and immediately actionable.
 - Keep the same topic and scope. Do not add unrelated subjects.
-- "whatText" should list 3-5 specific concepts the learner will cover in this lesson.
-- "howText" should be a timed study script (for example: 10 min read, 15 min draw, 10 min practice, 5 min recall).
+- "whatText" lists 3-5 specific concepts, one per line, at most 120 characters in total.
+- "howText" is a timed study script (for example: 10 min read, 15 min draw, 10 min practice, 5 min recall), at most 120 characters.
+- "objective" is at most 40 characters.
 - Return exactly 3 checks: 1 recall check and 2 case/transfer checks.
-- For each check, provide a "rubric" with scoring points. For the recall check, also provide an "answerKey".
+- Each check "prompt" is at most 60 characters and each "rubric" is at most 40 characters.
+- For the recall check, also provide a short "answerKey".
 - "resources" is optional. Only include a resource when you are confident it exists; do not invent book page numbers or exam years.
 - Write in Chinese. Be specific, but do not invent official facts.
+
+Stay strictly inside those limits. Long answers get truncated and the whole lesson is discarded.
 
 Return JSON only, with no markdown fences or extra prose:
 {"objective":"...","whatText":"...","howText":"...","checkSpecs":[{"kind":"recall","prompt":"...","rubric":"...","answerKey":"..."},{"kind":"case","prompt":"...","rubric":"...","answerKey":null},{"kind":"case","prompt":"...","rubric":"...","answerKey":null}],"resources":["..."]}`;
@@ -50,12 +54,22 @@ const parseJson = (text: string): unknown => {
   }
 };
 
+/**
+ * Three outcomes instead of `null`: "no provider configured" and "provider call
+ * failed" need different messages, otherwise a quota/auth/endpoint failure looks
+ * like a missing configuration.
+ */
+type EnrichStudyLessonResult =
+  | { status: "ok"; enrichment: StudyLessonEnrichment }
+  | { status: "missing_provider" }
+  | { status: "provider_error"; message: string };
+
 const enrichStudyLesson = async (
   input: EnrichStudyLessonInput
-): Promise<StudyLessonEnrichment | null> => {
+): Promise<EnrichStudyLessonResult> => {
   const config = await resolveStudyReasoningConfig(input.profileId);
   if (!config) {
-    return null;
+    return { status: "missing_provider" };
   }
 
   try {
@@ -86,7 +100,9 @@ const enrichStudyLesson = async (
           }),
         },
       ],
-      { maxTokens: 1800, temperature: 0.2 }
+      // Reasoning models on OpenCode spend part of this budget on
+      // `reasoning_content` before emitting `content`, so keep headroom.
+      { maxTokens: 3000, temperature: 0.2 }
     );
     const parsed = enrichmentResponseSchema.parse(parseJson(text));
     const checkSpecs = parsed.checkSpecs.map((check, index) => ({
@@ -98,18 +114,24 @@ const enrichStudyLesson = async (
     }));
 
     return {
-      checkSpecs,
-      enrichedAt: new Date().toISOString(),
-      howText: parsed.howText,
-      objective: parsed.objective,
-      resources: parsed.resources,
-      source: "llm",
-      whatText: parsed.whatText,
+      status: "ok",
+      enrichment: {
+        checkSpecs,
+        enrichedAt: new Date().toISOString(),
+        howText: parsed.howText,
+        objective: parsed.objective,
+        resources: parsed.resources,
+        source: "llm",
+        whatText: parsed.whatText,
+      },
     };
-  } catch {
-    return null;
+  } catch (error) {
+    return {
+      status: "provider_error",
+      message: error instanceof Error ? error.message : String(error),
+    };
   }
 };
 
-export type { EnrichStudyLessonInput };
+export type { EnrichStudyLessonInput, EnrichStudyLessonResult };
 export { enrichStudyLesson };

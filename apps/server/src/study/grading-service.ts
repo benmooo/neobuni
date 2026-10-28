@@ -45,6 +45,7 @@ Grade each answer from 0 to 1 against the lesson objective and the question.
 - 0.0-0.29: wrong, empty, or only repeats the question.
 
 Be strict but fair. A learner at 0.6+ should be able to explain or apply the idea without notes.
+Keep "feedback" to at most 120 characters and each missing point to at most 40 characters.
 
 Return JSON only, with no markdown fences or extra prose:
 {"grades":[{"promptId":"...","score":0.0,"feedback":"...","missingPoints":["..."]}]}`;
@@ -113,7 +114,8 @@ const gradeStudyChecks = async (input: {
           }),
         },
       ],
-      { maxTokens: 1500, temperature: 0 }
+      // See enrichment-service: reasoning tokens count against maxTokens.
+      { maxTokens: 2500, temperature: 0 }
     );
     const parsed = gradeResponseSchema.parse(parseJson(text));
     const byPrompt = new Map(

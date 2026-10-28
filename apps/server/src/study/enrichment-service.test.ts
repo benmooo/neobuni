@@ -123,21 +123,25 @@ describe("enrichStudyLesson", () => {
       profileId: "profile-1",
     });
 
-    expect(result).toMatchObject({
+    if (result.status !== "ok") {
+      throw new Error(`expected ok, received ${result.status}`);
+    }
+
+    expect(result.enrichment).toMatchObject({
       howText: validResponse.howText,
       objective: validResponse.objective,
       source: "llm",
       whatText: validResponse.whatText,
     });
-    expect(result?.checkSpecs).toHaveLength(3);
-    expect(result?.checkSpecs[0]).toMatchObject({
+    expect(result.enrichment.checkSpecs).toHaveLength(3);
+    expect(result.enrichment.checkSpecs[0]).toMatchObject({
       id: `${node.id}.enriched.1`,
       kind: "recall",
     });
-    expect(result?.checkSpecs[1]?.id).toBe(`${node.id}.enriched.2`);
+    expect(result.enrichment.checkSpecs[1]?.id).toBe(`${node.id}.enriched.2`);
   });
 
-  test("returns null when no reasoning provider is configured", async () => {
+  test("reports missing_provider when no reasoning provider is configured", async () => {
     mocks.getMemoryReasoningProviderConfig.mockReturnValue(
       Effect.succeed(null)
     );
@@ -149,10 +153,10 @@ describe("enrichStudyLesson", () => {
       profileId: "profile-1",
     });
 
-    expect(result).toBeNull();
+    expect(result).toEqual({ status: "missing_provider" });
   });
 
-  test("returns null when the model returns invalid JSON", async () => {
+  test("reports provider_error when the model returns invalid JSON", async () => {
     mocks.createChatCompletion.mockResolvedValue("not json");
 
     const result = await enrichStudyLesson({
@@ -162,7 +166,28 @@ describe("enrichStudyLesson", () => {
       profileId: "profile-1",
     });
 
-    expect(result).toBeNull();
+    expect(result.status).toBe("provider_error");
+  });
+
+  test("surfaces the provider failure message instead of hiding it", async () => {
+    mocks.createChatCompletion.mockRejectedValue(
+      new Error(
+        "OpenAI-compatible request failed (402): Insufficient account funds"
+      )
+    );
+
+    const result = await enrichStudyLesson({
+      desiredOutcome: "Pass the exam",
+      goalTitle: "系统架构设计师",
+      node,
+      profileId: "profile-1",
+    });
+
+    expect(result).toEqual({
+      status: "provider_error",
+      message:
+        "OpenAI-compatible request failed (402): Insufficient account funds",
+    });
   });
 
   test("passes the lesson and goal to the provider", async () => {
