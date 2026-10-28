@@ -51,6 +51,21 @@ describe("createServerTextAdapter", () => {
     expect(adapter.name).toBe("openai");
   });
 
+  test("uses TanStack OpenAI chat-completions adapter for opencode", () => {
+    const adapter = createServerTextAdapter(
+      {
+        ...baseConfig,
+        provider: "opencode",
+        protocol: "openai",
+        model: "glm-5.3-flash",
+        baseUrl: "",
+      },
+      { sessionId: "thread-1" }
+    );
+
+    expect(adapter.name).toBe("openai-chat");
+  });
+
   test("rejects unsupported vendor and protocol combinations", () => {
     expect(() =>
       createServerTextAdapter({
@@ -67,5 +82,13 @@ describe("createServerTextAdapter", () => {
         protocol: "anthropic",
       })
     ).toThrow("OpenRouter vendor must use the OpenAI protocol.");
+
+    expect(() =>
+      createServerTextAdapter({
+        ...baseConfig,
+        provider: "opencode",
+        protocol: "anthropic",
+      })
+    ).toThrow("OpenCode vendor must use the OpenAI protocol.");
   });
 });

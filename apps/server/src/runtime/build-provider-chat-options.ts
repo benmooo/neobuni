@@ -16,7 +16,9 @@ const buildProviderChatOptions = (input: {
   tools: Tool[];
   middleware: ChatMiddleware[];
 }) => ({
-  adapter: createServerTextAdapter(input.providerConfig),
+  adapter: createServerTextAdapter(input.providerConfig, {
+    sessionId: input.threadId,
+  }),
   abortController: input.abortController,
   threadId: input.threadId,
   messages: normalizePersistedMessages(input.persistedMessages),

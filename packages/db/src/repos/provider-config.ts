@@ -1,4 +1,8 @@
-import type { ProviderProtocol, ProviderVendor } from "@neobuni/contracts";
+import {
+  OPENCODE_DEFAULT_BASE_URL,
+  type ProviderProtocol,
+  type ProviderVendor,
+} from "@neobuni/contracts";
 import { eq } from "drizzle-orm";
 import { Effect } from "effect";
 
@@ -58,6 +62,10 @@ const deriveBaseUrl = (input: {
     return "https://openrouter.ai/api/v1";
   }
 
+  if (input.provider === "opencode" && normalized.length === 0) {
+    return OPENCODE_DEFAULT_BASE_URL;
+  }
+
   return normalized;
 };
 
@@ -76,6 +84,9 @@ const normalizeProviderVendor = (value: string): ProviderVendor => {
   }
   if (value === "qwen") {
     return "qwen";
+  }
+  if (value === "opencode") {
+    return "opencode";
   }
   return "mock";
 };

@@ -79,7 +79,9 @@ const collectChatText = async (config: Exclude<ProviderConfig, null>) => {
   let text = "";
 
   const stream = chat({
-    adapter: createServerTextAdapter(config),
+    adapter: createServerTextAdapter(config, {
+      sessionId: `provider-self-check:${crypto.randomUUID()}`,
+    }),
     threadId: `provider-self-check:${crypto.randomUUID()}`,
     messages: [
       {

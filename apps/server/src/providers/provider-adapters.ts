@@ -1,11 +1,20 @@
-import type { ProviderProtocol, ProviderVendor } from "@neobuni/contracts";
+import {
+  OPENCODE_DEFAULT_BASE_URL,
+  type ProviderProtocol,
+  type ProviderVendor,
+} from "@neobuni/contracts";
 import type { AnyTextAdapter } from "@tanstack/ai";
 import { createAnthropicChat } from "@tanstack/ai-anthropic";
-import { createOpenaiChat, type OpenAIChatModel } from "@tanstack/ai-openai";
+import {
+  createOpenaiChat,
+  createOpenaiChatCompletions,
+  type OpenAIChatModel,
+} from "@tanstack/ai-openai";
 import { createOpenRouterText } from "@tanstack/ai-openrouter";
 
 import { createDeepSeekAnthropicAdapter } from "./deepseek-anthropic-adapter";
 import { createMockTextAdapter } from "./mock-text-adapter";
+import { buildOpenCodeHeaders, OPENCODE_CLIENT_NAME } from "./opencode";
 
 interface ProviderConfig {
   apiKey: string;
@@ -52,9 +61,28 @@ const validateProtocolSelection = (config: ProviderConfig) => {
       "Qwen vendor currently supports only the OpenAI protocol."
     );
   }
+
+  if (config.provider === "opencode" && config.protocol !== "openai") {
+    throw createError("OpenCode vendor must use the OpenAI protocol.");
+  }
 };
 
-const createOpenAiAdapter = (config: ProviderConfig): AnyTextAdapter => {
+interface TextAdapterOptions {
+  /** Stable per-conversation id, forwarded to providers that ask for one. */
+  sessionId?: string;
+}
+
+const resolveSessionId = (sessionId?: string): string => {
+  const trimmed = sessionId?.trim() ?? "";
+  return trimmed.length > 0
+    ? trimmed
+    : `${OPENCODE_CLIENT_NAME}-${crypto.randomUUID()}`;
+};
+
+const createOpenAiAdapter = (
+  config: ProviderConfig,
+  options: Required<TextAdapterOptions>
+): AnyTextAdapter => {
   ensureConfigured(config);
 
   if (config.provider === "openrouter") {
@@ -65,6 +93,18 @@ const createOpenAiAdapter = (config: ProviderConfig): AnyTextAdapter => {
     ) as unknown as AnyTextAdapter;
   }
 
+  if (config.provider === "opencode") {
+    // Chat Completions rather than the Responses API: it is the surface
+    // OpenCode documents for every text model, and it matches the raw client
+    // the study enrichment/grading paths already use.
+    return createOpenaiChatCompletions(config.model as never, config.apiKey, {
+      baseURL: config.baseUrl || OPENCODE_DEFAULT_BASE_URL,
+      defaultHeaders: buildOpenCodeHeaders({
+        sessionId: options.sessionId,
+      }),
+    }) as unknown as AnyTextAdapter;
+  }
+
   return createOpenaiChat(
     config.model as OpenAIChatModel,
     config.apiKey,
@@ -72,7 +112,10 @@ const createOpenAiAdapter = (config: ProviderConfig): AnyTextAdapter => {
   );
 };
 
-const createAnthropicAdapter = (config: ProviderConfig): AnyTextAdapter => {
+const createAnthropicAdapter = (
+  config: ProviderConfig,
+  _options: Required<TextAdapterOptions>
+): AnyTextAdapter => {
   ensureConfigured(config);
 
   if (config.provider === "deepseek") {
@@ -92,14 +135,20 @@ const createAnthropicAdapter = (config: ProviderConfig): AnyTextAdapter => {
 
 const adapterFactories: Record<
   ProviderProtocol,
-  (config: ProviderConfig) => AnyTextAdapter
+  (
+    config: ProviderConfig,
+    options: Required<TextAdapterOptions>
+  ) => AnyTextAdapter
 > = {
   mock: () => createMockTextAdapter(),
   openai: createOpenAiAdapter,
   anthropic: createAnthropicAdapter,
 };
 
-const createServerTextAdapter = (config: ProviderConfig): AnyTextAdapter => {
+const createServerTextAdapter = (
+  config: ProviderConfig,
+  options: TextAdapterOptions = {}
+): AnyTextAdapter => {
   if (!config.enabled) {
     return createMockTextAdapter();
   }
@@ -107,7 +156,12 @@ const createServerTextAdapter = (config: ProviderConfig): AnyTextAdapter => {
   validateProtocolSelection(config);
 
   const factory = adapterFactories[config.protocol];
-  return factory ? factory(config) : createMockTextAdapter();
+  const resolvedOptions: Required<TextAdapterOptions> = {
+    sessionId: resolveSessionId(options.sessionId),
+  };
+
+  return factory ? factory(config, resolvedOptions) : createMockTextAdapter();
 };
 
+export type { TextAdapterOptions };
 export { createServerTextAdapter };

@@ -1,4 +1,5 @@
 import {
+  OPENCODE_DEFAULT_BASE_URL,
   type ProviderConfig,
   providerConfigInputSchema,
 } from "@neobuni/contracts";
@@ -35,9 +36,15 @@ type ProviderValue =
   | "openrouter"
   | "anthropic"
   | "deepseek"
-  | "qwen";
+  | "qwen"
+  | "opencode";
 type EmbeddingProviderValue = "openai" | "openrouter" | "qwen";
-type ReasoningProviderValue = "openai" | "openrouter" | "deepseek" | "qwen";
+type ReasoningProviderValue =
+  | "openai"
+  | "openrouter"
+  | "deepseek"
+  | "qwen"
+  | "opencode";
 
 interface ProviderPreset {
   apiKeyPlaceholder: string;
@@ -110,6 +117,14 @@ const chatProviderPresets: Record<ProviderValue, ProviderPreset> = {
     note: "默认使用 DashScope 国际站；北京地域可改为 https://dashscope.aliyuncs.com/compatible-mode/v1。",
     apiKeyPlaceholder: "sk-...",
   },
+  opencode: {
+    protocol: "openai",
+    model: "deepseek-v4.1-flash",
+    baseUrl: OPENCODE_DEFAULT_BASE_URL,
+    baseUrlPlaceholder: OPENCODE_DEFAULT_BASE_URL,
+    note: "OpenCode Go（$10/月）：Base URL 必须带 /go，即 https://opencode.ai/inference/go/openai/v1；Console 按量计费才用不带 /go 的地址。额度按月美元上限计算，-free 模型只能在 OpenCode 客户端里用。",
+    apiKeyPlaceholder: "sk-...",
+  },
 };
 
 const memoryEmbeddingPresets: Record<EmbeddingProviderValue, ProviderPreset> = {
@@ -172,6 +187,14 @@ const memoryReasoningPresets: Record<ReasoningProviderValue, ProviderPreset> = {
     note: "如果你想用 Qwen 做 reasoning，默认使用 DashScope 北京地域。",
     apiKeyPlaceholder: "sk-...",
   },
+  opencode: {
+    protocol: "openai",
+    model: "deepseek-v4.1-flash",
+    baseUrl: OPENCODE_DEFAULT_BASE_URL,
+    baseUrlPlaceholder: OPENCODE_DEFAULT_BASE_URL,
+    note: "学习细化与检查判分都走这条链路。deepseek-v4.1-flash 最快最省（需在 Console 把 DeepSeek 的 Regions 设为 Global）；glm-5.3-flash 是更稳的备选。Go 必须在 /inference/go/... 上调用，Console 按量计费则去掉 /go。",
+    apiKeyPlaceholder: "sk-...",
+  },
 };
 
 const chatProviderFormSchema = z
@@ -183,6 +206,7 @@ const chatProviderFormSchema = z
       "anthropic",
       "deepseek",
       "qwen",
+      "opencode",
     ]),
     protocol: z.enum(["mock", "openai", "anthropic"]),
     model: z.string().trim().min(1).max(120),
@@ -235,7 +259,7 @@ const embeddingProviderFormSchema = z
 
 const reasoningProviderFormSchema = z
   .object({
-    provider: z.enum(["openai", "openrouter", "deepseek", "qwen"]),
+    provider: z.enum(["openai", "openrouter", "deepseek", "qwen", "opencode"]),
     protocol: z.enum(["openai"]),
     model: z.string().trim().min(1).max(120),
     apiKey: z.string().trim().max(400),
@@ -340,6 +364,69 @@ const buildMemoryReasoningInitialValue = (
         : 50,
   };
 };
+
+function OpenCodeModelPicker({
+  baseUrl,
+  model,
+  onSelect,
+}: {
+  baseUrl: string;
+  model: string;
+  onSelect: (value: string) => void;
+}) {
+  const [models, setModels] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const loadModels = useMutation({
+    mutationFn: () =>
+      api.config.providerModels({ provider: "opencode", baseUrl }),
+    onSuccess: (result) => {
+      setError(null);
+      setModels(result.models);
+    },
+    onError: (mutationError) => {
+      setError(getMutationErrorMessage(mutationError));
+    },
+  });
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-2">
+        <Button
+          onClick={() => loadModels.mutate()}
+          size="sm"
+          type="button"
+          variant="outline"
+        >
+          {loadModels.isPending ? "拉取中…" : "拉取可用模型"}
+        </Button>
+        {models.length > 0 ? (
+          <Select
+            onValueChange={(value) => {
+              if (value) {
+                onSelect(value);
+              }
+            }}
+            value={model}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="选择一个模型" />
+            </SelectTrigger>
+            <SelectContent>
+              {models.map((entry) => (
+                <SelectItem key={entry} value={entry}>
+                  {entry}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <FieldHint>从 OpenCode 官方模型表拉取，不使用 Go 额度。</FieldHint>
+        )}
+      </div>
+      {error ? <FieldHint tone="destructive">{error}</FieldHint> : null}
+    </div>
+  );
+}
 
 function ChatProviderSection() {
   const queryClient = useQueryClient();
@@ -471,6 +558,9 @@ function ChatProviderForm({
                   <SelectItem value="anthropic">Anthropic</SelectItem>
                   <SelectItem value="deepseek">DeepSeek</SelectItem>
                   <SelectItem value="qwen">Qwen</SelectItem>
+                  <SelectItem value="opencode">
+                    OpenCode（Go / Console）
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </FormFieldBlock>
@@ -501,6 +591,19 @@ function ChatProviderForm({
                         placeholder={preset.model}
                         value={field.state.value}
                       />
+                      {provider === "opencode" ? (
+                        <form.Subscribe
+                          selector={(state) => state.values.baseUrl}
+                        >
+                          {(baseUrl) => (
+                            <OpenCodeModelPicker
+                              baseUrl={baseUrl}
+                              model={field.state.value}
+                              onSelect={field.handleChange}
+                            />
+                          )}
+                        </form.Subscribe>
+                      ) : null}
                     </FormFieldBlock>
                   )}
                 </form.Field>
@@ -1010,6 +1113,9 @@ function MemoryReasoningForm({
                   <SelectItem value="openai">OpenAI</SelectItem>
                   <SelectItem value="openrouter">OpenRouter</SelectItem>
                   <SelectItem value="qwen">Qwen</SelectItem>
+                  <SelectItem value="opencode">
+                    OpenCode（Go / Console）
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </FormFieldBlock>
@@ -1041,6 +1147,19 @@ function MemoryReasoningForm({
                         placeholder={preset.model}
                         value={field.state.value}
                       />
+                      {provider === "opencode" ? (
+                        <form.Subscribe
+                          selector={(state) => state.values.baseUrl}
+                        >
+                          {(baseUrl) => (
+                            <OpenCodeModelPicker
+                              baseUrl={baseUrl}
+                              model={field.state.value}
+                              onSelect={field.handleChange}
+                            />
+                          )}
+                        </form.Subscribe>
+                      ) : null}
                     </FormFieldBlock>
                   )}
                 </form.Field>

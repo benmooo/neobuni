@@ -7,9 +7,20 @@ const providerVendorSchema = z.enum([
   "anthropic",
   "deepseek",
   "qwen",
+  "opencode",
 ]);
 
 const providerProtocolSchema = z.enum(["mock", "openai", "anthropic"]);
+
+/**
+ * OpenCode Go ($10/month) and OpenCode Console (pay-as-you-go) accept the same
+ * API keys, so one vendor covers both plans. They do NOT share endpoints though:
+ * Go lives under `/inference/go/...` and a Go-only account gets
+ * `402 Insufficient account funds` on the Console path. Go is the default
+ * because it is the plan this vendor was added for.
+ */
+const OPENCODE_DEFAULT_BASE_URL = "https://opencode.ai/inference/go/openai/v1";
+const OPENCODE_CONSOLE_BASE_URL = "https://opencode.ai/inference/openai/v1";
 
 const providerConfigInputSchema = z
   .object({
@@ -109,8 +120,25 @@ const providerConfigInputSchema = z
           message: "Qwen vendor currently supports only the OpenAI protocol.",
         });
       }
+
+      if (value.provider === "opencode" && protocol !== "openai") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["protocol"],
+          message: "OpenCode vendor must use the OpenAI protocol.",
+        });
+      }
     }
   });
+
+const providerModelListInputSchema = z.object({
+  provider: providerVendorSchema,
+  baseUrl: z.string().trim().max(500).default(""),
+});
+
+const providerModelListSchema = z.object({
+  models: z.array(z.string().trim().min(1)),
+});
 
 const providerConfigSchema = providerConfigInputSchema.safeExtend({
   id: z.string(),
@@ -121,13 +149,21 @@ const providerConfigSchema = providerConfigInputSchema.safeExtend({
 });
 
 export {
+  OPENCODE_CONSOLE_BASE_URL,
+  OPENCODE_DEFAULT_BASE_URL,
   providerConfigInputSchema,
   providerConfigSchema,
+  providerModelListInputSchema,
+  providerModelListSchema,
   providerProtocolSchema,
   providerVendorSchema,
 };
 
 export type ProviderConfig = z.infer<typeof providerConfigSchema>;
+export type ProviderModelList = z.infer<typeof providerModelListSchema>;
+export type ProviderModelListInput = z.infer<
+  typeof providerModelListInputSchema
+>;
 export type ProviderConfigInput = z.infer<typeof providerConfigInputSchema>;
 export type ProviderProtocol = z.infer<typeof providerProtocolSchema>;
 export type ProviderVendor = z.infer<typeof providerVendorSchema>;

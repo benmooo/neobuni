@@ -5,6 +5,7 @@ const openAICompatibleConfigSchema = z.object({
   model: z.string().trim().min(1),
   baseUrl: z.string().trim().url().optional(),
   dimensions: z.number().int().positive().optional(),
+  headers: z.record(z.string(), z.string()).optional(),
 });
 
 type OpenAICompatibleConfig = z.infer<typeof openAICompatibleConfigSchema>;
@@ -29,6 +30,26 @@ const normalizeBaseUrl = (baseUrl?: string): string =>
     ""
   );
 
+class OpenAICompatibleRequestError extends Error {
+  readonly status: number;
+
+  constructor(status: number, body: string) {
+    super(`OpenAI-compatible request failed (${status}): ${body}`);
+    this.name = "OpenAICompatibleRequestError";
+    this.status = status;
+  }
+}
+
+/**
+ * Some gateway models only accept a single temperature value (Kimi on OpenCode
+ * rejects anything but 1). Detect that by inspecting the rejection rather than
+ * hardcoding per-model rules that go stale.
+ */
+const isTemperatureRejection = (error: unknown): boolean =>
+  error instanceof OpenAICompatibleRequestError &&
+  error.status === 400 &&
+  /temperature/i.test(error.message);
+
 const postJson = async <TResponse>(
   config: OpenAICompatibleConfig,
   path: string,
@@ -40,15 +61,16 @@ const postJson = async <TResponse>(
     headers: {
       Authorization: `Bearer ${config.apiKey}`,
       "Content-Type": "application/json",
+      ...config.headers,
     },
     body: JSON.stringify(body),
     ...(signal ? { signal } : {}),
   });
 
   if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `OpenAI-compatible request failed (${response.status}): ${errorText}`
+    throw new OpenAICompatibleRequestError(
+      response.status,
+      await response.text()
     );
   }
 
@@ -106,31 +128,56 @@ const createEmbedding = async (
   return embedding;
 };
 
+interface ChatCompletionResponse {
+  choices?: Array<{ message?: { content?: unknown } }>;
+}
+
+const buildChatCompletionBody = (input: {
+  config: OpenAICompatibleConfig;
+  messages: OpenAICompatibleMessage[];
+  options: OpenAICompatibleChatOptions | undefined;
+  includeTemperature: boolean;
+}): Record<string, unknown> => ({
+  model: input.config.model,
+  messages: input.messages,
+  ...(input.includeTemperature
+    ? { temperature: input.options?.temperature ?? 0 }
+    : {}),
+  stream: input.options?.stream ?? false,
+  ...(input.options?.maxTokens === undefined
+    ? {}
+    : { max_tokens: input.options.maxTokens }),
+});
+
 const createChatCompletion = async (
   config: OpenAICompatibleConfig,
   messages: OpenAICompatibleMessage[],
   options?: OpenAICompatibleChatOptions
 ): Promise<string> => {
-  const response = await postJson<{
-    choices?: Array<{
-      message?: {
-        content?: unknown;
-      };
-    }>;
-  }>(
-    config,
-    "/chat/completions",
-    {
-      model: config.model,
-      messages,
-      temperature: options?.temperature ?? 0,
-      stream: options?.stream ?? false,
-      ...(options?.maxTokens === undefined
-        ? {}
-        : { max_tokens: options.maxTokens }),
-    },
-    options?.signal
-  );
+  const parsedConfig = openAICompatibleConfigSchema.parse(config);
+  const complete = (includeTemperature: boolean) =>
+    postJson<ChatCompletionResponse>(
+      parsedConfig,
+      "/chat/completions",
+      buildChatCompletionBody({
+        config: parsedConfig,
+        includeTemperature,
+        messages,
+        options,
+      }),
+      options?.signal
+    );
+
+  let response: ChatCompletionResponse;
+  try {
+    response = await complete(true);
+  } catch (error) {
+    if (!isTemperatureRejection(error)) {
+      throw error;
+    }
+
+    response = await complete(false);
+  }
 
   return readMessageContent(response.choices?.[0]?.message?.content);
 };

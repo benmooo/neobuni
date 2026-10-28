@@ -24,6 +24,7 @@ import {
   memoryDigestSchema,
   memorySearchSchema,
   nextActionEvaluationCreateSchema,
+  providerModelListInputSchema,
   qqConfigInputSchema,
   scheduleCreateSchema,
   scheduleUpdateSchema,
@@ -82,6 +83,7 @@ import {
 import { ingestKnowledgeDocument } from "../memory/knowledge-ingest-service";
 import { syncMemoryEmbedding } from "../memory/memory-write-side-effects";
 import { recallMemories } from "../memory/temporal-memory-store";
+import { listOpenCodeModels } from "../providers/opencode";
 import { runRuntimeProviderSelfChecks } from "../runtime/provider-self-check";
 import {
   planScheduleCreateInput,
@@ -357,6 +359,19 @@ export const extrasRouter = {
         memoryReasoningConfig,
       });
     }),
+
+    /**
+     * Fills the model picker from the vendor's own catalogue. Only OpenCode
+     * exposes one today; other vendors return an empty list.
+     */
+    providerModels: protectedProcedure
+      .input(providerModelListInputSchema)
+      .handler(async ({ input }) => ({
+        models:
+          input.provider === "opencode"
+            ? await listOpenCodeModels({ baseUrl: input.baseUrl })
+            : [],
+      })),
 
     messaging: {
       discord: {
