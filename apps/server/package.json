@@ -42,6 +42,7 @@
   "devDependencies": {
     "@neobuni/config": "workspace:*",
     "@types/bun": "catalog:",
+    "pdfjs-dist": "^6.4.299",
     "tsdown": "^0.23.0",
     "typescript": "catalog:",
     "vitest": "5.0.3"

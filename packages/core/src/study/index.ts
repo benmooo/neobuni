@@ -1,3 +1,4 @@
+export * from "./chapter-map";
 export * from "./date";
 export * from "./expand-template";
 export * from "./mastery";

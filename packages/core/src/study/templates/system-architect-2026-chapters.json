@@ -1,0 +1,253 @@
+{
+  "source": "系统架构设计师教程（第2版）",
+  "topics": {
+    "topic.computer-organization": {
+      "chapters": [2],
+      "title": "计算机组成与体系结构"
+    },
+    "topic.operating-systems": {
+      "chapters": [2],
+      "title": "操作系统"
+    },
+    "topic.networks": {
+      "chapters": [2],
+      "title": "计算机网络"
+    },
+    "topic.database-fundamentals": {
+      "chapters": [6],
+      "title": "数据库系统"
+    },
+    "topic.middleware-integration": {
+      "chapters": [3, 15],
+      "title": "中间件与系统集成"
+    },
+    "topic.security-fundamentals": {
+      "chapters": [4],
+      "title": "信息安全基础"
+    },
+    "topic.standards-legal": {
+      "chapters": [1],
+      "title": "标准化与知识产权"
+    },
+    "topic.lifecycle": {
+      "chapters": [5],
+      "title": "软件生命周期与过程模型"
+    },
+    "topic.requirements": {
+      "chapters": [5],
+      "title": "需求工程"
+    },
+    "topic.software-design": {
+      "chapters": [5],
+      "title": "软件设计"
+    },
+    "topic.testing": {
+      "chapters": [5],
+      "title": "软件测试"
+    },
+    "topic.maintenance": {
+      "chapters": [10, 5],
+      "title": "软件维护与演化"
+    },
+    "topic.project-management": {
+      "chapters": [5],
+      "title": "软件项目管理"
+    },
+    "topic.architecture-views": {
+      "chapters": [7],
+      "title": "架构定义与视图"
+    },
+    "topic.architecture-styles": {
+      "chapters": [7],
+      "title": "架构风格与模式"
+    },
+    "topic.quality-attributes": {
+      "chapters": [8],
+      "title": "质量属性与场景"
+    },
+    "topic.architecture-tactics": {
+      "chapters": [8],
+      "title": "架构战术"
+    },
+    "topic.architecture-evaluation": {
+      "chapters": [8],
+      "title": "架构评估"
+    },
+    "topic.architecture-documentation": {
+      "chapters": [7],
+      "title": "架构文档与决策"
+    },
+    "topic.presentation-layer": {
+      "chapters": [13],
+      "title": "表现层架构"
+    },
+    "topic.business-layer": {
+      "chapters": [13],
+      "title": "业务层设计"
+    },
+    "topic.data-access-layer": {
+      "chapters": [13, 6],
+      "title": "数据访问层"
+    },
+    "topic.web-architecture": {
+      "chapters": [13],
+      "title": "Web 系统架构"
+    },
+    "topic.frontend-backend-integration": {
+      "chapters": [13, 15],
+      "title": "前后端集成"
+    },
+    "topic.high-concurrency": {
+      "chapters": [13, 8],
+      "title": "高并发设计"
+    },
+    "topic.distributed-theory": {
+      "chapters": [12],
+      "title": "分布式理论基础"
+    },
+    "topic.microservices": {
+      "chapters": [14, 15],
+      "title": "微服务架构"
+    },
+    "topic.containers": {
+      "chapters": [14],
+      "title": "容器与编排"
+    },
+    "topic.service-mesh": {
+      "chapters": [14],
+      "title": "服务网格与可观测性"
+    },
+    "topic.serverless": {
+      "chapters": [14],
+      "title": "Serverless 与事件驱动"
+    },
+    "topic.distributed-consistency": {
+      "chapters": [14, 12],
+      "title": "分布式一致性实践"
+    },
+    "topic.data-modeling": {
+      "chapters": [6],
+      "title": "数据建模"
+    },
+    "topic.warehouse": {
+      "chapters": [19, 6],
+      "title": "数据仓库与数据湖"
+    },
+    "topic.big-data": {
+      "chapters": [19],
+      "title": "大数据架构"
+    },
+    "topic.data-governance": {
+      "chapters": [19, 6],
+      "title": "数据治理"
+    },
+    "topic.distributed-database": {
+      "chapters": [6, 19],
+      "title": "分布式数据库"
+    },
+    "topic.threat-modeling": {
+      "chapters": [18],
+      "title": "安全原则与威胁建模"
+    },
+    "topic.identity-access": {
+      "chapters": [18],
+      "title": "身份与访问管理"
+    },
+    "topic.data-security": {
+      "chapters": [18, 4],
+      "title": "数据安全"
+    },
+    "topic.application-security": {
+      "chapters": [18, 4],
+      "title": "应用安全"
+    },
+    "topic.security-operations": {
+      "chapters": [18],
+      "title": "安全运营"
+    },
+    "topic.embedded-architecture": {
+      "chapters": [16],
+      "title": "嵌入式系统架构"
+    },
+    "topic.embedded-software": {
+      "chapters": [16],
+      "title": "嵌入式软件"
+    },
+    "topic.communication-architecture": {
+      "chapters": [17],
+      "title": "通信系统架构"
+    },
+    "topic.iot": {
+      "chapters": [11, 16],
+      "title": "物联网架构"
+    },
+    "topic.case-format": {
+      "chapters": [],
+      "title": "案例题型与评分"
+    },
+    "topic.quality-case": {
+      "chapters": [8],
+      "title": "质量属性案例"
+    },
+    "topic.style-case": {
+      "chapters": [7],
+      "title": "架构风格与选型案例"
+    },
+    "topic.distributed-case": {
+      "chapters": [14, 15],
+      "title": "分布式与微服务案例"
+    },
+    "topic.data-security-case": {
+      "chapters": [18, 19],
+      "title": "数据与安全案例"
+    },
+    "topic.case-answer-template": {
+      "chapters": [],
+      "title": "案例答题模板"
+    },
+    "topic.essay-format": {
+      "chapters": [20],
+      "title": "论文评分与结构"
+    },
+    "topic.project-material": {
+      "chapters": [20],
+      "title": "项目素材准备"
+    },
+    "topic.essay-argument": {
+      "chapters": [20],
+      "title": "论点与论据"
+    },
+    "topic.essay-topic-bank": {
+      "chapters": [20],
+      "title": "常见题目分类"
+    },
+    "topic.essay-timed-writing": {
+      "chapters": [20],
+      "title": "限时写作训练"
+    },
+    "topic.essay-review": {
+      "chapters": [20],
+      "title": "论文修改与自查"
+    },
+    "topic.comprehensive-mock": {
+      "chapters": [],
+      "title": "综合知识模考"
+    },
+    "topic.case-mock": {
+      "chapters": [],
+      "title": "案例分析模考"
+    },
+    "topic.essay-mock": {
+      "chapters": [],
+      "title": "论文模考"
+    },
+    "topic.error-review": {
+      "chapters": [],
+      "title": "错题归因与回炉"
+    },
+    "topic.final-week": {
+      "chapters": [],
+      "title": "考前一周清单"
+    }
+  }
+}

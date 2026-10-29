@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   createChatCompletion: vi.fn(),
   getMemoryReasoningProviderConfig: vi.fn(),
   getProviderConfig: vi.fn(),
+  retrieveTextbookExcerpts: vi.fn(),
 }));
 
 vi.mock("@neobuni/db", async (importOriginal) => {
@@ -14,6 +15,14 @@ vi.mock("@neobuni/db", async (importOriginal) => {
     ...actual,
     getMemoryReasoningProviderConfig: mocks.getMemoryReasoningProviderConfig,
     getProviderConfig: mocks.getProviderConfig,
+  };
+});
+
+vi.mock("./textbook-retrieval", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./textbook-retrieval")>();
+  return {
+    ...actual,
+    retrieveTextbookExcerpts: mocks.retrieveTextbookExcerpts,
   };
 });
 
@@ -110,6 +119,7 @@ beforeEach(() => {
     Effect.succeed(providerConfig)
   );
   mocks.getProviderConfig.mockReturnValue(Effect.succeed(null));
+  mocks.retrieveTextbookExcerpts.mockResolvedValue([]);
 });
 
 describe("enrichStudyLesson", () => {
@@ -188,6 +198,90 @@ describe("enrichStudyLesson", () => {
       message:
         "OpenAI-compatible request failed (402): Insufficient account funds",
     });
+  });
+
+  test("attaches textbook material when excerpts are available", async () => {
+    mocks.retrieveTextbookExcerpts.mockResolvedValue([
+      {
+        chapter: "第7章 系统架构设计基础知识",
+        chunkId: "chunk-1",
+        locator: "【第7章 系统架构设计基础知识 · p.270-271】",
+        page: 270,
+        pageEnd: 271,
+        text: "管道-过滤器把处理步骤做成过滤器。",
+      },
+      {
+        chapter: "第7章 系统架构设计基础知识",
+        chunkId: "chunk-2",
+        locator: "【第7章 系统架构设计基础知识 · p.273-275】",
+        page: 273,
+        pageEnd: 275,
+        text: "解释器含解释引擎、存储区。",
+      },
+    ]);
+    mocks.createChatCompletion.mockImplementation(
+      async (_config: unknown, messages: { content: string }[]) =>
+        String(messages[0]?.content ?? "").includes("教材编写者")
+          ? JSON.stringify({
+              sections: [
+                {
+                  body: "Saga 用本地事务与补偿（见 第7章 p.270）。",
+                  heading: "概念讲解",
+                },
+              ],
+            })
+          : JSON.stringify(validResponse)
+    );
+
+    const result = await enrichStudyLesson({
+      desiredOutcome: "Pass the exam",
+      goalTitle: "系统架构设计师",
+      node,
+      profileId: "profile-1",
+    });
+
+    if (result.status !== "ok") {
+      throw new Error(`expected ok, received ${result.status}`);
+    }
+
+    expect(result.enrichment.checkSpecs).toHaveLength(3);
+
+    const material = result.enrichment.material;
+    expect(material?.sections).toHaveLength(1);
+    expect(material?.sections[0]?.heading).toBe("概念讲解");
+    expect(material?.excerpts.map((excerpt) => excerpt.page)).toEqual([
+      270, 273,
+    ]);
+    expect(material?.excerpts[0]).toMatchObject({
+      chapter: "第7章 系统架构设计基础知识",
+      locator: "【第7章 系统架构设计基础知识 · p.270-271】",
+      page: 270,
+      pageEnd: 271,
+      text: "管道-过滤器把处理步骤做成过滤器。",
+    });
+  });
+
+  test("keeps the summary when the material call returns non-JSON", async () => {
+    mocks.createChatCompletion.mockImplementation(
+      async (_config: unknown, messages: { content: string }[]) =>
+        String(messages[0]?.content ?? "").includes("教材编写者")
+          ? "这不是 JSON"
+          : JSON.stringify(validResponse)
+    );
+
+    const result = await enrichStudyLesson({
+      desiredOutcome: "Pass the exam",
+      goalTitle: "系统架构设计师",
+      node,
+      profileId: "profile-1",
+    });
+
+    if (result.status !== "ok") {
+      throw new Error(`expected ok, received ${result.status}`);
+    }
+
+    expect(result.enrichment.whatText).toBe(validResponse.whatText);
+    expect(result.enrichment.material ?? null).toBeNull();
   });
 
   test("passes the lesson and goal to the provider", async () => {

@@ -247,6 +247,7 @@ function SessionCard({
   const enrichment = node.enrichment;
   const whatText = enrichment?.whatText ?? node.whatText;
   const howText = enrichment?.howText ?? node.howText;
+  const material = enrichment?.material ?? null;
 
   return (
     <Card>
@@ -278,6 +279,44 @@ function SessionCard({
             </p>
           </div>
         ) : null}
+        {material ? (
+          <div className="space-y-3 rounded-md border border-border/60 bg-muted/30 p-3">
+            <div className="flex items-center justify-between gap-2">
+              <p className="font-medium text-sm">教材内容</p>
+              <span className="text-muted-foreground text-xs">
+                {material.source}
+              </span>
+            </div>
+            {material.sections.map((section) => (
+              <div className="space-y-1" key={section.heading}>
+                <p className="font-medium text-sm">{section.heading}</p>
+                <p className="whitespace-pre-line text-muted-foreground text-sm leading-relaxed">
+                  {section.body}
+                </p>
+              </div>
+            ))}
+            {material.excerpts.length > 0 ? (
+              <details className="group">
+                <summary className="cursor-pointer text-muted-foreground text-sm hover:text-foreground">
+                  原文摘录（{material.excerpts.length} 段）
+                </summary>
+                <div className="mt-2 space-y-2">
+                  {material.excerpts.map((excerpt) => (
+                    <div
+                      className="space-y-1 border-border/60 border-l-2 pl-2"
+                      key={`${excerpt.locator}-${excerpt.page}`}
+                    >
+                      <p className="text-muted-foreground text-xs">
+                        {excerpt.locator}
+                      </p>
+                      <p className="text-sm leading-relaxed">{excerpt.text}</p>
+                    </div>
+                  ))}
+                </div>
+              </details>
+            ) : null}
+          </div>
+        ) : null}
         {enrich.isError ? (
           <p className="text-destructive text-sm">
             细化失败：{messageOf(enrich.error)}
@@ -288,6 +327,17 @@ function SessionCard({
           <Button onClick={onSkip} variant="secondary">
             今天跳过
           </Button>
+          {enrichment && !material ? (
+            <Button
+              disabled={enrich.isPending}
+              onClick={() =>
+                enrich.mutate({ force: true, goalId, planNodeId: node.id })
+              }
+              variant="ghost"
+            >
+              {enrich.isPending ? "生成中…" : "生成教材内容"}
+            </Button>
+          ) : null}
           {enrichment ? null : (
             <Button
               disabled={enrich.isPending}

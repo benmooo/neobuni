@@ -104,12 +104,38 @@ const studySyllabusTemplateSchema = z.object({
   modules: z.array(studyTemplateModuleSchema).min(1).max(32),
 });
 
+const studyMaterialSectionSchema = z.object({
+  heading: z.string().trim().min(1).max(120),
+  body: z.string().trim().min(1).max(6000),
+});
+
+/**
+ * A verbatim paragraph from the textbook. Excerpts are assembled server-side
+ * from retrieved chunks, never from model output, so they can be trusted as
+ * source text.
+ */
+const studyMaterialExcerptSchema = z.object({
+  chapter: z.string().trim().min(1).max(200),
+  locator: z.string().trim().min(1).max(300),
+  page: z.number().int().positive(),
+  pageEnd: z.number().int().positive().nullable().default(null),
+  text: z.string().trim().min(1).max(2000),
+});
+
+const studyLessonMaterialSchema = z.object({
+  source: z.string().trim().min(1).max(200),
+  sections: z.array(studyMaterialSectionSchema).min(1).max(6),
+  excerpts: z.array(studyMaterialExcerptSchema).max(8).default([]),
+  generatedAt: isoDateTimeSchema,
+});
+
 const studyLessonEnrichmentSchema = z.object({
   objective: z.string().trim().min(1).max(2000),
   whatText: z.string().trim().min(1).max(8000),
   howText: z.string().trim().min(1).max(4000),
   checkSpecs: z.array(studyCheckSpecSchema).min(3).max(3),
   resources: z.array(z.string().trim().min(1).max(500)).max(8).default([]),
+  material: studyLessonMaterialSchema.nullable().optional(),
   enrichedAt: isoDateTimeSchema,
   source: z.literal("llm"),
 });
@@ -330,7 +356,10 @@ export {
   studyGradedBySchema,
   studyLessonEnrichmentSchema,
   studyLessonEnrichSchema,
+  studyLessonMaterialSchema,
   studyMasterySchema,
+  studyMaterialExcerptSchema,
+  studyMaterialSectionSchema,
   studyNodeKindSchema,
   studyPaperReadinessSchema,
   studyPaperSchema,
@@ -370,6 +399,9 @@ export type StudyGoalParam = z.infer<typeof studyGoalParamSchema>;
 export type StudyPlanActivate = z.infer<typeof studyPlanActivateSchema>;
 export type StudyLessonEnrich = z.infer<typeof studyLessonEnrichSchema>;
 export type StudyLessonEnrichment = z.infer<typeof studyLessonEnrichmentSchema>;
+export type StudyLessonMaterial = z.infer<typeof studyLessonMaterialSchema>;
+export type StudyMaterialExcerpt = z.infer<typeof studyMaterialExcerptSchema>;
+export type StudyMaterialSection = z.infer<typeof studyMaterialSectionSchema>;
 export type StudyMastery = z.infer<typeof studyMasterySchema>;
 export type StudyNodeKind = z.infer<typeof studyNodeKindSchema>;
 export type StudyPaper = z.infer<typeof studyPaperSchema>;

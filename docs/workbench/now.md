@@ -32,12 +32,13 @@ Port（buni → neobuni）已经完成并且健康：90 个测试文件 / 277 �
 - **节奏优化（2026-10-25）**：新增 `maxNewPerDay`，把 150 节课按考试日均匀铺开，避免 70 天学完、后面空窗。
 - **重排连续性（2026-10-25）**：重新生成计划时按稳定 key 继承掌握度；已掌握课程不再重排为新 lesson；覆盖率/剩余时间把 mastery 计入；重排时补回间隔复习 session。
 - **LLM 内容细化（2026-10-25）**：`study.lessons.enrich` 按需把一节课的 what/how 与 3 道检查题改写得具体、可执行；结果缓存在 `study_plan_nodes.enrichment_json`；严格 Zod 校验，provider 缺失或失败时回退确定性内容；Now 增加"用 AI 细化这节课"与 AI 徽标。全量 296 个测试绿。
+- **教材级学习内容（2026-10-25）**：官方教材 PDF 入库（721 页 → 682 chunks，带「第N章 · p.X」定位，cMap 修复中文抽取），682 条 embedding 入库；新增 62 主题 → 教材章节映射、按章节过滤的向量检索、以及基于原文生成 `教材内容`（3-4 节 + 原文摘录 + 页码引用）。`enrichment_json.material` 缓存，Now 卡片渲染「教材内容 / 原文摘录（N 段）」。实测一节：4 节内容 + 5 段第7章原文，25-40s。全量 320 个测试绿。
 - **OpenCode provider 联调（2026-10-25）**：真实试跑发现三个问题并修复——① Go 有独立端点命名空间 `/inference/go/...`，指向 Console 路径会 402；② `enrichStudyLesson` 把"没有 provider"和"provider 调用失败"都返回 null，掩盖了真实错误，现在分为 `missing_provider` / `provider_error` 并在 API 层返回 `BAD_GATEWAY` 携带真实信息；③ 推理模型的 `reasoning_content` 计入 `max_tokens`，冗长 prompt 导致 JSON 截断，现在 prompt 有明确字数上限、`maxTokens` 提到 3000、并对拒绝 temperature 的模型（如 kimi-k2.7-code）自动重试。实测：细化 11.3s 成功、判分 4.3s（LLM 0.85 分）。默认模型改为 `deepseek-v4.1-flash`。全量 314 个测试绿。
 - **OpenCode provider（2026-10-25）**：新增 `opencode` vendor（OpenAI 协议、Base URL `https://opencode.ai/inference/openai/v1`）、`glm-5.3-flash` 默认模型、模型目录拉取（`config.providerModels`）、`User-Agent` / `x-opencode-session` 头、study 侧稳定 session id；无迁移。全量 310 个测试绿，typecheck 与 Ultracite 通过。
 
 ## Next Exact Step
 
-1. **重启 dev server 后重试「用 AI 细化这节课」**：provider 已配好（OpenCode / `deepseek-v4.1-flash` / Go 端点），
+1. **重启 dev server 后重试「用 AI 细化这节课」／「生成教材内容」**：provider 已配好（OpenCode / `deepseek-v4.1-flash` / Go 端点），
    本地库里的 `base_url` 已修正为 `https://opencode.ai/inference/go/openai/v1`。
    细节与实测数据见 `docs/workbench/features/opencode-go-provider.md`。
 2. **真实环境试跑**：细化一节课 → 完成检查 → 配置提醒渠道 → 观察 `study.reminder_sent` 事件与推送。
