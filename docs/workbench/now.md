@@ -4,8 +4,8 @@ title: "Current Focus"
 
 # Current Focus
 
-Updated At: 2026-10-27 11:50 Asia/Shanghai
-Active Feature: opencode-go-provider (implemented) / initiative-study-journey
+Updated At: 2026-10-30 15:52 Asia/Shanghai
+Active Feature: initiative-study-journey (awaiting live smoke) / openapi-rest-rollout (done)
 Status: awaiting-live-smoke
 
 ## Why
@@ -37,22 +37,27 @@ Port（buni → neobuni）已经完成并且健康：90 个测试文件 / 277 �
 - **OpenCode provider（2026-10-25）**：新增 `opencode` vendor（OpenAI 协议、Base URL `https://opencode.ai/inference/openai/v1`）、`glm-5.3-flash` 默认模型、模型目录拉取（`config.providerModels`）、`User-Agent` / `x-opencode-session` 头、study 侧稳定 session id；无迁移。全量 310 个测试绿，typecheck 与 Ultracite 通过。
 - **聊天检查工具（2026-10-27）**：新增 `study_quiz`（返回今日课程的 3 道题，不暴露 rubric/答案）+ `study_quiz_submit`（判分并持久化）；提交逻辑抽到 `study/check-service.ts`，REST 与聊天共用同一套 check 写入、掌握度更新、session 完成与间隔复习。全量 307 个测试绿。
 - **Study OpenAPI（2026-10-27）**：15 个 study 过程补齐 `method` / `path` / `summary` / `description` / `tags`，从默认 `POST /study/x/y` 收敛为 `/study/goals`、`/study/goals/{goalId}/today`、`/study/sessions/{sessionId}/checks` 等 REST 路径；新增 `routes/study.openapi.test.ts` 锁定生成结果。RPC 客户端路径不受影响。全量 309 个测试绿。
+- **OpenAPI 全量铺开（2026-10-30）**：其余 77 个 procedure（`packages/api/src/routers/*` 的 67 个 + `apps/server/src/routers/extras.ts` 的 25 个覆盖/新增）全部补上 `.route(...)`，92 个 operation 不再有默认 `POST /namespace/name` 形态；标签收敛为 17 个（Goals / Memories / Config / Study / ...）。新增 `routes/api.openapi.test.ts`：锁定 `METHOD /path → tag` 全表、每个 operation 的 id/summary/description/唯一标签、路径参数必须是 `in: path` 且 required，并断言 92 条文档路由都能被 `OpenAPIHandler` 真实匹配。全量 93 个测试文件 / 338 个测试绿，typecheck 与 Ultracite 通过。
 
 ## Next Exact Step
 
 1. **重启 dev server 后重试「用 AI 细化这节课」／「生成教材内容」**：provider 已配好（OpenCode / `deepseek-v4.1-flash` / Go 端点），
    本地库里的 `base_url` 已修正为 `https://opencode.ai/inference/go/openai/v1`。
    细节与实测数据见 `docs/workbench/features/opencode-go-provider.md`。
-2. **真实环境试跑**：在 Now 创建学习目标，点"用 AI 细化这节课"，完成检查，配置一个提醒渠道，观察 `study.reminder_sent` 事件与推送。
-3. **推广 OpenAPI 约定**：把 `.route(...)` 用到其余 router（`goals` / `config` / `extras` 等约 87 个 procedure），沿用 `study.openapi.test.ts` 的断言方式。
-4. **归档说明**：补齐 `experiments/decision-os/` 与旧 docs 的归档说明。
-5. 跑 `bun run test`，保持 309+ 全绿。
+2. **真实环境试跑**：在 Now 创建学习目标，点"用 AI 细化这节课"，完成检查，配置一个提醒渠道，观察 `study.reminder_sent` 事件与推送。目前 `.data/neobuni.db` 里 `study_plans` / `study_sessions` / `study_checks` 全是 0 条，闭环从未在本地真正跑过。
+3. **看一眼生成的 REST 文档**：先起服务（`:3000` 现在被 `codeup/oneport-pulse` 占着，neobuni 的 server 没在跑；需要先腾出端口或改 `PORT`），
+   然后打开 `http://localhost:3000/api-reference`（spec 在 `/api-reference/spec.json`）。
+   同时决定 `/api-reference` 是否该只做文档挂载点、把 operation 挪回 API 根路径。
+4. **归档说明**：核对 `experiments/decision-os/README.md` 是否已覆盖旧 docs 的归档说明。
+5. 跑 `bun run test`，保持 338 全绿（93 个测试文件）。
 
 ## Reopen These Files
 
 - `docs/workbench/now.md`
 - `docs/workbench/features/initiative-study-journey.md`
+- `docs/workbench/features/openapi-rest-rollout.md`
 - `experiments/decision-os/README.md`
+- `apps/server/src/routes/api.openapi.test.ts`
 - `packages/contracts/src/decision/index.ts`
 - `packages/core/src/decision/next-action.ts`
 - `apps/server/src/decision/initiative-worker.ts`

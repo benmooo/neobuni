@@ -33,6 +33,14 @@ const requireConversation = async (
 
 export const messagesRouter = {
   list: protectedProcedure
+    .route({
+      method: "GET",
+      path: "/conversations/{conversationId}/messages",
+      summary: "List conversation messages",
+      description:
+        "Return every message in a conversation owned by the current profile, in transcript order.",
+      tags: ["Messages"],
+    })
     .input(conversationInput)
     .handler(async ({ input, context }) => {
       await requireConversation(context.profileId, input.conversationId);
@@ -40,6 +48,14 @@ export const messagesRouter = {
     }),
 
   create: protectedProcedure
+    .route({
+      method: "POST",
+      path: "/conversations/{conversationId}/messages",
+      summary: "Append a message",
+      description:
+        "Append a message to a conversation and record a creation event with its role.",
+      tags: ["Messages"],
+    })
     .input(conversationInput.merge(messageCreateSchema))
     .handler(async ({ input, context }) => {
       const { conversationId, ...payload } = input;
@@ -58,6 +74,14 @@ export const messagesRouter = {
     }),
 
   update: protectedProcedure
+    .route({
+      method: "PATCH",
+      path: "/conversations/{conversationId}/messages/{messageId}",
+      summary: "Update a message",
+      description:
+        "Replace a message's content or metadata and record an update event.",
+      tags: ["Messages"],
+    })
     .input(messageInput.merge(messageUpdateSchema))
     .handler(async ({ input, context }) => {
       const { conversationId, messageId, ...payload } = input;
@@ -77,6 +101,14 @@ export const messagesRouter = {
     }),
 
   remove: protectedProcedure
+    .route({
+      method: "DELETE",
+      path: "/conversations/{conversationId}/messages/{messageId}",
+      summary: "Delete a message",
+      description:
+        "Delete one message from a conversation and record a deletion event.",
+      tags: ["Messages"],
+    })
     .input(messageInput)
     .handler(async ({ input, context }) => {
       await requireConversation(context.profileId, input.conversationId);

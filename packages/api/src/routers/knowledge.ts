@@ -33,17 +33,42 @@ const requireKnowledgeDocument = async (
 // TODO(server): create - requires ingestKnowledgeDocument (apps/server knowledge ingest
 // service) plus toOpenAICompatibleConfig and the memory provider configs.
 export const knowledgeRouter = {
-  list: protectedProcedure.handler(({ context }) =>
-    run(listKnowledgeDocumentsVisible(context.profileId))
-  ),
+  list: protectedProcedure
+    .route({
+      method: "GET",
+      path: "/knowledge",
+      summary: "List knowledge documents",
+      description:
+        "Return knowledge documents visible to the current profile, including globally shared sources.",
+      tags: ["Knowledge"],
+    })
+    .handler(({ context }) =>
+      run(listKnowledgeDocumentsVisible(context.profileId))
+    ),
 
   get: protectedProcedure
+    .route({
+      method: "GET",
+      path: "/knowledge/{documentId}",
+      summary: "Get a knowledge document",
+      description:
+        "Return one knowledge document with its chunks and extracted facts.",
+      tags: ["Knowledge"],
+    })
     .input(documentIdInput)
     .handler(({ input, context }) =>
       requireKnowledgeDocument(context.profileId, input.documentId)
     ),
 
   remove: protectedProcedure
+    .route({
+      method: "DELETE",
+      path: "/knowledge/{documentId}",
+      summary: "Delete a knowledge document",
+      description:
+        "Delete a profile-owned knowledge document together with its chunks, full-text entries, and embeddings.",
+      tags: ["Knowledge"],
+    })
     .input(documentIdInput)
     .handler(async ({ input, context }) => {
       const detail = await requireKnowledgeDocument(

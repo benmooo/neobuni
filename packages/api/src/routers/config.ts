@@ -50,31 +50,55 @@ const summarizeProviderConfig = (config: ProviderConfig | null) => {
 };
 
 export const configRouter = {
-  runtime: protectedProcedure.handler(async ({ context }) => {
-    const [chatConfig, memoryEmbeddingConfig, memoryReasoningConfig] =
-      await Promise.all([
-        run(getProviderConfig(context.profileId)),
-        run(getMemoryEmbeddingProviderConfig(context.profileId)),
-        run(getMemoryReasoningProviderConfig(context.profileId)),
-      ]);
+  runtime: protectedProcedure
+    .route({
+      method: "GET",
+      path: "/config/runtime",
+      summary: "Get the runtime configuration summary",
+      description:
+        "Return the database runtime status plus a redacted summary of the chat, memory embedding, and memory reasoning providers.",
+      tags: ["Config"],
+    })
+    .handler(async ({ context }) => {
+      const [chatConfig, memoryEmbeddingConfig, memoryReasoningConfig] =
+        await Promise.all([
+          run(getProviderConfig(context.profileId)),
+          run(getMemoryEmbeddingProviderConfig(context.profileId)),
+          run(getMemoryReasoningProviderConfig(context.profileId)),
+        ]);
 
-    return {
-      profileId: context.profileId,
-      database: getDatabaseRuntimeStatus(),
-      providers: {
-        chat: summarizeProviderConfig(chatConfig),
-        memoryEmbedding: summarizeProviderConfig(memoryEmbeddingConfig),
-        memoryReasoning: summarizeProviderConfig(memoryReasoningConfig),
-      },
-    };
-  }),
+      return {
+        profileId: context.profileId,
+        database: getDatabaseRuntimeStatus(),
+        providers: {
+          chat: summarizeProviderConfig(chatConfig),
+          memoryEmbedding: summarizeProviderConfig(memoryEmbeddingConfig),
+          memoryReasoning: summarizeProviderConfig(memoryReasoningConfig),
+        },
+      };
+    }),
 
   agent: {
-    get: protectedProcedure.handler(({ context }) =>
-      run(getAgentConfig(context.profileId))
-    ),
+    get: protectedProcedure
+      .route({
+        method: "GET",
+        path: "/config/agent",
+        summary: "Get the agent configuration",
+        description:
+          "Return the assistant name, avatar, user name, and user persona for the current profile.",
+        tags: ["Config"],
+      })
+      .handler(({ context }) => run(getAgentConfig(context.profileId))),
 
     update: protectedProcedure
+      .route({
+        method: "PUT",
+        path: "/config/agent",
+        summary: "Replace the agent configuration",
+        description:
+          "Upsert the assistant name, avatar, user name, and user persona for the current profile.",
+        tags: ["Config"],
+      })
       .input(agentConfigInputSchema)
       .handler(({ input, context }) =>
         run(upsertAgentConfig(context.profileId, input))
@@ -82,11 +106,26 @@ export const configRouter = {
   },
 
   soul: {
-    get: protectedProcedure.handler(({ context }) =>
-      run(getSoulConfig(context.profileId))
-    ),
+    get: protectedProcedure
+      .route({
+        method: "GET",
+        path: "/config/soul",
+        summary: "Get the soul configuration",
+        description:
+          "Return the assistant name, temperament, relationship, values, drives, and expression settings.",
+        tags: ["Config"],
+      })
+      .handler(({ context }) => run(getSoulConfig(context.profileId))),
 
     update: protectedProcedure
+      .route({
+        method: "PUT",
+        path: "/config/soul",
+        summary: "Replace the soul configuration",
+        description:
+          "Upsert the assistant temperament, relationship, values, drives, and expression settings.",
+        tags: ["Config"],
+      })
       .input(soulConfigInputSchema)
       .handler(({ input, context }) =>
         run(upsertSoulConfig(context.profileId, input))
@@ -94,22 +133,54 @@ export const configRouter = {
   },
 
   provider: {
-    get: protectedProcedure.handler(({ context }) =>
-      run(getProviderConfig(context.profileId))
-    ),
+    get: protectedProcedure
+      .route({
+        method: "GET",
+        path: "/config/provider",
+        summary: "Get the chat provider configuration",
+        description:
+          "Return the chat provider configuration, including the API key; treat the response as a secret.",
+        tags: ["Config"],
+      })
+      .handler(({ context }) => run(getProviderConfig(context.profileId))),
 
     update: protectedProcedure
+      .route({
+        method: "PUT",
+        path: "/config/provider",
+        summary: "Replace the chat provider configuration",
+        description:
+          "Upsert the chat provider vendor, protocol, model, base URL, API key, and enabled flag.",
+        tags: ["Config"],
+      })
       .input(providerConfigInputSchema)
       .handler(({ input, context }) =>
         run(upsertProviderConfig(context.profileId, "chat", input))
       ),
 
     memoryEmbedding: {
-      get: protectedProcedure.handler(({ context }) =>
-        run(getMemoryEmbeddingProviderConfig(context.profileId))
-      ),
+      get: protectedProcedure
+        .route({
+          method: "GET",
+          path: "/config/provider/memory-embedding",
+          summary: "Get the memory embedding provider",
+          description:
+            "Return the provider used to embed memories and knowledge chunks, including the API key.",
+          tags: ["Config"],
+        })
+        .handler(({ context }) =>
+          run(getMemoryEmbeddingProviderConfig(context.profileId))
+        ),
 
       update: protectedProcedure
+        .route({
+          method: "PUT",
+          path: "/config/provider/memory-embedding",
+          summary: "Replace the memory embedding provider",
+          description:
+            "Upsert the provider used to embed memories and knowledge chunks.",
+          tags: ["Config"],
+        })
         .input(providerConfigInputSchema)
         .handler(({ input, context }) =>
           run(
@@ -119,11 +190,28 @@ export const configRouter = {
     },
 
     memoryReasoning: {
-      get: protectedProcedure.handler(({ context }) =>
-        run(getMemoryReasoningProviderConfig(context.profileId))
-      ),
+      get: protectedProcedure
+        .route({
+          method: "GET",
+          path: "/config/provider/memory-reasoning",
+          summary: "Get the memory reasoning provider",
+          description:
+            "Return the provider used for memory digests, grading, and lesson enrichment, including the API key.",
+          tags: ["Config"],
+        })
+        .handler(({ context }) =>
+          run(getMemoryReasoningProviderConfig(context.profileId))
+        ),
 
       update: protectedProcedure
+        .route({
+          method: "PUT",
+          path: "/config/provider/memory-reasoning",
+          summary: "Replace the memory reasoning provider",
+          description:
+            "Upsert the provider used for memory digests, grading, and lesson enrichment.",
+          tags: ["Config"],
+        })
         .input(providerConfigInputSchema)
         .handler(({ input, context }) =>
           run(

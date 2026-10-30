@@ -41,6 +41,14 @@ const requireRuntimeTurn = async (profileId: string, turnId: string) => {
 
 export const runtimeRouter = {
   recentActivity: protectedProcedure
+    .route({
+      method: "GET",
+      path: "/runtime/recent-activity",
+      summary: "List recent runtime activity",
+      description:
+        "Return running turns, recently failed or aborted turns, and recent failed spans for the current profile.",
+      tags: ["Runtime"],
+    })
     .input(runtimeRecentActivityQuerySchema)
     .handler(async ({ input, context }) => {
       const { profileId } = context;
@@ -70,6 +78,14 @@ export const runtimeRouter = {
     }),
 
   listTurns: protectedProcedure
+    .route({
+      method: "GET",
+      path: "/conversations/{conversationId}/turns",
+      summary: "List conversation turns",
+      description:
+        "Return the runtime turns recorded for one conversation owned by the current profile.",
+      tags: ["Runtime"],
+    })
     .input(runtimeTurnListQuerySchema)
     .handler(async ({ input, context }) => {
       await requireConversation(context.profileId, input.conversationId);
@@ -80,12 +96,28 @@ export const runtimeRouter = {
     }),
 
   getTurn: protectedProcedure
+    .route({
+      method: "GET",
+      path: "/runtime/turns/{turnId}",
+      summary: "Get a runtime turn",
+      description:
+        "Return one runtime turn owned by the current profile, or 404 when it does not exist.",
+      tags: ["Runtime"],
+    })
     .input(runtimeTurnParamSchema)
     .handler(({ input, context }) =>
       requireRuntimeTurn(context.profileId, input.turnId)
     ),
 
   listTurnSpans: protectedProcedure
+    .route({
+      method: "GET",
+      path: "/runtime/turns/{turnId}/spans",
+      summary: "List runtime turn spans",
+      description:
+        "Return the ordered spans (model calls, tool calls, retrievals) recorded for one runtime turn.",
+      tags: ["Runtime"],
+    })
     .input(runtimeTurnParamSchema)
     .handler(async ({ input, context }) => {
       await requireRuntimeTurn(context.profileId, input.turnId);

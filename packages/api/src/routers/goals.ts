@@ -68,11 +68,26 @@ const requireGoal = async (profileId: string, goalId: string) => {
 };
 
 export const goalsRouter = {
-  list: protectedProcedure.handler(({ context }) =>
-    run(listGoals(context.profileId))
-  ),
+  list: protectedProcedure
+    .route({
+      method: "GET",
+      path: "/goals",
+      summary: "List goals",
+      description:
+        "Return every goal owned by the current profile with its status, horizon, and review date.",
+      tags: ["Goals"],
+    })
+    .handler(({ context }) => run(listGoals(context.profileId))),
 
   create: protectedProcedure
+    .route({
+      method: "POST",
+      path: "/goals",
+      summary: "Create a goal",
+      description:
+        "Create a goal with success criteria, constraints, horizon, and autonomy mode, then record a creation event.",
+      tags: ["Goals"],
+    })
     .input(goalCreateSchema)
     .handler(async ({ input, context }) => {
       const goal = await run(
@@ -98,6 +113,13 @@ export const goalsRouter = {
     }),
 
   get: protectedProcedure
+    .route({
+      method: "GET",
+      path: "/goals/{goalId}",
+      summary: "Get a goal",
+      description: "Return one goal with its commitments and decision traces.",
+      tags: ["Goals"],
+    })
     .input(goalParamSchema)
     .handler(async ({ input, context }) => {
       const goal = await requireGoal(context.profileId, input.goalId);
@@ -110,6 +132,14 @@ export const goalsRouter = {
     }),
 
   update: protectedProcedure
+    .route({
+      method: "PATCH",
+      path: "/goals/{goalId}",
+      summary: "Update a goal",
+      description:
+        "Patch goal fields such as status, horizon, success criteria, or next review date, then record the changed fields.",
+      tags: ["Goals"],
+    })
     .input(goalParamSchema.and(goalUpdateSchema))
     .handler(async ({ input, context }) => {
       const { goalId, ...patch } = input;
@@ -133,6 +163,14 @@ export const goalsRouter = {
 
   commitments: {
     create: protectedProcedure
+      .route({
+        method: "POST",
+        path: "/goals/{goalId}/commitments",
+        summary: "Create a commitment",
+        description:
+          "Attach a task, promise, deadline, decision, or dependency commitment to a goal.",
+        tags: ["Goals"],
+      })
       .input(goalParamSchema.and(commitmentCreateSchema))
       .handler(async ({ input, context }) => {
         const { goalId, ...payload } = input;
@@ -157,6 +195,14 @@ export const goalsRouter = {
       }),
 
     update: protectedProcedure
+      .route({
+        method: "PATCH",
+        path: "/goals/{goalId}/commitments/{commitmentId}",
+        summary: "Update a commitment",
+        description:
+          "Patch a commitment's title, status, owner, due date, or evidence references.",
+        tags: ["Goals"],
+      })
       .input(commitmentParamSchema.and(commitmentUpdateSchema))
       .handler(async ({ input, context }) => {
         const { goalId, commitmentId, ...patch } = input;
@@ -191,6 +237,14 @@ export const goalsRouter = {
 
   decisions: {
     get: protectedProcedure
+      .route({
+        method: "GET",
+        path: "/goals/{goalId}/decisions/{decisionId}",
+        summary: "Get a decision trace",
+        description:
+          "Return one decision trace inside a goal, including its candidates and policy result.",
+        tags: ["Decisions"],
+      })
       .input(decisionParamSchema)
       .handler(async ({ input, context }) => {
         const trace = await run(getDecisionTrace(input.decisionId));
@@ -207,6 +261,14 @@ export const goalsRouter = {
       }),
 
     feedback: protectedProcedure
+      .route({
+        method: "POST",
+        path: "/decisions/{decisionId}/feedback",
+        summary: "Record decision feedback",
+        description:
+          "Record user feedback on a decision, optionally pinned to one of its candidates.",
+        tags: ["Decisions"],
+      })
       .input(decisionIdSchema.and(decisionFeedbackCreateSchema))
       .handler(async ({ input, context }) => {
         const trace = await run(getDecisionTrace(input.decisionId));
@@ -250,6 +312,14 @@ export const goalsRouter = {
 
   actionProposals: {
     get: protectedProcedure
+      .route({
+        method: "GET",
+        path: "/action-proposals/{proposalId}",
+        summary: "Get an action proposal",
+        description:
+          "Return one action proposal with its kind, reversibility, required authority, and proposed input.",
+        tags: ["Action Proposals"],
+      })
       .input(proposalIdSchema)
       .handler(async ({ input, context }) => {
         const proposal = await run(getActionProposal(input.proposalId));
@@ -262,6 +332,14 @@ export const goalsRouter = {
       }),
 
     create: protectedProcedure
+      .route({
+        method: "POST",
+        path: "/action-proposals",
+        summary: "Create an action proposal",
+        description:
+          "Create a proposal for an eligible decision candidate and record a creation event. The decision is passed in the body.",
+        tags: ["Action Proposals"],
+      })
       .input(decisionIdSchema.and(actionProposalCreateSchema))
       .handler(async ({ input, context }) => {
         const trace = await run(getDecisionTrace(input.decisionId));
@@ -307,6 +385,14 @@ export const goalsRouter = {
       }),
 
     authorize: protectedProcedure
+      .route({
+        method: "POST",
+        path: "/action-proposals/{proposalId}/authorize",
+        summary: "Authorize an action proposal",
+        description:
+          "Grant execution or notify-mode authorization for a proposal. Denials are expressed by not granting anything.",
+        tags: ["Action Proposals"],
+      })
       .input(proposalIdSchema.and(actionAuthorizationCreateSchema))
       .handler(async ({ input, context }) => {
         const proposal = await run(getActionProposal(input.proposalId));
@@ -361,6 +447,14 @@ export const goalsRouter = {
 
   actionRuns: {
     get: protectedProcedure
+      .route({
+        method: "GET",
+        path: "/action-runs/{actionRunId}",
+        summary: "Get an action run",
+        description:
+          "Return one action run with its status, authorization, and receipt.",
+        tags: ["Action Runs"],
+      })
       .input(actionRunIdSchema)
       .handler(async ({ input, context }) => {
         const actionRun = await run(getActionRun(input.actionRunId));
@@ -373,6 +467,14 @@ export const goalsRouter = {
       }),
 
     cancel: protectedProcedure
+      .route({
+        method: "POST",
+        path: "/action-runs/{actionRunId}/cancel",
+        summary: "Cancel an action run",
+        description:
+          "Cancel an action run that has not reached a terminal status and record a cancellation event.",
+        tags: ["Action Runs"],
+      })
       .input(actionRunIdSchema)
       .handler(async ({ input, context }) => {
         const current = await run(getActionRun(input.actionRunId));
@@ -400,6 +502,14 @@ export const goalsRouter = {
       }),
 
     confirmReceipt: protectedProcedure
+      .route({
+        method: "POST",
+        path: "/action-runs/{actionRunId}/confirm-receipt",
+        summary: "Confirm an action run receipt",
+        description:
+          "Confirm the external receipt of an action run, then record the receipt kind in the event log.",
+        tags: ["Action Runs"],
+      })
       .input(actionRunIdSchema)
       .handler(async ({ input, context }) => {
         const current = await run(getActionRun(input.actionRunId));

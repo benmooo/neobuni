@@ -51,30 +51,57 @@ const requireSchedule = async (profileId: string, scheduleId: string) => {
 // TODO(server): update - requires planScheduleUpdateInput
 // (apps/server schedules/plan-schedule).
 export const schedulesRouter = {
-  list: protectedProcedure.handler(async ({ context }) => {
-    const schedules = await run(listSchedules(context.profileId));
+  list: protectedProcedure
+    .route({
+      method: "GET",
+      path: "/schedules",
+      summary: "List schedules",
+      description:
+        "Return every schedule for the current profile with its latest task run.",
+      tags: ["Schedules"],
+    })
+    .handler(async ({ context }) => {
+      const schedules = await run(listSchedules(context.profileId));
 
-    return Promise.all(
-      schedules.map(async (schedule) => {
-        const [latestTaskRun] = await run(
-          listTaskRunsBySchedule(schedule.id, { limit: 1 })
-        );
+      return Promise.all(
+        schedules.map(async (schedule) => {
+          const [latestTaskRun] = await run(
+            listTaskRunsBySchedule(schedule.id, { limit: 1 })
+          );
 
-        return {
-          ...schedule,
-          latestTaskRun: latestTaskRun ? toTaskRunSummary(latestTaskRun) : null,
-        };
-      })
-    );
-  }),
+          return {
+            ...schedule,
+            latestTaskRun: latestTaskRun
+              ? toTaskRunSummary(latestTaskRun)
+              : null,
+          };
+        })
+      );
+    }),
 
   get: protectedProcedure
+    .route({
+      method: "GET",
+      path: "/schedules/{scheduleId}",
+      summary: "Get a schedule",
+      description:
+        "Return one schedule owned by the current profile, or 404 when it does not exist.",
+      tags: ["Schedules"],
+    })
     .input(scheduleIdInput)
     .handler(({ input, context }) =>
       requireSchedule(context.profileId, input.scheduleId)
     ),
 
   listTaskRuns: protectedProcedure
+    .route({
+      method: "GET",
+      path: "/schedules/{scheduleId}/task-runs",
+      summary: "List runs for a schedule",
+      description:
+        "Return the most recent task runs of a schedule, newest first, capped by the limit query.",
+      tags: ["Schedules"],
+    })
     .input(scheduleTaskRunListInput)
     .handler(async ({ input, context }) => {
       await requireSchedule(context.profileId, input.scheduleId);
@@ -85,6 +112,14 @@ export const schedulesRouter = {
     }),
 
   remove: protectedProcedure
+    .route({
+      method: "DELETE",
+      path: "/schedules/{scheduleId}",
+      summary: "Delete a schedule",
+      description:
+        "Delete a schedule owned by the current profile and record a deletion event.",
+      tags: ["Schedules"],
+    })
     .input(scheduleIdInput)
     .handler(async ({ input, context }) => {
       await requireSchedule(context.profileId, input.scheduleId);

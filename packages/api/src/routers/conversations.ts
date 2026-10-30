@@ -32,17 +32,40 @@ const requireConversation = async (
 };
 
 export const conversationsRouter = {
-  list: protectedProcedure.handler(({ context }) =>
-    run(listConversations(context.profileId))
-  ),
+  list: protectedProcedure
+    .route({
+      method: "GET",
+      path: "/conversations",
+      summary: "List conversations",
+      description:
+        "Return every conversation owned by the current profile with its title and model key.",
+      tags: ["Conversations"],
+    })
+    .handler(({ context }) => run(listConversations(context.profileId))),
 
   get: protectedProcedure
+    .route({
+      method: "GET",
+      path: "/conversations/{conversationId}",
+      summary: "Get a conversation",
+      description:
+        "Return one conversation owned by the current profile, or 404 when it does not exist.",
+      tags: ["Conversations"],
+    })
     .input(conversationIdInput)
     .handler(async ({ input, context }) =>
       requireConversation(context.profileId, input.conversationId)
     ),
 
   create: protectedProcedure
+    .route({
+      method: "POST",
+      path: "/conversations",
+      summary: "Create a conversation",
+      description:
+        "Create an empty conversation for the current profile and record a creation event.",
+      tags: ["Conversations"],
+    })
     .input(conversationCreateSchema)
     .handler(async ({ input, context }) => {
       const conversation = await run(
@@ -60,6 +83,14 @@ export const conversationsRouter = {
     }),
 
   rename: protectedProcedure
+    .route({
+      method: "PATCH",
+      path: "/conversations/{conversationId}",
+      summary: "Rename a conversation",
+      description:
+        "Replace the conversation title and record a rename event with the new title.",
+      tags: ["Conversations"],
+    })
     .input(conversationIdInput.merge(conversationUpdateSchema))
     .handler(async ({ input, context }) => {
       const existing = await requireConversation(
@@ -79,6 +110,14 @@ export const conversationsRouter = {
     }),
 
   remove: protectedProcedure
+    .route({
+      method: "DELETE",
+      path: "/conversations/{conversationId}",
+      summary: "Delete a conversation",
+      description:
+        "Delete a conversation owned by the current profile and record a deletion event.",
+      tags: ["Conversations"],
+    })
     .input(conversationIdInput)
     .handler(async ({ input, context }) => {
       await requireConversation(context.profileId, input.conversationId);

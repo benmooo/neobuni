@@ -23,12 +23,28 @@ const requireTaskRun = async (profileId: string, taskRunId: string) => {
 
 export const taskRunsRouter = {
   get: protectedProcedure
+    .route({
+      method: "GET",
+      path: "/task-runs/{taskRunId}",
+      summary: "Get a task run",
+      description:
+        "Return one task run owned by the current profile with its status, attempt, and error.",
+      tags: ["Task Runs"],
+    })
     .input(taskRunIdInput)
     .handler(({ input, context }) =>
       requireTaskRun(context.profileId, input.taskRunId)
     ),
 
   trace: protectedProcedure
+    .route({
+      method: "GET",
+      path: "/task-runs/{taskRunId}/trace",
+      summary: "Get a task run trace",
+      description:
+        "Return a task run together with the runtime turn and spans it produced.",
+      tags: ["Task Runs"],
+    })
     .input(taskRunIdInput)
     .handler(async ({ input, context }) => {
       const taskRun = await requireTaskRun(context.profileId, input.taskRunId);

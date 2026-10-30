@@ -41,6 +41,14 @@ const requireMemory = async (profileId: string, memoryId: string) => {
 // TODO(server): reindex - requires syncMemoryEmbedding (apps/server memory stores).
 export const memoriesRouter = {
   list: protectedProcedure
+    .route({
+      method: "GET",
+      path: "/memories",
+      summary: "List memories",
+      description:
+        "Return stored memories for the current profile, optionally filtered by type or unresolved flag.",
+      tags: ["Memories"],
+    })
     .input(memoryListInput)
     .handler(({ input, context }) =>
       run(
@@ -55,12 +63,28 @@ export const memoriesRouter = {
     ),
 
   get: protectedProcedure
+    .route({
+      method: "GET",
+      path: "/memories/{memoryId}",
+      summary: "Get a memory",
+      description:
+        "Return one memory owned by the current profile, or 404 when it does not exist.",
+      tags: ["Memories"],
+    })
     .input(memoryIdInput)
     .handler(({ input, context }) =>
       requireMemory(context.profileId, input.memoryId)
     ),
 
   create: protectedProcedure
+    .route({
+      method: "POST",
+      path: "/memories",
+      summary: "Create a memory",
+      description:
+        "Store a memory for the current profile and record a creation event.",
+      tags: ["Memories"],
+    })
     .input(memoryCreateSchema)
     .handler(async ({ input, context }) => {
       const memory = await run(createMemory(context.profileId, input));
@@ -78,6 +102,14 @@ export const memoriesRouter = {
     }),
 
   update: protectedProcedure
+    .route({
+      method: "PATCH",
+      path: "/memories/{memoryId}",
+      summary: "Update a memory",
+      description:
+        "Patch a memory's content, classification, or lifecycle status and record an update event.",
+      tags: ["Memories"],
+    })
     .input(memoryIdInput.merge(memoryUpdateSchema))
     .handler(async ({ input, context }) => {
       const { memoryId, ...payload } = input;
@@ -98,6 +130,14 @@ export const memoriesRouter = {
     }),
 
   remove: protectedProcedure
+    .route({
+      method: "DELETE",
+      path: "/memories/{memoryId}",
+      summary: "Delete a memory",
+      description:
+        "Delete a memory and its embedding row, then record a deletion event.",
+      tags: ["Memories"],
+    })
     .input(memoryIdInput)
     .handler(async ({ input, context }) => {
       await requireMemory(context.profileId, input.memoryId);

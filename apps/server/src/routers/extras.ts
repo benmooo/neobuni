@@ -138,6 +138,14 @@ export const extrasRouter = {
     ...schedulesRouter,
 
     create: protectedProcedure
+      .route({
+        method: "POST",
+        path: "/schedules",
+        summary: "Create a schedule",
+        description:
+          "Validate and create a one-off or cron schedule, then record a creation event.",
+        tags: ["Schedules"],
+      })
       .input(scheduleCreateSchema)
       .handler(async ({ input, context }) => {
         const planned = planOrThrow(() =>
@@ -160,6 +168,14 @@ export const extrasRouter = {
       }),
 
     update: protectedProcedure
+      .route({
+        method: "PATCH",
+        path: "/schedules/{scheduleId}",
+        summary: "Update a schedule",
+        description:
+          "Re-plan and patch a schedule's trigger, content, or status, then record an update event.",
+        tags: ["Schedules"],
+      })
       .input(scheduleUpdateSchema.extend({ scheduleId: z.string().min(1) }))
       .handler(async ({ input, context }) => {
         const { scheduleId, ...update } = input;
@@ -195,6 +211,14 @@ export const extrasRouter = {
     ...knowledgeRouter,
 
     create: protectedProcedure
+      .route({
+        method: "POST",
+        path: "/knowledge",
+        summary: "Ingest a knowledge document",
+        description:
+          "Chunk, embed, and extract facts from a profile-scoped knowledge document, then record an ingest event.",
+        tags: ["Knowledge"],
+      })
       .input(knowledgeDocumentCreateSchema)
       .handler(async ({ input, context }) => {
         if (input.scope === "global") {
@@ -241,6 +265,14 @@ export const extrasRouter = {
     ...memoriesRouter,
 
     search: protectedProcedure
+      .route({
+        method: "POST",
+        path: "/memories/search",
+        summary: "Search memories",
+        description:
+          "Run a hybrid keyword and embedding recall over stored memories. Requires a configured memory embedding provider.",
+        tags: ["Memories"],
+      })
       .input(memorySearchSchema)
       .handler(async ({ input, context }) => {
         const embeddingConfig = await getEmbeddingConfig(context.profileId);
@@ -261,6 +293,14 @@ export const extrasRouter = {
       }),
 
     digest: protectedProcedure
+      .route({
+        method: "POST",
+        path: "/memories/digest",
+        summary: "Digest a conversation into memories",
+        description:
+          "Run the memory digest pipeline over one conversation and persist the extracted memories.",
+        tags: ["Memories"],
+      })
       .input(memoryDigestSchema)
       .handler(async ({ input, context }) => {
         const conversation = await run(getConversation(input.conversationId));
@@ -301,70 +341,96 @@ export const extrasRouter = {
         return data;
       }),
 
-    reindex: protectedProcedure.handler(async ({ context }) => {
-      const embeddingConfig = await getEmbeddingConfig(context.profileId);
+    reindex: protectedProcedure
+      .route({
+        method: "POST",
+        path: "/memories/reindex",
+        summary: "Reindex memory embeddings",
+        description:
+          "Clear and rebuild every memory embedding for the current profile, reporting reindexed and failed counts.",
+        tags: ["Memories"],
+      })
+      .handler(async ({ context }) => {
+        const embeddingConfig = await getEmbeddingConfig(context.profileId);
 
-      if (!embeddingConfig) {
-        throw new ORPCError("BAD_REQUEST", {
-          message: "Memory embedding provider not configured",
-        });
-      }
-
-      const memories = await run(listMemories(context.profileId));
-      await run(clearMemoryEmbeddings);
-
-      let reindexed = 0;
-      let failed = 0;
-
-      // Reindex sequentially: the embedding provider is rate limited.
-      for (const memory of memories) {
-        try {
-          await syncMemoryEmbedding({
-            embeddingConfig,
-            memoryId: memory.id,
-            content: memory.content,
-            status: memory.status,
+        if (!embeddingConfig) {
+          throw new ORPCError("BAD_REQUEST", {
+            message: "Memory embedding provider not configured",
           });
-
-          if (memory.status === "active") {
-            reindexed += 1;
-          }
-        } catch (error) {
-          failed += 1;
-          console.warn(`Failed to reindex memory ${memory.id}:`, error);
         }
-      }
 
-      const data = { total: memories.length, reindexed, failed };
-      await run(appendEvent(context.profileId, "memory.reindex", data));
+        const memories = await run(listMemories(context.profileId));
+        await run(clearMemoryEmbeddings);
 
-      return data;
-    }),
+        let reindexed = 0;
+        let failed = 0;
+
+        // Reindex sequentially: the embedding provider is rate limited.
+        for (const memory of memories) {
+          try {
+            await syncMemoryEmbedding({
+              embeddingConfig,
+              memoryId: memory.id,
+              content: memory.content,
+              status: memory.status,
+            });
+
+            if (memory.status === "active") {
+              reindexed += 1;
+            }
+          } catch (error) {
+            failed += 1;
+            console.warn(`Failed to reindex memory ${memory.id}:`, error);
+          }
+        }
+
+        const data = { total: memories.length, reindexed, failed };
+        await run(appendEvent(context.profileId, "memory.reindex", data));
+
+        return data;
+      }),
   },
 
   config: {
     ...configRouter,
 
-    providerChecks: protectedProcedure.handler(async ({ context }) => {
-      const [chatConfig, memoryEmbeddingConfig, memoryReasoningConfig] =
-        await Promise.all([
-          run(getProviderConfig(context.profileId)),
-          run(getMemoryEmbeddingProviderConfig(context.profileId)),
-          run(getMemoryReasoningProviderConfig(context.profileId)),
-        ]);
+    providerChecks: protectedProcedure
+      .route({
+        method: "GET",
+        path: "/config/provider-checks",
+        summary: "Run provider self-checks",
+        description:
+          "Probe the configured chat, memory embedding, and memory reasoning providers and report a pass, fail, or skip status per slot.",
+        tags: ["Config"],
+      })
+      .handler(async ({ context }) => {
+        const [chatConfig, memoryEmbeddingConfig, memoryReasoningConfig] =
+          await Promise.all([
+            run(getProviderConfig(context.profileId)),
+            run(getMemoryEmbeddingProviderConfig(context.profileId)),
+            run(getMemoryReasoningProviderConfig(context.profileId)),
+          ]);
 
-      return runRuntimeProviderSelfChecks({
-        chatConfig,
-        memoryEmbeddingConfig,
-        memoryReasoningConfig,
-      });
-    }),
+        return runRuntimeProviderSelfChecks({
+          chatConfig,
+          memoryEmbeddingConfig,
+          memoryReasoningConfig,
+        });
+      }),
 
     /**
      * Fills the model picker from the vendor's own catalogue. Only OpenCode
      * exposes one today; other vendors return an empty list.
      */
     providerModels: protectedProcedure
+      .route({
+        method: "GET",
+        path: "/config/provider/models",
+        summary: "List provider models",
+        description:
+          "Return the model catalogue of a vendor for the provider picker. Only OpenCode publishes one; other vendors return an empty list.",
+        tags: ["Config"],
+      })
       .input(providerModelListInputSchema)
       .handler(async ({ input }) => ({
         models:
@@ -375,11 +441,28 @@ export const extrasRouter = {
 
     messaging: {
       discord: {
-        get: protectedProcedure.handler(({ context }) =>
-          getEffectiveDiscordConfig(context.profileId)
-        ),
+        get: protectedProcedure
+          .route({
+            method: "GET",
+            path: "/config/messaging/discord",
+            summary: "Get the Discord messaging config",
+            description:
+              "Return the effective Discord bot configuration, falling back to environment defaults when the database has none.",
+            tags: ["Config"],
+          })
+          .handler(({ context }) =>
+            getEffectiveDiscordConfig(context.profileId)
+          ),
 
         put: protectedProcedure
+          .route({
+            method: "PUT",
+            path: "/config/messaging/discord",
+            summary: "Replace the Discord messaging config",
+            description:
+              "Upsert the Discord bot credentials, signature keys, and channel targets for the current profile.",
+            tags: ["Config"],
+          })
           .input(discordMessagingConfigInputSchema)
           .handler(({ input, context }) =>
             saveDiscordConfig(context.profileId, input)
@@ -387,11 +470,28 @@ export const extrasRouter = {
       },
 
       telegram: {
-        get: protectedProcedure.handler(({ context }) =>
-          getEffectiveTelegramConfig(context.profileId)
-        ),
+        get: protectedProcedure
+          .route({
+            method: "GET",
+            path: "/config/messaging/telegram",
+            summary: "Get the Telegram messaging config",
+            description:
+              "Return the effective Telegram bot configuration, falling back to environment defaults when the database has none.",
+            tags: ["Config"],
+          })
+          .handler(({ context }) =>
+            getEffectiveTelegramConfig(context.profileId)
+          ),
 
         put: protectedProcedure
+          .route({
+            method: "PUT",
+            path: "/config/messaging/telegram",
+            summary: "Replace the Telegram messaging config",
+            description:
+              "Upsert the Telegram bot credentials, webhook secret, and channel targets for the current profile.",
+            tags: ["Config"],
+          })
           .input(telegramMessagingConfigInputSchema)
           .handler(({ input, context }) =>
             saveTelegramConfig(context.profileId, input)
@@ -399,11 +499,28 @@ export const extrasRouter = {
       },
 
       feishu: {
-        get: protectedProcedure.handler(({ context }) =>
-          getEffectiveFeishuConfig(context.profileId)
-        ),
+        get: protectedProcedure
+          .route({
+            method: "GET",
+            path: "/config/messaging/feishu",
+            summary: "Get the Feishu messaging config",
+            description:
+              "Return the effective Feishu app configuration, falling back to environment defaults when the database has none.",
+            tags: ["Config"],
+          })
+          .handler(({ context }) =>
+            getEffectiveFeishuConfig(context.profileId)
+          ),
 
         put: protectedProcedure
+          .route({
+            method: "PUT",
+            path: "/config/messaging/feishu",
+            summary: "Replace the Feishu messaging config",
+            description:
+              "Upsert the Feishu app id, secret, base URL, and delivery targets for the current profile.",
+            tags: ["Config"],
+          })
           .input(feishuConfigInputSchema)
           .handler(({ input, context }) =>
             saveFeishuConfig(context.profileId, input)
@@ -411,11 +528,26 @@ export const extrasRouter = {
       },
 
       qq: {
-        get: protectedProcedure.handler(({ context }) =>
-          getEffectiveQqConfig(context.profileId)
-        ),
+        get: protectedProcedure
+          .route({
+            method: "GET",
+            path: "/config/messaging/qq",
+            summary: "Get the QQ messaging config",
+            description:
+              "Return the effective QQ bot configuration, falling back to environment defaults when the database has none.",
+            tags: ["Config"],
+          })
+          .handler(({ context }) => getEffectiveQqConfig(context.profileId)),
 
         put: protectedProcedure
+          .route({
+            method: "PUT",
+            path: "/config/messaging/qq",
+            summary: "Replace the QQ messaging config",
+            description:
+              "Upsert the QQ bot credentials, base URL, and delivery targets for the current profile.",
+            tags: ["Config"],
+          })
           .input(qqConfigInputSchema)
           .handler(({ input, context }) =>
             saveQqConfig(context.profileId, input)
@@ -427,63 +559,81 @@ export const extrasRouter = {
   goals: {
     ...goalsRouter,
 
-    now: protectedProcedure.handler(async ({ context }) => {
-      const [activeGoals, commitments] = await Promise.all([
-        run(listGoals(context.profileId, "active")),
-        run(listCommitments(context.profileId)),
-      ]);
-      const openCommitments = commitments.filter(
-        (commitment) =>
-          commitment.status === "open" || commitment.status === "blocked"
-      );
-      const decisionGroups = await Promise.all(
-        activeGoals.map((goal) =>
-          run(listDecisionTracesByGoal(context.profileId, goal.id))
-        )
-      );
-      const recentDecisions = decisionGroups
-        .flat()
-        .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
-        .slice(0, 20);
-      const nextReviewAt =
-        activeGoals
-          .map((goal) => goal.nextReviewAt)
-          .filter((value): value is string => value !== null)
-          .sort()[0] ?? null;
-      const candidates = buildNextActionCandidates({
-        goals: activeGoals,
-        commitments: openCommitments,
-      });
-      const latestSuggestionTrace =
-        (
-          await Promise.all(
-            recentDecisions
-              .filter(
-                (decision) =>
-                  decision.kind === "next_action" &&
-                  decision.route === "suggest"
-              )
-              .slice(0, 1)
-              .map((decision) => run(getDecisionTrace(decision.id)))
+    now: protectedProcedure
+      .route({
+        method: "GET",
+        path: "/now",
+        summary: "Get the Now snapshot",
+        description:
+          "Return active goals, open commitments, recent decisions, the next review date, and the suggested next action for the Now view.",
+        tags: ["Now"],
+      })
+      .handler(async ({ context }) => {
+        const [activeGoals, commitments] = await Promise.all([
+          run(listGoals(context.profileId, "active")),
+          run(listCommitments(context.profileId)),
+        ]);
+        const openCommitments = commitments.filter(
+          (commitment) =>
+            commitment.status === "open" || commitment.status === "blocked"
+        );
+        const decisionGroups = await Promise.all(
+          activeGoals.map((goal) =>
+            run(listDecisionTracesByGoal(context.profileId, goal.id))
           )
-        ).find((trace): trace is NonNullable<typeof trace> => trace !== null) ??
-        null;
-      const suggestedAction =
-        (latestSuggestionTrace
-          ? selectHeuristicNextAction(latestSuggestionTrace.candidates)
-          : null) ?? selectHeuristicNextAction(candidates);
+        );
+        const recentDecisions = decisionGroups
+          .flat()
+          .sort((left, right) => right.createdAt.localeCompare(left.createdAt))
+          .slice(0, 20);
+        const nextReviewAt =
+          activeGoals
+            .map((goal) => goal.nextReviewAt)
+            .filter((value): value is string => value !== null)
+            .sort()[0] ?? null;
+        const candidates = buildNextActionCandidates({
+          goals: activeGoals,
+          commitments: openCommitments,
+        });
+        const latestSuggestionTrace =
+          (
+            await Promise.all(
+              recentDecisions
+                .filter(
+                  (decision) =>
+                    decision.kind === "next_action" &&
+                    decision.route === "suggest"
+                )
+                .slice(0, 1)
+                .map((decision) => run(getDecisionTrace(decision.id)))
+            )
+          ).find(
+            (trace): trace is NonNullable<typeof trace> => trace !== null
+          ) ?? null;
+        const suggestedAction =
+          (latestSuggestionTrace
+            ? selectHeuristicNextAction(latestSuggestionTrace.candidates)
+            : null) ?? selectHeuristicNextAction(candidates);
 
-      return {
-        activeGoals,
-        openCommitments,
-        recentDecisions,
-        nextReviewAt,
-        suggestedAction,
-        suggestedDecisionId: latestSuggestionTrace?.decision.id ?? null,
-      };
-    }),
+        return {
+          activeGoals,
+          openCommitments,
+          recentDecisions,
+          nextReviewAt,
+          suggestedAction,
+          suggestedDecisionId: latestSuggestionTrace?.decision.id ?? null,
+        };
+      }),
 
     nextActionEvaluations: protectedProcedure
+      .route({
+        method: "POST",
+        path: "/goals/next-action-evaluations",
+        summary: "Evaluate the next action",
+        description:
+          "Recompute next-action candidates across active goals, optionally scoped to one goal, and record the resulting decision.",
+        tags: ["Goals"],
+      })
       .input(nextActionEvaluationCreateSchema)
       .handler(async ({ input, context }) => {
         const [activeGoals, commitments] = await Promise.all([
@@ -520,24 +670,41 @@ export const extrasRouter = {
         return data;
       }),
 
-    telegramTargets: protectedProcedure.handler(async ({ context }) => {
-      const config = await getEffectiveTelegramConfig(context.profileId);
+    telegramTargets: protectedProcedure
+      .route({
+        method: "GET",
+        path: "/telegram/targets",
+        summary: "List Telegram delivery targets",
+        description:
+          "Return the enabled Telegram channel targets, as aliases and labels, available for drafts.",
+        tags: ["Telegram"],
+      })
+      .handler(async ({ context }) => {
+        const config = await getEffectiveTelegramConfig(context.profileId);
 
-      return config.enabled
-        ? config.targets
-            .filter(
-              (target) => target.enabled && target.targetType === "channel"
-            )
-            .map((target) =>
-              telegramChannelTargetSchema.parse({
-                alias: target.alias,
-                label: target.label.trim() || target.alias,
-              })
-            )
-        : [];
-    }),
+        return config.enabled
+          ? config.targets
+              .filter(
+                (target) => target.enabled && target.targetType === "channel"
+              )
+              .map((target) =>
+                telegramChannelTargetSchema.parse({
+                  alias: target.alias,
+                  label: target.label.trim() || target.alias,
+                })
+              )
+          : [];
+      }),
 
     telegramDrafts: protectedProcedure
+      .route({
+        method: "POST",
+        path: "/telegram/drafts",
+        summary: "Create a Telegram message draft",
+        description:
+          "Create a confirmation-gated Telegram message draft for a channel alias, optionally bound to a goal, and return the decision plus proposal.",
+        tags: ["Telegram"],
+      })
       .input(telegramDraftCreateSchema)
       .handler(async ({ input, context }) => {
         const { profileId } = context;
@@ -648,6 +815,14 @@ export const extrasRouter = {
       ...goalsRouter.actionProposals,
 
       createRun: protectedProcedure
+        .route({
+          method: "POST",
+          path: "/action-proposals/{proposalId}/runs",
+          summary: "Queue an action run",
+          description:
+            "Queue an action run for an authorized proposal, rejecting unauthorized or unbound input.",
+          tags: ["Action Runs"],
+        })
         .input(actionRunCreateSchema.extend({ proposalId: z.string().min(1) }))
         .handler(async ({ input, context }) => {
           const { proposalId, ...payload } = input;

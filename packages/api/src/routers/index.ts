@@ -14,7 +14,16 @@ import { schedulesRouter } from "./schedules";
 import { taskRunsRouter } from "./task-runs";
 
 export const appRouter = {
-  healthCheck: publicProcedure.handler(() => "OK"),
+  healthCheck: publicProcedure
+    .route({
+      method: "GET",
+      path: "/health",
+      summary: "Health check",
+      description:
+        "Return OK when the oRPC router is reachable. Public: no session required.",
+      tags: ["Health"],
+    })
+    .handler(() => "OK"),
   conversations: conversationsRouter,
   messages: messagesRouter,
   profile: profileRouter,
