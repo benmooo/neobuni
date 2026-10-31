@@ -100,7 +100,15 @@ export const deliveredNudgeKeys = (events: StudyNudgeEvent[]): Set<string> => {
   return keys;
 };
 
-/** Per-day nudge budget: counts both legacy reminders and new nudges. */
+/**
+ * Per-day outbound budget shared by nudges and scout digests: counts legacy
+ * reminders, new nudges, and material digests.
+ */
+const BUDGET_EVENT_TYPES = new Set([
+  "study.nudge_sent",
+  "study.reminder_sent",
+  "study.scout_sent",
+]);
 export const countNudgesOnDate = (
   events: StudyNudgeEvent[],
   localDate: string,
@@ -118,8 +126,7 @@ export const countNudgesOnDate = (
   };
   return events.filter(
     (event) =>
-      (event.type === "study.nudge_sent" ||
-        event.type === "study.reminder_sent") &&
+      BUDGET_EVENT_TYPES.has(event.type) &&
       inZone(event.createdAt) === localDate
   ).length;
 };

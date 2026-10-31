@@ -85,6 +85,8 @@ const DEFAULT_CONFIG: StudyScoutConfig = {
 };
 
 const PRE_WINDOW_MINUTES = 30;
+const MISSING_PROVIDER_REASON =
+  "缺少搜索服务密钥：请在「记忆理解与路由」里配置 DeepSeek 的 API Key。";
 const MAX_DIGEST_ITEMS = 3;
 const DIGEST_ID_LENGTH = 8;
 const DIGEST_WHY_LIMIT = 40;
@@ -208,8 +210,14 @@ const sentOnDate = (events: StudyNudgeEvent[], localDate: string): boolean =>
 const dayLabel = (value: string | null): string =>
   value ? value.slice(0, 10) : "无日期";
 
-const kindLabel = (pick: ScoutPick): string =>
-  pick.kind === "past-exam" ? "真题" : "文章";
+const KIND_LABELS: Record<ScoutPick["kind"], string> = {
+  article: "文章",
+  news: "新闻",
+  outline: "大纲",
+  "past-exam": "真题",
+};
+
+const kindLabel = (pick: ScoutPick): string => KIND_LABELS[pick.kind];
 
 const digestText = (input: {
   localDate: string;
@@ -263,7 +271,7 @@ const scaffoldKeyboard = (input: { digestId: string; picks: ScoutPick[] }) => {
       callback_data: `sc:skip:${index}:${input.digestId}`,
       text: `不感兴趣 ${index + 1}`,
     })),
-    [{ callback_data: `sc:later:0:${input.digestId}`, text: "明晚再看" }],
+    [{ callback_data: `sc:later:0:${input.digestId}`, text: "过几天再看" }],
   ];
 
   return { inline_keyboard: rows.filter((row) => row.length > 0) };
@@ -329,6 +337,7 @@ const deliverDigest = async (input: {
 };
 
 interface ScoutGoalRunResult {
+  available: boolean;
   candidateCount: number;
   candidates: ScoutCandidate[];
   errors: string[];
@@ -372,9 +381,8 @@ const runStudyScoutForGoal = async (input: {
   if (!provider) {
     return {
       ...emptyRun(),
-      errors: [
-        "缺少搜索服务密钥：请在「记忆理解与路由」里配置 DeepSeek 的 API Key。",
-      ],
+      available: false,
+      errors: [MISSING_PROVIDER_REASON],
     };
   }
 
@@ -435,6 +443,7 @@ const runStudyScoutForGoal = async (input: {
 
   if (candidates.length === 0) {
     return {
+      available: true,
       candidateCount: 0,
       candidates,
       errors,
@@ -454,6 +463,7 @@ const runStudyScoutForGoal = async (input: {
     : [];
 
   return {
+    available: true,
     candidateCount: candidates.length,
     candidates,
     errors,
@@ -463,6 +473,7 @@ const runStudyScoutForGoal = async (input: {
 };
 
 const emptyRun = (): ScoutGoalRunResult => ({
+  available: true,
   candidateCount: 0,
   candidates: [],
   errors: [],
@@ -506,11 +517,15 @@ const previewStudyScout = async (input: {
   });
 
   return {
+    available: result.available,
     candidateCount: result.candidateCount,
     errors: result.errors,
     localDate: input.localDate,
     picks: result.picks.map(toContractCandidate),
     queryCount: result.queryCount,
+    reason: result.available
+      ? null
+      : (result.errors[0] ?? MISSING_PROVIDER_REASON),
   };
 };
 

@@ -93,7 +93,13 @@ const makeDeps = (input?: {
   nodes?: ReturnType<typeof node>[];
   provider?: { apiKey: string; baseUrl: string; kind: string } | null;
 }) => {
-  const appendEvent = vi.fn(() => Effect.succeed(null));
+  const state: StudyNudgeEvent[] = [...(input?.events ?? [digestEvent()])];
+  const appendEvent = vi.fn(
+    (_profileId: string, type: string, payload: Record<string, unknown>) => {
+      state.push({ createdAt: new Date().toISOString(), payload, type });
+      return Effect.succeed(null);
+    }
+  );
   const deps = {
     appendEvent,
     createChatCompletion: vi.fn(async () => quizPayload),
@@ -112,7 +118,7 @@ const makeDeps = (input?: {
         plan: { id: "plan-1" },
       })
     ),
-    listEvents: vi.fn(() => Effect.succeed(input?.events ?? [digestEvent()])),
+    listEvents: vi.fn(() => Effect.succeed([...state])),
     resolveReasoning: vi.fn(async () => ({
       apiKey: "sk-reasoning",
       baseUrl: "https://api.deepseek.com",
@@ -296,6 +302,44 @@ describe("applyStudyScoutAction", () => {
     );
     expect(result?.ack).toBe("已收藏到知识库。");
     expect(deps.updateStudyNodeEnrichment).not.toHaveBeenCalled();
+  });
+
+  test("records the item index and ignores a second save", async () => {
+    const { appendEvent, deps } = makeDeps();
+
+    const first = await applyStudyScoutAction(
+      { action: "save", digestId: DIGEST_ID, index: 0, profileId: "profile-1" },
+      deps
+    );
+    const second = await applyStudyScoutAction(
+      { action: "save", digestId: DIGEST_ID, index: 0, profileId: "profile-1" },
+      deps
+    );
+
+    expect(first?.ack).toBe("已收藏到「质量属性场景」的资料里。");
+    expect(second?.ack).toBe("这一条已经处理过了。");
+    expect(deps.saveWebPageToKnowledge).toHaveBeenCalledTimes(1);
+    expect(appendEvent).toHaveBeenCalledWith(
+      "profile-1",
+      "study.scout_saved",
+      expect.objectContaining({ digestId: DIGEST_ID, index: 0 })
+    );
+  });
+
+  test("ignores a second quiz for the same item", async () => {
+    const { deps } = makeDeps();
+
+    await applyStudyScoutAction(
+      { action: "quiz", digestId: DIGEST_ID, index: 0, profileId: "profile-1" },
+      deps
+    );
+    const second = await applyStudyScoutAction(
+      { action: "quiz", digestId: DIGEST_ID, index: 0, profileId: "profile-1" },
+      deps
+    );
+
+    expect(second?.ack).toBe("这一条已经处理过了。");
+    expect(deps.createChatCompletion).toHaveBeenCalledTimes(1);
   });
 
   test("refuses to save without a search provider", async () => {

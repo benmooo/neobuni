@@ -321,6 +321,7 @@ const applySave = async (input: {
   deps: ScoutActionDeps;
   digest: { goalId: string };
   digestId: string;
+  index: number;
   item: ScoutDigestItem;
   profileId: string;
 }): Promise<ScoutActionResult> => {
@@ -351,6 +352,7 @@ const applySave = async (input: {
       digestId: input.digestId,
       documentId: (saved as { documentId?: string }).documentId ?? null,
       goalId: input.digest.goalId || null,
+      index: input.index,
       lessonTitle: node?.title ?? null,
       planNodeId: node?.id ?? null,
       url: input.item.url,
@@ -388,6 +390,7 @@ const applyQuiz = async (input: {
   deps: ScoutActionDeps;
   digest: { goalId: string };
   digestId: string;
+  index: number;
   item: ScoutDigestItem;
   profileId: string;
 }): Promise<ScoutActionResult> => {
@@ -465,6 +468,7 @@ const applyQuiz = async (input: {
   await runRepo(
     input.deps.appendEvent(input.profileId, "study.scout_quiz", {
       digestId: input.digestId,
+      index: input.index,
       planNodeId: node.id,
       url: input.item.url,
     })
@@ -552,6 +556,7 @@ const applyStudyScoutAction = async (
       deps,
       digest: { goalId: digest.goalId },
       digestId: input.digestId,
+      index: input.index,
       item,
       profileId: input.profileId,
     });
@@ -562,6 +567,7 @@ const applyStudyScoutAction = async (
       deps,
       digest: { goalId: digest.goalId },
       digestId: input.digestId,
+      index: input.index,
       item,
       profileId: input.profileId,
     });

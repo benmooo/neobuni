@@ -5,6 +5,7 @@ import type { ScoutPick } from "./scout-service";
 import {
   digestText,
   isWithinScoutWindow,
+  previewStudyScout,
   runStudyScoutSweep,
   type StudyScoutConfig,
   type StudyScoutDeps,
@@ -238,6 +239,31 @@ describe("runStudyScoutSweep", () => {
       (call) => call[1] === "study.scout_sent"
     );
     expect(sentEvent?.[2]).toMatchObject({ localDate: "2026-10-26", picks: 1 });
+  });
+
+  test("researches news and syllabus changes alongside exams", async () => {
+    const deps = buildDeps();
+
+    await runStudyScoutSweep({ config, deps, now });
+
+    const queries = deps.search.mock.calls.map(
+      (call) => (call[0] as { query: string }).query
+    );
+    expect(queries.some((query) => query.includes("最新进展 新闻"))).toBe(true);
+    expect(queries.some((query) => query.includes("考试大纲 变化"))).toBe(true);
+  });
+
+  test("reports why a preview cannot run without a search key", async () => {
+    const result = await previewStudyScout({
+      deps: buildDeps({ provider: null }),
+      goalId: "goal-1",
+      localDate: "2026-10-26",
+      profileId: "profile-1",
+    });
+
+    expect(result.available).toBe(false);
+    expect(result.reason).toContain("缺少搜索服务密钥");
+    expect(result.picks).toEqual([]);
   });
 
   test("stays quiet when the goal turns scouting off", async () => {

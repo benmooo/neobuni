@@ -331,10 +331,17 @@ const studyReminderTestResultSchema = z.object({
   preview: z.string(),
 });
 
+const studyScoutCandidateKindSchema = z.enum([
+  "article",
+  "news",
+  "outline",
+  "past-exam",
+]);
+
 const studyScoutCandidateSchema = z.object({
   confidence: z.number().min(0).max(1),
   host: z.string().trim().min(1).max(120),
-  kind: z.enum(["article", "past-exam"]),
+  kind: studyScoutCandidateKindSchema,
   publishedAt: z.string().trim().min(1).nullable(),
   summary: z.string().nullable(),
   title: z.string().trim().min(1).max(300),
@@ -345,16 +352,18 @@ const studyScoutCandidateSchema = z.object({
 });
 
 const studyScoutRunResultSchema = z.object({
+  available: z.boolean(),
   candidateCount: z.number().int().nonnegative(),
   errors: z.array(z.string()),
   localDate: localDateSchema,
   picks: z.array(studyScoutCandidateSchema),
   queryCount: z.number().int().nonnegative(),
+  reason: z.string().nullable(),
 });
 
 const studyScoutDigestItemSchema = z.object({
   host: z.string().trim().min(1).max(120),
-  kind: z.enum(["article", "past-exam"]),
+  kind: studyScoutCandidateKindSchema,
   title: z.string().trim().max(300).nullable(),
   topicKey: z.string().trim().min(1).max(120),
   url: z.string().trim().min(1).max(2000),
@@ -477,6 +486,7 @@ export {
   studyProgressInputSchema,
   studyProgressSchema,
   studyReminderTestResultSchema,
+  studyScoutCandidateKindSchema,
   studyScoutCandidateSchema,
   studyScoutDigestItemSchema,
   studyScoutLatestSchema,
@@ -532,6 +542,9 @@ export type StudyReminderTestResult = z.infer<
   typeof studyReminderTestResultSchema
 >;
 export type StudyScoutCandidate = z.infer<typeof studyScoutCandidateSchema>;
+export type StudyScoutCandidateKind = z.infer<
+  typeof studyScoutCandidateKindSchema
+>;
 export type StudyScoutDigestItem = z.infer<typeof studyScoutDigestItemSchema>;
 export type StudyScoutLatest = z.infer<typeof studyScoutLatestSchema>;
 export type StudyScoutRunResult = z.infer<typeof studyScoutRunResultSchema>;

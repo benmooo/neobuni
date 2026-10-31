@@ -144,7 +144,7 @@ describe("buildScoutQueries", () => {
       profile,
     });
 
-    expect(queries).toHaveLength(4);
+    expect(queries).toHaveLength(6);
     expect(queries[0]?.text).toBe(
       "质量属性 深度分析 after:2024-10-26 -site:facebook.com -site:pinterest.com -site:x.com"
     );
@@ -156,7 +156,11 @@ describe("buildScoutQueries", () => {
       "past-exam",
       "past-exam",
       "article",
+      "news",
+      "outline",
     ]);
+    expect(queries[4]?.text).toContain("最新进展 新闻 after:2025-10-26");
+    expect(queries[5]?.text).toContain("考试大纲 变化 after:2024-10-26");
   });
 
   test("respects the configured allowlist and query limit", () => {

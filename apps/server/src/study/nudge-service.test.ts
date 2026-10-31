@@ -220,4 +220,17 @@ describe("nudge event bookkeeping", () => {
     expect(countNudgesOnDate(events, "2026-10-26", "Asia/Shanghai")).toBe(2);
     expect(countNudgesOnDate(events, "2026-10-27", "Asia/Shanghai")).toBe(0);
   });
+
+  test("counts scout digests against the same budget", () => {
+    const shared: StudyNudgeEvent[] = [
+      ...events,
+      {
+        createdAt: "2026-10-26T11:45:00.000Z",
+        payload: { digestId: "ab12cd34", localDate: "2026-10-26" },
+        type: "study.scout_sent",
+      },
+    ];
+
+    expect(countNudgesOnDate(shared, "2026-10-26", "Asia/Shanghai")).toBe(3);
+  });
 });

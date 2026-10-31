@@ -12,7 +12,7 @@ title: "Study Scout 设计文档"
 
 Study Scout 让 Buni 每天主动"上网找学过的、即将学的、学得不好的东西"相关的
 优质材料（帖子、新闻、历年真题/案例解析），筛掉噪音后通过 Telegram 推送 2–3 条，
-每条带可点击的动作：收藏到知识库、出 3 道延伸题写进 lesson 的自检、不感兴趣、明晚再看。
+每条带可点击的动作：收藏到知识库、出 3 道延伸题写进 lesson 的自检、不感兴趣、过几天再看。
 
 它补的是现有教材流水线的空白：目前教材只来自预置考纲 + 静态教材库
 （`apps/server/src/study/textbook-retrieval.ts`），**不会去看互联网**。
@@ -93,7 +93,7 @@ buildScoutProfile(goal, config, nodes, mastery, sessions)
    ▼
 buildScoutQueries(profile, localDate)          // 确定性模板，5 条
    ▼
-searchDeepSeek(query, count=10) × 5            // DeepSeek Search API，并行
+searchDeepSeek(query, count=6) × 6             // DeepSeek Search API，并行
    ▼
 filterCandidates(items, history, blocklist)    // 免费过滤：去重/分数/权威/时效/配额/负反馈
    ▼
@@ -101,7 +101,7 @@ rankCandidates(profile, candidates)            // 1 次 LLM：挑 ≤3 条 + 写
    ▼
 sendTelegramDigest(card, keyboard)             // 共用 nudge 预算与免打扰
    ▼
-callback_query  sc:{action}:{idx}:{digestId}   // 收藏 / 出题 / 不感兴趣 / 明晚再看
+callback_query  sc:{action}:{idx}:{digestId}   // 收藏 / 出题 / 不感兴趣 / 过几天再看
 ```
 
 ## 6. 兴趣画像 `buildScoutProfile`
@@ -122,15 +122,19 @@ callback_query  sc:{action}:{idx}:{digestId}   // 收藏 / 出题 / 不感兴趣
 
 ## 7. 查询生成 `buildScoutQueries`
 
-确定性模板（不花 LLM），共 5 条，按 `localDate` 做轮换，避免连续两天问同样的东西：
+确定性模板（不花 LLM），每个主题 6 条，按 `localDate` 轮换主题顺序，避免连续几天问同样的东西：
 
-| # | 模板 | 说明 |
-| --- | --- | --- |
-| Q1 | `"{topic}" {paperLabel} 解析 lang:zh after:{year-2}-01-01` | 近期解析/案例 |
-| Q2 | `site:{allowlistHost} {examName} 真题` | 白名单站点的真题页（`site:` 可 `OR` 拼接多个） |
-| Q3 | `"{topic}" 真题 案例 after:{year-1}-01-01 lang:zh` | 真题与案例 |
-| Q4 | `"{topic}" 踩坑 实践 面试题 lang:zh after:{year-1}-01-01` | 实战型帖子 |
-| Q5 | `"{examName}" 考试大纲 变化 lang:zh after:{year-1}-01-01` | 大纲/政策变化 |
+| # | 模板 | `kind` | 说明 |
+| --- | --- | --- | --- |
+| Q1 | `{keyword} 深度分析 after:{today-730d}` | `article` | 近期解析/案例 |
+| Q2 | `site:{allowlistHost} {keyword} 真题` | `past-exam` | 白名单站点的真题页 |
+| Q3 | `{keyword} 案例分析 真题 after:{today-730d}` | `past-exam` | 真题与案例 |
+| Q4 | `{keyword} 实践经验 踩坑 after:{today-365d}` | `article` | 实战型帖子 |
+| Q5 | `{keyword} 最新进展 新闻 after:{today-365d}` | `news` | 新闻/动态 |
+| Q6 | `{keyword} 考试大纲 变化 after:{today-730d}` | `outline` | 大纲/政策变化 |
+
+- `keyword` 取主题的第一个关键词（lessson 标题或 `syllabusRefs`），空则退回主题标签。
+- 一次 sweep 最多发出 `QUERY_LIMIT = 8` 条查询，所以权重最高的主题拿到全部 6 条，第二个主题拿到前 2 条。
 
 - `paperLabel` 由 `node.paper` 映射（`case` → 案例分析、`essay` → 论文、`tech` → 技术）。
 - `allowlist` 来自 `config.scout.siteAllowlist`，默认
@@ -180,10 +184,10 @@ fetchDeepSeekPage(input: {
 | 步骤 | 规则 |
 | --- | --- |
 | 1. URL 归一化 | 去 `#fragment`、去 `utm_*` / `ref` / `spm` / `from` / `share_*` 参数、去尾部 `/`、host 小写；`http` → `https` |
-| 2. 协议 | 只保留 `https`（PDF 归为 `kind: "pdf"`，仍可推送但标记「需点开阅读」） |
+| 2. 协议 | 只保留 `https`（PDF 链接照常推送，正文抓取失败时回复「这篇抓不到正文」） |
 | 3. 分数 | `rerank_score < 1.5` 丢弃；若存活不足 5 条，放宽为按 `rerank_score` 取前 5 |
 | 4. 权威 | `authority < 2` 丢弃；`authority === -1`（未知）仅当 `rerank_score ≥ 2.2` 保留 |
-| 5. 时效 | 真题类 `date` 距今 ≤ 3 年；文章/资讯类 ≤ 18 个月；`date === null` 仅当 `authority ≥ 3` 保留 |
+| 5. 时效 | `past-exam`/`outline` 距今 ≤ 3 年；`article` ≤ 18 个月；`news` ≤ 12 个月；`date === null` 仅当 `authority ≥ 3` 保留 |
 | 6. 历史去重 | 与 `study.scout_sent` 事件里出现过的归一化 URL 相同 → 丢弃（永久） |
 | 7. 负反馈 | 命中 `study.scout_feedback{action:"skip", host, topicKey}` 且 30 天内 → 丢弃 |
 | 8. 配额 | 同一 host 每天 1 条；进入排序的候选总数上限 8 条（按 `rerank_score + authority` 排序后截断） |
@@ -202,7 +206,7 @@ fetchDeepSeekPage(input: {
       "url": "https://…",
       "why": "≤ 60 字，说明这份材料解决了哪个具体问题",
       "lessonId": "node-id-or-empty",
-      "kind": "past_exam | article | news | outline",
+      "kind": "article | news | outline | past-exam",
       "confidence": 0.82
     }
   ]
@@ -232,11 +236,12 @@ fetchDeepSeekPage(input: {
 
 ```
 [ 收藏 1 ] [ 收藏 2 ] [ 收藏 3 ]
-[ 出题 2 ] [ 不感兴趣 1 ] [ 明晚再看 ]
+[ 出题 2 ] [ 不感兴趣 1 ] [ 过几天再看 ]
 ```
 
 - `callback_data` 格式：`sc:{action}:{index}:{digestId}`，
-  `action ∈ {save, quiz, skip, later}`，`index` 从 1 开始。示例：`sc:save:2:9f3a1c7e`。
+  `action ∈ {save, quiz, skip, later}`，`index` 从 0 开始（与 `study.scout_sent.items` 下标一致）。
+  示例：`sc:save:1:9f3a1c7e`。
 - 空候选 → 当天**不发任何消息**（不发"没找到"的噪音），只记事件。
 - 预算与免打扰完全复用 `apps/server/src/study/reminder-worker.ts`：
   `budget = maxPerDay - sentToday`（nudge 与 scout 共用），`isWithinQuietHours` 命中则跳过。
@@ -264,7 +269,7 @@ fetchDeepSeekPage(input: {
 | 事件 | payload | 用途 |
 | --- | --- | --- |
 | `study.scout_run` | `{ goalId, localDate, queries: string[], candidates: number, kept: number, picked: number, fallback?: boolean, provider: "deepseek" \| "webclaw" }` | 观测/调参 |
-| `study.scout_sent` | `{ digestId, goalId, localDate, picks: [{url, host, topicKey, why, planNodeId, kind}], budget }` | 推送历史（URL 去重来源）、按钮索引、`digestId` |
+| `study.scout_sent` | `{ candidates, digestId, errors, goalId, items: [{host, kind, title, topicKey, url}], localDate, picks }` | 推送历史（URL 与 `localDate` 去重来源）、按钮索引、`digestId`、收藏/出题的标题 |
 | `study.scout_saved` | `{ digestId, documentId, goalId, planNodeId, url }` | 沉淀追踪 |
 | `study.scout_quiz` | `{ digestId, goalId, nodeId, url, specIds }` | 出题追踪 |
 | `study.scout_feedback` | `{ digestId, action: "skip" \| "later", host, topicKey, url, reofferOn? }` | 负反馈抑制 / 延后 |
@@ -313,7 +318,8 @@ studyScoutSettingsSchema = {
 | `429` QPS | 指数退避（1s → 3s，最多 2 次）；仍失败则跳过该 query，其它 query 继续 |
 | `404` Fetch 无正文 | 收藏失败时回复「这篇抓不到正文，点标题直接看原文」，不改其他状态 |
 | LLM 超时/非法 JSON | 启发式降级（第 10 节），推送照常 |
-| 候选为空 | 当天不发消息，只记事件 |
+| 候选为空 | 当天不发消息，只记事件（`study.scout_run`） |
+| 同一条被点两次 | `study.scout_saved` / `study.scout_quiz` 已带 `(digestId, index)`，重复点击回复「这一条已经处理过了。」 |
 | 时钟/时区异常 | 全部基于 `config.timezone` 的本地日期计算，与 `nudge-service` 共用 `clockToMinutes` |
 
 ## 17. 成本模型

@@ -63,6 +63,12 @@ const NUDGE_TOGGLES: { key: keyof StudyNudgeSettings; label: string }[] = [
 ];
 
 const PER_DAY_OPTIONS = [1, 2, 3] as const;
+const SCOUT_KIND_LABELS = {
+  article: "文章",
+  news: "新闻",
+  outline: "大纲",
+  "past-exam": "真题",
+} as const;
 const DEFAULT_ALLOWLIST = ["ruankao.org.cn", "github.com", "zhihu.com"];
 
 const parseAllowlist = (value: string): string[] =>
@@ -127,7 +133,11 @@ function StudySettingsForm({
     queryFn: () => api.config.provider.memoryReasoning.get(),
     staleTime: 60_000,
   });
-  const hasSearchKey = Boolean(reasoningProvider.data?.apiKey);
+  const reasoning = reasoningProvider.data;
+  const hasSearchKey =
+    Boolean(reasoning?.apiKey) &&
+    (reasoning?.provider === "deepseek" ||
+      (reasoning?.baseUrl ?? "").toLowerCase().includes("deepseek.com"));
   const telegramTargets = useTelegramChannelTargets();
   const testReminder = useSendStudyReminderTest(goalId);
   const telegramConfig = useQuery({
@@ -204,6 +214,9 @@ function StudySettingsForm({
   };
 
   const toggleScout = () => {
+    if (!hasSearchKey) {
+      return;
+    }
     setScout((current) => ({ ...current, enabled: !current.enabled }));
   };
 
@@ -514,12 +527,13 @@ function StudySettingsForm({
         <CardContent className="space-y-3">
           <div className="flex flex-wrap items-center gap-2">
             <Button
+              disabled={!hasSearchKey}
               onClick={toggleScout}
               size="sm"
               type="button"
-              variant={scout.enabled ? "default" : "outline"}
+              variant={scout.enabled && hasSearchKey ? "default" : "outline"}
             >
-              {scout.enabled ? "精选已开" : "精选已关"}
+              {scout.enabled && hasSearchKey ? "精选已开" : "精选已关"}
             </Button>
             <span className="text-muted-foreground text-xs">每天</span>
             {PER_DAY_OPTIONS.map((value) => (
@@ -551,8 +565,9 @@ function StudySettingsForm({
 
           {hasSearchKey ? null : (
             <p className="text-muted-foreground text-xs">
-              还没有配置 DeepSeek
-              密钥，精选暂时找不到材料。到「记忆理解与路由」里填上模型和密钥后即可使用。
+              当前 profile 未配置 DeepSeek
+              密钥，无法联网检索。到「记忆理解与路由」把 provider 切到 DeepSeek
+              并填上密钥即可使用。
             </p>
           )}
 
@@ -585,7 +600,9 @@ function StudySettingsForm({
               </p>
               {scoutResult.picks.length === 0 ? (
                 <p className="text-muted-foreground text-sm">
-                  这次没有达到质量线的材料，稍后再试试。
+                  {scoutResult.available
+                    ? "这次没有达到质量线的材料，稍后再试试。"
+                    : (scoutResult.reason ?? "当前无法联网检索。")}
                 </p>
               ) : (
                 scoutResult.picks.map((pick) => (
@@ -599,8 +616,7 @@ function StudySettingsForm({
                       {pick.title}
                     </a>
                     <p className="text-muted-foreground text-xs">
-                      {pick.host} ·{" "}
-                      {pick.kind === "past-exam" ? "真题" : "文章"} · {pick.why}
+                      {pick.host} · {SCOUT_KIND_LABELS[pick.kind]} · {pick.why}
                     </p>
                   </div>
                 ))

@@ -18,13 +18,15 @@ const MIN_AUTHORITY = 2;
 const RELAXED_CANDIDATE_TOP = 5;
 const RELAXED_MIN_RERANK_SCORE = 1;
 const ARTICLE_MAX_AGE_DAYS = 548;
+const NEWS_MAX_AGE_DAYS = 365;
+const OUTLINE_MAX_AGE_DAYS = 1095;
 const EXAM_MAX_AGE_DAYS = 1095;
 const RANKING_CANDIDATE_LIMIT = 8;
 const MAX_PICKS = 3;
 const MIN_CONFIDENCE = 0.5;
 const SKIP_SUPPRESSION_DAYS = 30;
 const LATER_REOFFER_DAYS = 7;
-const QUERY_LIMIT = 6;
+const QUERY_LIMIT = 8;
 const RANKING_MAX_TOKENS = 700;
 const RANKING_TEMPERATURE = 0.2;
 
@@ -40,7 +42,7 @@ const EXCLUDED_SITE_SUFFIXES = ["facebook.com", "pinterest.com", "x.com"];
 const WEAK_MASTERY_THRESHOLD = 0.6;
 
 type ScoutTopicTag = "goal" | "recent" | "upcoming" | "weak";
-type ScoutCandidateKind = "article" | "past-exam";
+type ScoutCandidateKind = "article" | "news" | "outline" | "past-exam";
 type ScoutFeedbackAction = "later" | "skip";
 
 interface ScoutTopic {
@@ -157,8 +159,17 @@ const daysBetween = (from: string, to: string): number | null => {
   return diffLocalDays(fromDate, toDate);
 };
 
-const maxAgeDaysFor = (kind: ScoutCandidateKind): number =>
-  kind === "past-exam" ? EXAM_MAX_AGE_DAYS : ARTICLE_MAX_AGE_DAYS;
+const maxAgeDaysFor = (kind: ScoutCandidateKind): number => {
+  if (kind === "past-exam") {
+    return EXAM_MAX_AGE_DAYS;
+  }
+
+  if (kind === "outline") {
+    return OUTLINE_MAX_AGE_DAYS;
+  }
+
+  return kind === "news" ? NEWS_MAX_AGE_DAYS : ARTICLE_MAX_AGE_DAYS;
+};
 
 const topicKeywords = (node: StudyPlanNode): string[] => {
   const keywords = [
@@ -312,6 +323,20 @@ const buildScoutQueries = (input: {
       id: `${topic.key}:practice`,
       kind: "article",
       text: withExclusions(`${keyword} 实践经验 踩坑 after:${recentCutoff}`),
+      topicKey: topic.key,
+      topicLabel: topic.label,
+    });
+    queries.push({
+      id: `${topic.key}:news`,
+      kind: "news",
+      text: withExclusions(`${keyword} 最新进展 新闻 after:${recentCutoff}`),
+      topicKey: topic.key,
+      topicLabel: topic.label,
+    });
+    queries.push({
+      id: `${topic.key}:outline`,
+      kind: "outline",
+      text: withExclusions(`${keyword} 考试大纲 变化 after:${examCutoff}`),
       topicKey: topic.key,
       topicLabel: topic.label,
     });
