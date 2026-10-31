@@ -371,3 +371,130 @@ describe("telegram integration routes", () => {
     expect(response.status).toBe(404);
   });
 });
+
+describe("telegram nudge interactions", () => {
+  const answerTelegramCallbackQueryMock = vi.fn(async () => undefined);
+  const applyStudyNudgeActionMock = vi.fn(async () => ({
+    ack: "已记录",
+    text: "已改到明晚 20:30",
+  }));
+  const bindStudyGoalChannelMock = vi.fn(async () => ({
+    bound: true,
+    channels: [],
+  }));
+  const editTelegramMessageTextMock = vi.fn(async () => undefined);
+
+  const nudgeApp = new Hono().route(
+    "/v1/integrations/telegram",
+    createTelegramIntegrationRoutes({
+      answerTelegramCallbackQuery: answerTelegramCallbackQueryMock,
+      applyStudyNudgeAction: applyStudyNudgeActionMock,
+      bindStudyGoalChannel: bindStudyGoalChannelMock,
+      createConversation: createConversationMock,
+      createExternalConversationBinding: createExternalConversationBindingMock,
+      editTelegramMessageText: editTelegramMessageTextMock,
+      getExternalConversationBinding: getExternalConversationBindingMock,
+      getMessagingIntegrationByWebhookSecret:
+        getMessagingIntegrationByWebhookSecretMock,
+      recordExternalEventReceipt: recordExternalEventReceiptMock,
+      runExternalMessageTurn: runExternalMessageTurnMock,
+      sendTelegramMessage: sendTelegramMessageMock,
+      touchExternalConversationBinding: touchExternalConversationBindingMock,
+    })
+  );
+
+  const post = (body: unknown, secret = "telegram-secret") =>
+    nudgeApp.request("/v1/integrations/telegram/events", {
+      body: JSON.stringify(body),
+      headers: {
+        "content-type": "application/json",
+        "x-telegram-bot-api-secret-token": secret,
+      },
+      method: "POST",
+    });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    getMessagingIntegrationByWebhookSecretMock.mockImplementation(
+      async (_platform?: string, webhookSecret?: string) =>
+        webhookSecret === "telegram-secret" ? buildTelegramIntegration() : null
+    );
+    recordExternalEventReceiptMock.mockResolvedValue({
+      inserted: true,
+      receipt: {
+        eventId: "2001",
+        id: "receipt-2",
+        platform: "telegram" as const,
+        profileId: "profile-1",
+        receivedAt: "2026-06-15T00:00:00.000Z",
+      },
+    });
+    applyStudyNudgeActionMock.mockResolvedValue({
+      ack: "已记录",
+      text: "已改到明晚 20:30",
+    });
+    bindStudyGoalChannelMock.mockResolvedValue({ bound: true, channels: [] });
+  });
+
+  test("applies a nudge button and rewrites the message", async () => {
+    const response = await post({
+      callback_query: {
+        data: "st:tomorrow:session-1",
+        from: { id: 42 },
+        id: "callback-1",
+        message: {
+          chat: { id: 42, type: "private" },
+          message_id: 777,
+          text: "20:30 · Quality attributes",
+        },
+      },
+      update_id: 2001,
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      acted: true,
+      ok: true,
+    });
+    expect(applyStudyNudgeActionMock).toHaveBeenCalledWith({
+      action: "tomorrow",
+      profileId: "profile-1",
+      sessionId: "session-1",
+    });
+    expect(answerTelegramCallbackQueryMock).toHaveBeenCalledWith("profile-1", {
+      callbackQueryId: "callback-1",
+      text: "已记录",
+    });
+    expect(editTelegramMessageTextMock).toHaveBeenCalledWith("profile-1", {
+      messageId: "777",
+      targetId: "42",
+      text: "已改到明晚 20:30",
+    });
+    expect(runExternalMessageTurnMock).not.toHaveBeenCalled();
+  });
+
+  test("binds the chat when the start payload carries a study goal", async () => {
+    const response = await post({
+      message: {
+        chat: { id: 42, type: "private" },
+        message_id: 2002,
+        text: "/start bunistudy_goal-123456",
+      },
+      update_id: 2002,
+    });
+
+    expect(response.status).toBe(200);
+    expect(bindStudyGoalChannelMock).toHaveBeenCalledWith({
+      chatId: "42",
+      goalId: "goal-123456",
+      profileId: "profile-1",
+    });
+    expect(sendTelegramMessageMock).toHaveBeenCalledWith(
+      "profile-1",
+      expect.objectContaining({
+        message: { text: expect.stringContaining("已绑定"), type: "text" },
+      })
+    );
+    expect(runExternalMessageTurnMock).not.toHaveBeenCalled();
+  });
+});
