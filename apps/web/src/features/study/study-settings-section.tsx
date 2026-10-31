@@ -1,4 +1,9 @@
-import type { StudyGoalConfig, StudyNudgeSettings } from "@neobuni/contracts";
+import type {
+  StudyGoalConfig,
+  StudyNudgeSettings,
+  StudyScoutRunResult,
+  StudyScoutSettings,
+} from "@neobuni/contracts";
 import { Alert, AlertDescription } from "@neobuni/ui/components/alert";
 import { Badge } from "@neobuni/ui/components/badge";
 import { Button } from "@neobuni/ui/components/button";
@@ -24,6 +29,7 @@ import { useTelegramChannelTargets } from "@/hooks/use-goals";
 import {
   useActivateStudyPlan,
   useGenerateStudyPlan,
+  useRunStudyScout,
   useSendStudyReminderTest,
   useStudyGoals,
   useUpdateStudyConfig,
@@ -55,6 +61,15 @@ const NUDGE_TOGGLES: { key: keyof StudyNudgeSettings; label: string }[] = [
   { key: "reviewDue", label: "复习到期" },
   { key: "wrapUp", label: "收尾复盘" },
 ];
+
+const PER_DAY_OPTIONS = [1, 2, 3] as const;
+const DEFAULT_ALLOWLIST = ["ruankao.org.cn", "github.com", "zhihu.com"];
+
+const parseAllowlist = (value: string): string[] =>
+  value
+    .split(/[,，\s]+/)
+    .map((item) => item.trim().toLowerCase())
+    .filter((item) => item.length > 0);
 
 const messageOf = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
@@ -93,6 +108,26 @@ function StudySettingsForm({
     ...config.nudges,
   });
   const [testResult, setTestResult] = useState<string | null>(null);
+  const [scout, setScout] = useState<StudyScoutSettings>({
+    enabled: true,
+    minRerankScore: 1.5,
+    perDay: 2,
+    siteAllowlist: DEFAULT_ALLOWLIST,
+    ...config.scout,
+  });
+  const [allowlistText, setAllowlistText] = useState(
+    (config.scout?.siteAllowlist ?? DEFAULT_ALLOWLIST).join(", ")
+  );
+  const [scoutResult, setScoutResult] = useState<StudyScoutRunResult | null>(
+    null
+  );
+  const runScout = useRunStudyScout(goalId);
+  const reasoningProvider = useQuery({
+    queryKey: ["config", "provider", "memory_reasoning"],
+    queryFn: () => api.config.provider.memoryReasoning.get(),
+    staleTime: 60_000,
+  });
+  const hasSearchKey = Boolean(reasoningProvider.data?.apiKey);
   const telegramTargets = useTelegramChannelTargets();
   const testReminder = useSendStudyReminderTest(goalId);
   const telegramConfig = useQuery({
@@ -157,6 +192,21 @@ function StudySettingsForm({
     setSelectedTarget("");
   };
 
+  const findMaterial = async () => {
+    setError(null);
+    setScoutResult(null);
+    try {
+      const result = await runScout.mutateAsync();
+      setScoutResult(result);
+    } catch (cause) {
+      setError(messageOf(cause));
+    }
+  };
+
+  const toggleScout = () => {
+    setScout((current) => ({ ...current, enabled: !current.enabled }));
+  };
+
   const replan = async () => {
     setError(null);
     setSaved(false);
@@ -190,6 +240,7 @@ function StudySettingsForm({
       channels,
       dailyMinutes,
       nudges,
+      scout: { ...scout, siteAllowlist: parseAllowlist(allowlistText) },
       quietHours: quietEnabled ? { end: quietEnd, start: quietStart } : null,
       restDays,
       studyWindow: { end: windowEnd, start: windowStart },
@@ -456,8 +507,122 @@ function StudySettingsForm({
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">每日精选材料</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              onClick={toggleScout}
+              size="sm"
+              type="button"
+              variant={scout.enabled ? "default" : "outline"}
+            >
+              {scout.enabled ? "精选已开" : "精选已关"}
+            </Button>
+            <span className="text-muted-foreground text-xs">每天</span>
+            {PER_DAY_OPTIONS.map((value) => (
+              <Button
+                key={value}
+                onClick={() =>
+                  setScout((current) => ({ ...current, perDay: value }))
+                }
+                size="sm"
+                type="button"
+                variant={scout.perDay === value ? "default" : "outline"}
+              >
+                {value} 条
+              </Button>
+            ))}
+          </div>
+
+          <label className="block space-y-1 text-sm">
+            <span className="text-muted-foreground text-xs">
+              优先站点（可留空，用逗号分隔）
+            </span>
+            <Input
+              disabled={update.isPending}
+              onChange={(event) => setAllowlistText(event.target.value)}
+              placeholder="ruankao.org.cn, github.com, zhihu.com"
+              value={allowlistText}
+            />
+          </label>
+
+          {hasSearchKey ? null : (
+            <p className="text-muted-foreground text-xs">
+              还没有配置 DeepSeek
+              密钥，精选暂时找不到材料。到「记忆理解与路由」里填上模型和密钥后即可使用。
+            </p>
+          )}
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              disabled={runScout.isPending || !hasSearchKey}
+              onClick={() => void findMaterial()}
+              type="button"
+              variant="outline"
+            >
+              {runScout.isPending ? (
+                <>
+                  <Spinner className="size-3.5" />
+                  正在检索…
+                </>
+              ) : (
+                "立刻找一次"
+              )}
+            </Button>
+            <p className="text-muted-foreground text-xs">
+              只做预览，不会推送到渠道。
+            </p>
+          </div>
+
+          {scoutResult ? (
+            <div className="space-y-2 border-t pt-2">
+              <p className="text-muted-foreground text-xs">
+                {scoutResult.queryCount} 条查询 · {scoutResult.candidateCount}{" "}
+                个候选 · {scoutResult.picks.length} 条精选
+              </p>
+              {scoutResult.picks.length === 0 ? (
+                <p className="text-muted-foreground text-sm">
+                  这次没有达到质量线的材料，稍后再试试。
+                </p>
+              ) : (
+                scoutResult.picks.map((pick) => (
+                  <div className="space-y-0.5" key={pick.url}>
+                    <a
+                      className="line-clamp-2 text-sm hover:text-primary"
+                      href={pick.url}
+                      rel="noopener noreferrer"
+                      target="_blank"
+                    >
+                      {pick.title}
+                    </a>
+                    <p className="text-muted-foreground text-xs">
+                      {pick.host} ·{" "}
+                      {pick.kind === "past-exam" ? "真题" : "文章"} · {pick.why}
+                    </p>
+                  </div>
+                ))
+              )}
+              {scoutResult.errors.length > 0 ? (
+                <p className="text-destructive text-xs">
+                  {scoutResult.errors.join("；")}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+
+          <p className="text-muted-foreground text-xs">
+            学习时段开始前 30
+            分钟推送，按最近学过的内容和薄弱点检索，每日上限与上面提醒共享。
+          </p>
+        </CardContent>
+      </Card>
+
       {error ? (
         <Alert variant="destructive">
+          {" "}
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       ) : null}

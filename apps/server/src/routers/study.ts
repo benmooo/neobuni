@@ -7,6 +7,8 @@ import {
   type StudyGoalCreate,
   type StudyPlanView,
   type StudyReminderTestResult,
+  type StudyScoutLatest,
+  type StudyScoutRunResult,
   type StudySession,
   type StudySessionWithNode,
   type StudyToday,
@@ -19,6 +21,8 @@ import {
   studyPlanActivateSchema,
   studyPlanGenerateSchema,
   studyProgressInputSchema,
+  studyScoutDigestItemSchema,
+  studyScoutLatestSchema,
   studySessionCompleteSchema,
   studySessionIdSchema,
   studySessionRescheduleSchema,
@@ -49,6 +53,7 @@ import {
   getStudyGoalConfig,
   getStudyPlan,
   getStudySession,
+  listEvents,
   listGoals,
   listStudyChecks,
   listStudyMastery,
@@ -63,6 +68,7 @@ import { submitStudyCheck } from "../study/check-service";
 import { enrichStudyLesson } from "../study/enrichment-service";
 import { previewStudyNudge } from "../study/nudge-service";
 import { sendStudyNudgeNow } from "../study/reminder-worker";
+import { previewStudyScout } from "../study/scout-worker";
 
 const ACTIVITY_FUTURE_DAYS = 14;
 
@@ -836,6 +842,68 @@ export const studyRouter = {
           errors: result.errors,
           preview: nudge.text,
         };
+      }),
+  },
+
+  scout: {
+    run: protectedProcedure
+      .route({
+        method: "POST",
+        path: "/study/goals/{goalId}/scout/run",
+        summary: "Preview researched study material",
+        description:
+          "Run the Study Scout pipeline for a goal and return the ranked shortlist without sending anything to the configured channels.",
+        tags: ["Study"],
+      })
+      .input(studyGoalParamSchema)
+      .handler(async ({ input, context }): Promise<StudyScoutRunResult> => {
+        await requireStudyGoal(context.profileId, input.goalId);
+        const config = await requireStudyConfig(input.goalId);
+        await requireActivePlan(input.goalId);
+
+        return previewStudyScout({
+          goalId: input.goalId,
+          localDate: localDateInTimeZone(new Date(), config.timezone),
+          profileId: context.profileId,
+          settings: config.scout,
+        });
+      }),
+
+    latest: protectedProcedure
+      .route({
+        method: "GET",
+        path: "/study/goals/{goalId}/scout/latest",
+        summary: "Get the last scout digest",
+        description:
+          "Return the most recent Study Scout digest that was delivered for the goal, or null when nothing has been sent yet.",
+        tags: ["Study"],
+      })
+      .input(studyGoalParamSchema)
+      .handler(async ({ input, context }): Promise<StudyScoutLatest> => {
+        await requireStudyGoal(context.profileId, input.goalId);
+        const events = await run(listEvents(context.profileId));
+        const sent = events.find(
+          (event) =>
+            event.type === "study.scout_sent" &&
+            event.payload.goalId === input.goalId
+        );
+
+        if (!sent) {
+          return { digest: null };
+        }
+
+        const parsed = studyScoutLatestSchema.shape.digest.safeParse({
+          digestId: sent.payload.digestId,
+          items: Array.isArray(sent.payload.items)
+            ? sent.payload.items.filter(
+                (item) => studyScoutDigestItemSchema.safeParse(item).success
+              )
+            : [],
+          localDate: sent.payload.localDate,
+          sentAt: sent.createdAt,
+        });
+
+        return { digest: parsed.success ? parsed.data : null };
       }),
   },
 

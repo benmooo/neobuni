@@ -93,6 +93,22 @@ const useSendStudyReminderTest = (goalId: string) => {
   });
 };
 
+const useRunStudyScout = (goalId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.study.scout.run({ goalId }),
+    onSuccess: () => invalidateStudy(queryClient),
+  });
+};
+
+const useStudyScoutDigest = (goalId: string | null) =>
+  useQuery({
+    enabled: Boolean(goalId),
+    queryFn: () => api.study.scout.latest({ goalId: goalId ?? "" }),
+    queryKey: [...STUDY_QUERY_KEY, "scout", goalId, "latest"],
+    staleTime: 60_000,
+  });
+
 const useGenerateStudyPlan = (goalId: string) => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -170,6 +186,7 @@ export {
   useEnrichStudyLesson,
   useGenerateStudyPlan,
   useRescheduleStudySession,
+  useRunStudyScout,
   useSendStudyReminderTest,
   useSkipStudySession,
   useStartStudyGoal,
@@ -178,6 +195,7 @@ export {
   useStudyGoalDetail,
   useStudyGoals,
   useStudyProgress,
+  useStudyScoutDigest,
   useStudyToday,
   useSubmitStudyChecks,
   useUpdateStudyConfig,
