@@ -1,3 +1,4 @@
+import { studyLessonEnrichmentSchema } from "@neobuni/contracts";
 import { Effect } from "effect";
 import { describe, expect, test, vi } from "vitest";
 import type { StudyNudgeEvent } from "./nudge-service";
@@ -197,8 +198,11 @@ describe("applyStudyScoutAction", () => {
     );
 
     expect(deps.fetchPage).toHaveBeenCalledWith({
-      apiKey: "sk-test",
-      baseUrl: "https://api.deepseek.com",
+      provider: {
+        apiKey: "sk-test",
+        baseUrl: "https://api.deepseek.com",
+        kind: "deepseek",
+      },
       url: "https://zhihu.com/p/1",
     });
     expect(deps.saveWebPageToKnowledge).toHaveBeenCalledWith(
@@ -228,6 +232,53 @@ describe("applyStudyScoutAction", () => {
       }),
       planNodeId: "node-1",
     });
+  });
+
+  test("attaches the material to a lesson that was never enriched", async () => {
+    const { deps } = makeDeps({ nodes: [node({ enrichment: null })] });
+
+    const result = await applyStudyScoutAction(
+      { action: "save", digestId: DIGEST_ID, index: 0, profileId: "profile-1" },
+      deps
+    );
+
+    const updated = vi.mocked(deps.updateStudyNodeEnrichment).mock
+      .calls[0]?.[0] as {
+      enrichment: {
+        checkSpecs: unknown[];
+        resources: string[];
+        source: string;
+      };
+      planNodeId: string;
+    };
+
+    expect(updated.planNodeId).toBe("node-1");
+    expect(updated.enrichment.resources).toEqual(["https://zhihu.com/p/1"]);
+    expect(updated.enrichment.checkSpecs).toHaveLength(3);
+    expect(updated.enrichment.source).toBe("llm");
+    expect(
+      studyLessonEnrichmentSchema.safeParse(updated.enrichment).success
+    ).toBe(true);
+    expect(result?.ack).toBe("已收藏到「质量属性场景」的资料里。");
+  });
+
+  test("saves without touching a lesson that has no usable checks", async () => {
+    const { appendEvent, deps } = makeDeps({
+      nodes: [node({ checkSpecs: [], enrichment: null })],
+    });
+
+    const result = await applyStudyScoutAction(
+      { action: "save", digestId: DIGEST_ID, index: 0, profileId: "profile-1" },
+      deps
+    );
+
+    expect(appendEvent).toHaveBeenCalledWith(
+      "profile-1",
+      "study.scout_saved",
+      expect.objectContaining({ planNodeId: "node-1" })
+    );
+    expect(deps.updateStudyNodeEnrichment).not.toHaveBeenCalled();
+    expect(result?.ack).toBe("已收藏到知识库。");
   });
 
   test("still saves when the lesson has left the plan", async () => {
@@ -379,6 +430,6 @@ describe("applyStudyScoutAction", () => {
       "study.scout_feedback",
       expect.objectContaining({ action: "later", index: 1 })
     );
-    expect(later?.ack).toBe("明晚再看。");
+    expect(later?.ack).toBe("记下了，这类材料过几天再推。");
   });
 });

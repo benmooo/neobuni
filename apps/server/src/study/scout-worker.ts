@@ -25,8 +25,13 @@ import { sendDiscordMessage } from "../integrations/discord";
 import { sendFeishuMessage } from "../integrations/feishu";
 import { sendQqMessage } from "../integrations/qq";
 import { sendTelegramMessage } from "../integrations/telegram";
-import { searchDeepSeek } from "../integrations/web/deepseek-search";
+import { searchWithProvider } from "../integrations/web/dispatch";
+import type { ResolvedWebProvider } from "../integrations/web/provider";
 import { resolveWebProvider } from "../integrations/web/provider";
+import type {
+  WebProviderName,
+  WebSearchResult,
+} from "../integrations/web/types";
 import { countNudgesOnDate, type StudyNudgeEvent } from "./nudge-service";
 import { resolveStudyReasoningConfig } from "./reasoning-config";
 import { readStudyReminderConfig } from "./reminder-worker";
@@ -60,7 +65,12 @@ interface StudyScoutDeps {
   rank?: typeof rankCandidates;
   resolveReasoningConfig: typeof resolveStudyReasoningConfig;
   resolveWebProvider: typeof resolveWebProvider;
-  search: typeof searchDeepSeek;
+  search: (input: {
+    count: number;
+    oriQuestion?: string;
+    provider: ResolvedWebProvider;
+    query: string;
+  }) => Promise<WebSearchResult<WebProviderName>>;
   sendDiscordMessage: typeof sendDiscordMessage;
   sendFeishuMessage: typeof sendFeishuMessage;
   sendQqMessage: typeof sendQqMessage;
@@ -91,7 +101,7 @@ const defaultDeps: StudyScoutDeps = {
   listStudySessions,
   resolveReasoningConfig: resolveStudyReasoningConfig,
   resolveWebProvider,
-  search: searchDeepSeek,
+  search: searchWithProvider,
   sendDiscordMessage,
   sendFeishuMessage,
   sendQqMessage,
@@ -392,11 +402,9 @@ const runStudyScoutForGoal = async (input: {
   for (const query of queries) {
     try {
       const result = await input.deps.search({
-        apiKey: provider.apiKey,
-        baseUrl: provider.baseUrl,
         count: 6,
-        needContent: false,
         oriQuestion: query.topicLabel,
+        provider,
         query: query.text,
       });
       results.push({

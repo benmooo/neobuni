@@ -11,8 +11,10 @@ import {
   updateStudyNodeEnrichment,
 } from "@neobuni/db";
 import { z } from "zod";
-import { fetchDeepSeekPage } from "../integrations/web/deepseek-search";
+import { fetchPageWithProvider } from "../integrations/web/dispatch";
+import type { ResolvedWebProvider } from "../integrations/web/provider";
 import { resolveWebProvider } from "../integrations/web/provider";
+import type { WebPageResult, WebProviderName } from "../integrations/web/types";
 import {
   createChatCompletion,
   type OpenAICompatibleMessage,
@@ -26,6 +28,7 @@ const QUIZ_CHECK_COUNT = 3;
 const QUIZ_MAX_CHECKS = 6;
 const QUIZ_SOURCE_CHAR_LIMIT = 6000;
 const QUIZ_MAX_TOKENS = 700;
+const QUIZ_MIN_CHECKS = 3;
 const RESOURCE_LIMIT = 8;
 
 type ScoutAction = (typeof ACTIONS)[number];
@@ -41,7 +44,10 @@ interface ScoutDigestItem {
 interface ScoutActionDeps {
   appendEvent: typeof appendEvent;
   createChatCompletion: typeof createChatCompletion;
-  fetchPage: typeof fetchDeepSeekPage;
+  fetchPage: (input: {
+    provider: ResolvedWebProvider;
+    url: string;
+  }) => Promise<WebPageResult<WebProviderName>>;
   getLatestStudyPlan: typeof getLatestStudyPlan;
   listEvents: typeof listEvents;
   resolveReasoning: typeof resolveStudyReasoningConfig;
@@ -67,7 +73,7 @@ interface ScoutActionResult {
 const defaultDeps: ScoutActionDeps = {
   appendEvent,
   createChatCompletion,
-  fetchPage: fetchDeepSeekPage,
+  fetchPage: fetchPageWithProvider,
   getLatestStudyPlan,
   listEvents,
   resolveReasoning: resolveStudyReasoningConfig,
@@ -280,6 +286,37 @@ const mergeChecks = (
   return merged;
 };
 
+const appLink = (goalId: string, planNodeId: string): string | null => {
+  const base = process.env.NEOBUNI_APP_URL?.trim();
+
+  if (!base) {
+    return null;
+  }
+
+  return `${base.replace(/\/$/u, "")}/study/${goalId}/lesson/${planNodeId}?tab=checks`;
+};
+
+const withResource = (
+  node: StudyPlanNode,
+  url: string
+): StudyLessonEnrichment => {
+  const base: StudyLessonEnrichment = node.enrichment ?? {
+    checkSpecs: node.checkSpecs.slice(0, QUIZ_MAX_CHECKS),
+    enrichedAt: new Date().toISOString(),
+    howText: node.howText ?? "先读材料，再回头做这一节的检查项。",
+    material: null,
+    objective: node.objective ?? node.title,
+    resources: node.resources,
+    source: "llm",
+    whatText: node.whatText ?? node.title,
+  };
+
+  return {
+    ...base,
+    resources: [...new Set([...base.resources, url])].slice(0, RESOURCE_LIMIT),
+  };
+};
+
 const applySave = async (input: {
   deps: ScoutActionDeps;
   digest: { goalId: string };
@@ -297,8 +334,7 @@ const applySave = async (input: {
   }
 
   const page = await input.deps.fetchPage({
-    apiKey: provider.apiKey,
-    baseUrl: provider.baseUrl,
+    provider,
     url: input.item.url,
   });
   const node = await lessonOf(input.deps, input.digest.goalId, input.item);
@@ -321,25 +357,30 @@ const applySave = async (input: {
     })
   );
 
-  if (node?.enrichment) {
+  const attachable = node ? withResource(node, input.item.url) : null;
+  const attached =
+    node && attachable && attachable.checkSpecs.length >= QUIZ_MIN_CHECKS
+      ? attachable
+      : null;
+
+  if (node && attached) {
     await runRepo(
       input.deps.updateStudyNodeEnrichment({
-        enrichment: {
-          ...node.enrichment,
-          resources: [
-            ...new Set([...node.enrichment.resources, input.item.url]),
-          ].slice(0, RESOURCE_LIMIT),
-        },
+        enrichment: attached,
         planNodeId: node.id,
       })
     );
   }
 
   return {
-    ack: node ? `已收藏到「${node.title}」的资料里。` : "已收藏到知识库。",
-    text: node
-      ? `已收藏到「${node.title}」：${input.item.title ?? input.item.url}`
-      : `已收藏：${input.item.title ?? input.item.url}`,
+    ack:
+      node && attached
+        ? `已收藏到「${node.title}」的资料里。`
+        : "已收藏到知识库。",
+    text:
+      node && attached
+        ? `已收藏到「${node.title}」：${input.item.title ?? input.item.url}`
+        : `已收藏：${input.item.title ?? input.item.url}`,
   };
 };
 
@@ -370,8 +411,7 @@ const applyQuiz = async (input: {
   }
 
   const page = await input.deps.fetchPage({
-    apiKey: provider.apiKey,
-    baseUrl: provider.baseUrl,
+    provider,
     url: input.item.url,
   });
   const content = page.document.markdown || page.document.plainText;
@@ -430,9 +470,13 @@ const applyQuiz = async (input: {
     })
   );
 
+  const link = appLink(input.digest.goalId, node.id);
+
   return {
     ack: "已写进这一节的「互动自检」。",
-    text: `已为「${node.title}」加了 3 道延伸题。`,
+    text: `已为「${node.title}」加了 3 道延伸题。${
+      link ? `去练：${link}` : ""
+    }`,
   };
 };
 
@@ -459,7 +503,10 @@ const applyFeedback = async (input: {
 
   return input.action === "skip"
     ? { ack: "好的，这类材料会少推。", text: "已记录：不感兴趣。" }
-    : { ack: "明晚再看。", text: "已推迟到明晚。" };
+    : {
+        ack: "记下了，这类材料过几天再推。",
+        text: "已推迟：同一站点 7 天内不再推荐。",
+      };
 };
 
 const applyStudyScoutAction = async (

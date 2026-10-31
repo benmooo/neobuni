@@ -248,7 +248,7 @@ fetchDeepSeekPage(input: {
 
 | 动作 | 行为 | 持久化 |
 | --- | --- | --- |
-| `save` | `fetchDeepSeekPage`（1 次重试 on 429/5xx）→ 构建 `WebPageDocument`（`extractionMethod: "provider"`）→ `saveWebPageToKnowledge({ trustLevel: "imported" })` → 把 URL 追加进 `node.enrichment.resources`（去重、上限 8 条） | `study.scout_saved{url, documentId, goalId, planNodeId, lessonTitle}`；回复「✅ 已收藏到「<lesson>」的资料里」 |
+| `save` | `fetchDeepSeekPage`（1 次重试 on 429/5xx）→ 构建 `WebPageDocument`（`extractionMethod: "provider"`）→ `saveWebPageToKnowledge({ trustLevel: "imported" })` → 把 URL 追加进 `node.enrichment.resources`（去重、上限 8 条；lesson 尚未 AI 细化时用 `objective/whatText/howText/checkSpecs` 合成一份合法 enrichment，保证 lesson 页「参考资料」立刻可见；`checkSpecs < 3` 时跳过写回，避免破坏契约） | `study.scout_saved{url, documentId, goalId, planNodeId, lessonTitle}`；回复「✅ 已收藏到「<lesson>」的资料里」 |
 | `quiz` | 用正文（截断 6k 字）生成 3 条 `studyCheckSpec`，prompt 前缀 `材料延伸：` | 写入 `node.enrichment.checkSpecs`（契约从「恰好 3 条」放宽为 `min 3, max 6`）；`study.scout_quiz{url, nodeId, specs}`；回复 deep link `NEOBUNI_APP_URL/study/{goalId}/lesson/{planNodeId}?tab=checks` |
 | `skip` | 记录负反馈 | `study.scout_feedback{action:"skip", host, topicKey, url}`；回复「以后少推这类」 |
 | `later` | 不落库，事件里带 `reofferOn = localDate + 1` | `study.scout_feedback{action:"later", …}`；次日 `filterCandidates` 允许重新入选（不受第 9 节第 6 步永久去重约束，改为 7 天后才可再推） |
