@@ -32,6 +32,7 @@
       "!**/.source",
       "!**/convex/_generated",
       "!**/.agents",
+      "!**/.pi",
       "!**/src/env.ts",
       "!experiments"
     ]
