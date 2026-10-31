@@ -1,8 +1,4 @@
-import type {
-  StudyActivityDay,
-  StudyGoalCreate,
-  StudyPaper,
-} from "@neobuni/contracts";
+import type { StudyGoalCreate, StudyPaper } from "@neobuni/contracts";
 import { Alert, AlertDescription } from "@neobuni/ui/components/alert";
 import { Badge } from "@neobuni/ui/components/badge";
 import { Button } from "@neobuni/ui/components/button";
@@ -17,30 +13,22 @@ import { Progress } from "@neobuni/ui/components/progress";
 import { Spinner } from "@neobuni/ui/components/spinner";
 import {
   CaretRight,
-  ChartBar,
   CheckCircle,
   Clock,
   Fire,
   Target,
 } from "@phosphor-icons/react";
 import { Link } from "@tanstack/react-router";
-import { lazy, Suspense, useState } from "react";
+import { useState } from "react";
 
 import {
   useSkipStudySession,
   useStartStudyGoal,
-  useStudyActivity,
   useStudyGoals,
   useStudyToday,
 } from "@/hooks/use-study";
 import { EYEBROW, META } from "./lesson/styles";
 import { TodayLessonCard } from "./lesson/today-lesson-card";
-
-/** Recharts is heavy; the Now page only pays for it once the panel renders. */
-const RhythmChart = lazy(async () => {
-  const module = await import("./charts/rhythm-chart");
-  return { default: module.RhythmChart };
-});
 
 const PAPER_LABELS: Record<StudyPaper, string> = {
   comprehensive: "综合知识",
@@ -268,23 +256,6 @@ function ProgressPanel({
   );
 }
 
-function RhythmCard({ days }: { days: StudyActivityDay[] }) {
-  const completed = days.reduce((sum, day) => sum + day.completedMinutes, 0);
-  return (
-    <Card className="gap-0 py-0">
-      <div className="flex items-center justify-between border-b px-4 py-3">
-        <span className={EYEBROW}>近 14 天节奏</span>
-        <span className={META}>完成 {Math.round(completed / 60)} 小时</span>
-      </div>
-      <div className="px-4 py-3">
-        <Suspense fallback={<div className="h-28" />}>
-          <RhythmChart days={days} />
-        </Suspense>
-      </div>
-    </Card>
-  );
-}
-
 function PlanEntryCard({
   goalId,
   progress,
@@ -292,39 +263,48 @@ function PlanEntryCard({
   goalId: string;
   progress: NonNullable<ReturnType<typeof useStudyToday>["data"]>["progress"];
 }) {
+  const stats = [
+    {
+      label: "已完成",
+      value: `${progress.sessionsCompleted}/${progress.sessionsPlanned} 节`,
+    },
+    { label: "覆盖率", value: `${Math.round(progress.coverage * 100)}%` },
+    { label: "距考试", value: `${progress.daysRemaining} 天` },
+  ];
+
   return (
-    <Link
-      className="group flex flex-col justify-between gap-3 border border-border px-4 py-3 transition-colors hover:border-primary/50 hover:bg-card"
-      params={{ goalId }}
-      to="/study/$goalId"
-    >
-      <div className="space-y-1">
-        <span className={EYEBROW}>继续探索</span>
-        <p className="flex items-center gap-1.5 font-heading text-base">
-          完整计划
-          <ChartBar className="size-4 text-primary" />
-        </p>
-        <p className="text-muted-foreground text-xs leading-relaxed">
-          学习热力图、三科进度与全部课程节点
-        </p>
-      </div>
-      <div className="flex items-end justify-between gap-2">
-        <span className={META}>
-          已完成 {progress.sessionsCompleted}/{progress.sessionsPlanned} 节 ·
-          距考试 {progress.daysRemaining} 天
-        </span>
-        <span className="flex shrink-0 items-center gap-1 font-medium text-primary text-xs">
-          打开
-          <CaretRight className="size-3 transition-transform group-hover:translate-x-0.5" />
-        </span>
-      </div>
-    </Link>
+    <Card className="group gap-0 py-0 transition-colors hover:bg-accent/40">
+      <Link className="flex flex-col" params={{ goalId }} to="/study/$goalId">
+        <div className="flex items-start justify-between gap-2 px-4 pt-4">
+          <div className="space-y-1">
+            <span className={EYEBROW}>继续探索</span>
+            <p className="font-heading text-2xl leading-none">完整计划</p>
+            <p className="text-muted-foreground text-xs leading-relaxed">
+              学习热力图、三科进度与全部课程节点
+            </p>
+          </div>
+          <span className="flex shrink-0 items-center gap-1 font-medium text-primary text-xs">
+            打开
+            <CaretRight className="size-3 transition-transform group-hover:translate-x-0.5" />
+          </span>
+        </div>
+        <div className="mt-4 grid grid-cols-3 divide-x border-t">
+          {stats.map((stat) => (
+            <div className="px-3 py-2" key={stat.label}>
+              <p className={EYEBROW}>{stat.label}</p>
+              <p className="mt-0.5 font-heading text-sm tabular-nums">
+                {stat.value}
+              </p>
+            </div>
+          ))}
+        </div>
+      </Link>
+    </Card>
   );
 }
 
 function StudyDashboard({ goalId }: { goalId: string }) {
   const today = useStudyToday(goalId);
-  const activity = useStudyActivity(goalId, 28);
   const skip = useSkipStudySession();
 
   if (today.isLoading) {
@@ -348,9 +328,6 @@ function StudyDashboard({ goalId }: { goalId: string }) {
   const primary = today.data?.primary ?? null;
   const progress = today.data?.progress ?? null;
   const upcoming = today.data?.upcoming ?? [];
-  const activityDays = activity.data?.days ?? [];
-  const localDate = activity.data?.localDate ?? "";
-  const rhythm = activityDays.filter((day) => day.date <= localDate).slice(-14);
 
   return (
     <div className="space-y-3">
@@ -377,7 +354,6 @@ function StudyDashboard({ goalId }: { goalId: string }) {
               </CardHeader>
             </Card>
           )}
-          {rhythm.length > 0 ? <RhythmCard days={rhythm} /> : null}
           {progress ? (
             <PlanEntryCard goalId={goalId} progress={progress} />
           ) : null}
