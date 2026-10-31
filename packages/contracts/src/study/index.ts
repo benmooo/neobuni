@@ -265,6 +265,27 @@ const studyTodaySchema = z.object({
   progress: studyProgressSchema,
 });
 
+const studyActivityInputSchema = z.object({
+  goalId: idSchema,
+  days: z.number().int().min(7).max(120).default(28),
+});
+
+const studyActivityDaySchema = z.object({
+  date: localDateSchema,
+  plannedSessions: z.number().int().nonnegative(),
+  plannedMinutes: z.number().int().nonnegative(),
+  completedSessions: z.number().int().nonnegative(),
+  completedMinutes: z.number().int().nonnegative(),
+});
+
+const studyActivitySchema = z.object({
+  goalId: idSchema,
+  startDate: localDateSchema,
+  localDate: localDateSchema,
+  endDate: localDateSchema,
+  days: z.array(studyActivityDaySchema),
+});
+
 const studyGoalCreateSchema = z.object({
   title: z.string().trim().min(1).max(500),
   desiredOutcome: z.string().trim().min(1).max(4000),
@@ -346,6 +367,9 @@ const studyPlanActivateSchema = z.object({
 export {
   localDateSchema,
   localDateTimeSchema,
+  studyActivityDaySchema,
+  studyActivityInputSchema,
+  studyActivitySchema,
   studyCheckAnswerSchema,
   studyCheckGradeItemSchema,
   studyCheckKindSchema,
@@ -392,6 +416,9 @@ export {
   studyTodaySchema,
 };
 
+export type StudyActivity = z.infer<typeof studyActivitySchema>;
+export type StudyActivityDay = z.infer<typeof studyActivityDaySchema>;
+export type StudyActivityInput = z.infer<typeof studyActivityInputSchema>;
 export type StudyCheck = z.infer<typeof studyCheckSchema>;
 export type StudyCheckAnswer = z.infer<typeof studyCheckAnswerSchema>;
 export type StudyCheckGradeItem = z.infer<typeof studyCheckGradeItemSchema>;

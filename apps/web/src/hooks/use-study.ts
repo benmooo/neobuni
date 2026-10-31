@@ -1,5 +1,6 @@
 import type {
   Goal,
+  StudyActivity,
   StudyCheckResult,
   StudyGoalConfig,
   StudyGoalCreate,
@@ -56,6 +57,14 @@ const useStudyProgress = (goalId: string | null) =>
     enabled: goalId !== null,
     queryKey: [...STUDY_QUERY_KEY, "progress", goalId],
     queryFn: () => api.study.progress({ goalId: goalId ?? "" }),
+    staleTime: 30_000,
+  });
+
+const useStudyActivity = (goalId: string | null, days = 28) =>
+  useQuery<StudyActivity>({
+    enabled: goalId !== null,
+    queryKey: [...STUDY_QUERY_KEY, "activity", goalId, days],
+    queryFn: () => api.study.activity({ days, goalId: goalId ?? "" }),
     staleTime: 30_000,
   });
 
@@ -156,6 +165,7 @@ export {
   useSkipStudySession,
   useStartStudyGoal,
   useStartStudySession,
+  useStudyActivity,
   useStudyGoalDetail,
   useStudyGoals,
   useStudyProgress,

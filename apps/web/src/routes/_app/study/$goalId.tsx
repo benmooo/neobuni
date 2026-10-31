@@ -12,8 +12,18 @@ import { CaretRight } from "@phosphor-icons/react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 
 import { PageHeader } from "@/components/PageHeader";
+import { masteryDotClass } from "@/features/study/charts/mastery-bands";
+import { MasteryDistribution } from "@/features/study/charts/mastery-distribution";
+import { RhythmChart } from "@/features/study/charts/rhythm-chart";
+import { StudyChartCard } from "@/features/study/charts/study-chart-card";
+import { StudyHeatmap } from "@/features/study/charts/study-heatmap";
+import { WorkloadChart } from "@/features/study/charts/workload-chart";
 import { EYEBROW, META, PROSE, TAG } from "@/features/study/lesson/styles";
-import { useStudyGoalDetail, useStudyProgress } from "@/hooks/use-study";
+import {
+  useStudyActivity,
+  useStudyGoalDetail,
+  useStudyProgress,
+} from "@/hooks/use-study";
 
 export const Route = createFileRoute("/_app/study/$goalId")({
   component: StudyDetailPage,
@@ -28,22 +38,6 @@ const PAPER_LABELS = {
 
 const messageOf = (error: unknown) =>
   error instanceof Error ? error.message : String(error);
-
-const masteryClass = (
-  mastery: StudyMastery | undefined,
-  completed: boolean
-): string => {
-  if (mastery && mastery.score >= 0.8) {
-    return "bg-emerald-500";
-  }
-  if (mastery && mastery.score >= 0.6) {
-    return "bg-amber-500";
-  }
-  if (mastery && mastery.score > 0) {
-    return "bg-red-500";
-  }
-  return completed ? "bg-sky-500" : "bg-muted-foreground/25";
-};
 
 const lessonForTopic = (
   nodes: StudyPlanNode[],
@@ -127,64 +121,6 @@ function SummaryCard({
   );
 }
 
-function MasteryHeatmap({
-  nodes,
-  masteryByNode,
-  completed,
-}: {
-  nodes: StudyPlanNode[];
-  masteryByNode: Map<string, StudyMastery>;
-  completed: Set<string>;
-}) {
-  const lessons = nodes
-    .filter((node) => node.kind === "lesson")
-    .sort((left, right) => left.order - right.order);
-  return (
-    <Card className="gap-0 py-0">
-      <div className="flex items-center justify-between border-b px-4 py-3">
-        <span className={EYEBROW}>掌握度热力图</span>
-        <span className={META}>{lessons.length} 节</span>
-      </div>
-      <div className="space-y-3 px-4 py-3">
-        <div className="flex flex-wrap gap-1">
-          {lessons.map((lesson) => {
-            const mastery = masteryByNode.get(lesson.id);
-            return (
-              <span
-                className={`h-3 w-3 ${masteryClass(mastery, completed.has(lesson.id))}`}
-                key={lesson.id}
-                title={`${lesson.title} · ${mastery ? Math.round(mastery.score * 100) : 0}%`}
-              />
-            );
-          })}
-        </div>
-        <div className="flex flex-wrap gap-x-3 gap-y-1 text-[0.6875rem] text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <span className="h-2 w-2 bg-muted-foreground/25" />
-            未学
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="h-2 w-2 bg-sky-500" />
-            已学
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="h-2 w-2 bg-red-500" />
-            &lt;60%
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="h-2 w-2 bg-amber-500" />
-            60–80%
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="h-2 w-2 bg-emerald-500" />
-            ≥80%
-          </span>
-        </div>
-      </div>
-    </Card>
-  );
-}
-
 function PlanTree({
   goalId,
   nodes,
@@ -246,7 +182,7 @@ function PlanTree({
                             to="/study/$goalId/lesson/$planNodeId"
                           >
                             <span
-                              className={`size-1.5 shrink-0 rounded-full ${masteryClass(mastery, completed.has(lesson.id))}`}
+                              className={`size-1.5 shrink-0 rounded-full ${masteryDotClass(mastery, completed.has(lesson.id))}`}
                             />
                             <span className="min-w-0 flex-1 truncate">
                               {lesson.title}
@@ -317,6 +253,7 @@ function StudyDetailPage() {
   const { goalId } = Route.useParams();
   const detail = useStudyGoalDetail(goalId);
   const progress = useStudyProgress(goalId);
+  const activity = useStudyActivity(goalId, 91);
 
   if (detail.isLoading || progress.isLoading) {
     return (
@@ -350,7 +287,7 @@ function StudyDetailPage() {
     );
   }
 
-  const { goal, plan, mastery, sessions } = detail.data;
+  const { goal, plan, mastery, sessions, config } = detail.data;
   const nodes = plan?.nodes ?? [];
   const masteryByNode = new Map(mastery.map((item) => [item.planNodeId, item]));
   const completed = new Set(
@@ -358,6 +295,24 @@ function StudyDetailPage() {
       .filter((session) => session.status === "completed")
       .map((session) => session.planNodeId)
   );
+  const activityDays = activity.data?.days ?? [];
+  const localDate = activity.data?.localDate ?? "";
+  const pastDays = activityDays.filter((day) => day.date <= localDate);
+  const recentDays = pastDays.slice(-14);
+  const futureDays = activityDays
+    .filter((day) => day.date > localDate)
+    .slice(0, 14);
+  const recentPlanned = recentDays.reduce(
+    (sum, day) => sum + day.plannedMinutes,
+    0
+  );
+  const recentDone = recentDays.reduce(
+    (sum, day) => sum + day.completedMinutes,
+    0
+  );
+  const overloadedDays = futureDays.filter(
+    (day) => day.plannedMinutes > config.dailyMinutes
+  ).length;
 
   return (
     <div className="flex h-screen flex-col">
@@ -373,11 +328,46 @@ function StudyDetailPage() {
             </p>
           </div>
           {progress.data ? <SummaryCard progress={progress.data} /> : null}
-          <MasteryHeatmap
-            completed={completed}
-            masteryByNode={masteryByNode}
-            nodes={nodes}
-          />
+          {activity.data ? (
+            <>
+              <div className="grid gap-3 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+                <StudyChartCard
+                  footer={`最近 14 天完成 ${Math.round(recentDone / 60)} 小时 / 计划 ${Math.round(recentPlanned / 60)} 小时`}
+                  meta="计划 vs 完成"
+                  title="近 14 天节奏"
+                >
+                  <RhythmChart days={recentDays} />
+                </StudyChartCard>
+                <StudyChartCard
+                  meta={`${nodes.filter((node) => node.kind === "lesson").length} 节`}
+                  title="掌握度分布"
+                >
+                  <MasteryDistribution
+                    completed={completed}
+                    masteryByNode={masteryByNode}
+                    nodes={nodes}
+                  />
+                </StudyChartCard>
+              </div>
+              <StudyChartCard
+                footer={
+                  overloadedDays > 0
+                    ? `有 ${overloadedDays} 天排课超过每日上限，考虑把课节往后挪。`
+                    : "负荷均匀，按当前排期推进即可。"
+                }
+                meta={`每日上限 ${config.dailyMinutes} 分钟`}
+                title="未来 14 天负荷"
+              >
+                <WorkloadChart
+                  dailyMinutes={config.dailyMinutes}
+                  days={futureDays}
+                />
+              </StudyChartCard>
+              <StudyChartCard meta="近 12 周" title="学习热力图">
+                <StudyHeatmap days={pastDays} />
+              </StudyChartCard>
+            </>
+          ) : null}
           <PlanTree
             completed={completed}
             goalId={goalId}

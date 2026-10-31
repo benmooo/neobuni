@@ -1,4 +1,8 @@
-import type { StudyGoalCreate, StudyPaper } from "@neobuni/contracts";
+import type {
+  StudyActivityDay,
+  StudyGoalCreate,
+  StudyPaper,
+} from "@neobuni/contracts";
 import { Alert, AlertDescription } from "@neobuni/ui/components/alert";
 import { Badge } from "@neobuni/ui/components/badge";
 import { Button } from "@neobuni/ui/components/button";
@@ -13,16 +17,23 @@ import { Progress } from "@neobuni/ui/components/progress";
 import { Spinner } from "@neobuni/ui/components/spinner";
 import { CheckCircle, Clock, Fire, Target } from "@phosphor-icons/react";
 import { Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 
 import {
   useSkipStudySession,
   useStartStudyGoal,
+  useStudyActivity,
   useStudyGoals,
   useStudyToday,
 } from "@/hooks/use-study";
 import { EYEBROW, META } from "./lesson/styles";
 import { TodayLessonCard } from "./lesson/today-lesson-card";
+
+/** Recharts is heavy; the Now page only pays for it once the panel renders. */
+const RhythmChart = lazy(async () => {
+  const module = await import("./charts/rhythm-chart");
+  return { default: module.RhythmChart };
+});
 
 const PAPER_LABELS: Record<StudyPaper, string> = {
   comprehensive: "综合知识",
@@ -180,10 +191,16 @@ function StartStudyGoalCard() {
 
 function ProgressPanel({
   progress,
+  rhythm,
 }: {
   progress: NonNullable<ReturnType<typeof useStudyToday>["data"]>["progress"];
+  rhythm?: StudyActivityDay[];
 }) {
   const score = Math.round(progress.overallReadiness * 75);
+  const rhythmDone = (rhythm ?? []).reduce(
+    (sum, day) => sum + day.completedMinutes,
+    0
+  );
   return (
     <Card className="gap-0 py-0">
       <div className="flex items-start justify-between gap-2 px-4 pt-4">
@@ -246,12 +263,27 @@ function ProgressPanel({
         {Math.round(progress.projectedCoverage * 100)}%；每天约需{" "}
         {Math.round(progress.minutesPerDayNeeded)} 分钟。
       </p>
+
+      {rhythm && rhythm.length > 0 ? (
+        <div className="border-t px-4 py-3">
+          <div className="flex items-center justify-between">
+            <span className={EYEBROW}>近 14 天节奏</span>
+            <span className={META}>{Math.round(rhythmDone / 60)} 小时</span>
+          </div>
+          <div className="mt-2">
+            <Suspense fallback={<div className="h-20" />}>
+              <RhythmChart compact days={rhythm} />
+            </Suspense>
+          </div>
+        </div>
+      ) : null}
     </Card>
   );
 }
 
 function StudyDashboard({ goalId }: { goalId: string }) {
   const today = useStudyToday(goalId);
+  const activity = useStudyActivity(goalId, 28);
   const skip = useSkipStudySession();
 
   if (today.isLoading) {
@@ -275,6 +307,9 @@ function StudyDashboard({ goalId }: { goalId: string }) {
   const primary = today.data?.primary ?? null;
   const progress = today.data?.progress ?? null;
   const upcoming = today.data?.upcoming ?? [];
+  const activityDays = activity.data?.days ?? [];
+  const localDate = activity.data?.localDate ?? "";
+  const rhythm = activityDays.filter((day) => day.date <= localDate).slice(-14);
 
   return (
     <div className="space-y-3">
@@ -309,7 +344,9 @@ function StudyDashboard({ goalId }: { goalId: string }) {
             完整计划、热力图与检查点
           </Link>
         </div>
-        {progress ? <ProgressPanel progress={progress} /> : null}
+        {progress ? (
+          <ProgressPanel progress={progress} rhythm={rhythm} />
+        ) : null}
       </div>
 
       {upcoming.length > 0 ? (

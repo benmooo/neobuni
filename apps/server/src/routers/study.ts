@@ -1,5 +1,7 @@
 import { protectedProcedure, run } from "@neobuni/api";
 import {
+  type StudyActivity,
+  type StudyActivityDay,
   type StudyCheckResult,
   type StudyGoalConfig,
   type StudyGoalCreate,
@@ -7,6 +9,7 @@ import {
   type StudySession,
   type StudySessionWithNode,
   type StudyToday,
+  studyActivityInputSchema,
   studyCheckSubmitSchema,
   studyGoalConfigUpdateSchema,
   studyGoalCreateSchema,
@@ -58,6 +61,8 @@ import { ORPCError } from "@orpc/server";
 
 import { submitStudyCheck } from "../study/check-service";
 import { enrichStudyLesson } from "../study/enrichment-service";
+
+const ACTIVITY_FUTURE_DAYS = 14;
 
 const requireStudyGoal = async (profileId: string, goalId: string) => {
   const goal = await run(getGoal(goalId));
@@ -694,6 +699,68 @@ export const studyRouter = {
           goalId: input.goalId,
           plan,
         }),
+      };
+    }),
+
+  activity: protectedProcedure
+    .route({
+      method: "GET",
+      path: "/study/goals/{goalId}/activity",
+      summary: "Get daily study activity",
+      description:
+        "Return planned and completed minutes per day for the trailing window plus the next two weeks.",
+      tags: ["Study"],
+    })
+    .input(studyActivityInputSchema)
+    .handler(async ({ input, context }): Promise<StudyActivity> => {
+      await requireStudyGoal(context.profileId, input.goalId);
+      const config = await requireStudyConfig(input.goalId);
+      const plan = await requireActivePlan(input.goalId);
+      const nodeIds = new Set(plan.nodes.map((node) => node.id));
+      const sessions = (await run(listStudySessions(input.goalId))).filter(
+        (session) => nodeIds.has(session.planNodeId)
+      );
+      const { localDate } = nowInTimezone(config);
+      const startDate = addLocalDays(localDate, -(input.days - 1));
+      const endDate = addLocalDays(localDate, ACTIVITY_FUTURE_DAYS);
+      const buckets = new Map<string, StudyActivityDay>();
+
+      for (
+        let cursor = startDate;
+        cursor <= endDate;
+        cursor = addLocalDays(cursor, 1)
+      ) {
+        buckets.set(cursor, {
+          date: cursor,
+          plannedSessions: 0,
+          plannedMinutes: 0,
+          completedSessions: 0,
+          completedMinutes: 0,
+        });
+      }
+
+      for (const session of sessions) {
+        const bucket = buckets.get(localDateOf(session.scheduledFor));
+        if (!bucket) {
+          continue;
+        }
+        if (session.status !== "skipped" && session.status !== "missed") {
+          bucket.plannedSessions += 1;
+          bucket.plannedMinutes += session.durationMinutes;
+        }
+        if (session.status === "completed") {
+          bucket.completedSessions += 1;
+          bucket.completedMinutes +=
+            session.actualMinutes ?? session.durationMinutes;
+        }
+      }
+
+      return {
+        goalId: input.goalId,
+        startDate,
+        localDate,
+        endDate,
+        days: [...buckets.values()],
       };
     }),
 
