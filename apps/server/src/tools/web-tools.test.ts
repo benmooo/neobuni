@@ -43,7 +43,10 @@ const fetchWebclawSearchMock = vi.fn(async () => ({
   query: "buni ai agents site:github.com",
   items: [
     {
+      authority: null,
       rank: 1,
+      rerankScore: null,
+      summary: null,
       title: "Buni Web Tools",
       url: "https://github.com/aka/buni",
       snippet: "A first version of web tools for Buni.",

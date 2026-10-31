@@ -263,6 +263,7 @@ const fetchWebclawSearch = async (input: {
 
     return [
       {
+        authority: null,
         rank:
           typeof record.position === "number" &&
           Number.isInteger(record.position) &&
@@ -275,6 +276,8 @@ const fetchWebclawSearch = async (input: {
         sourceName: asString(record.source_name) ?? asString(record.source),
         publishedAt:
           asIsoString(record.published_at) ?? asIsoString(record.publishedAt),
+        rerankScore: null,
+        summary: asString(record.summary),
       },
     ];
   });

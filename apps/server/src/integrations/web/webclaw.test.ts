@@ -163,7 +163,10 @@ describe("fetchWebclawSearch", () => {
     expect(result.query).toBe("buni ai agents");
     expect(result.items).toEqual([
       {
+        authority: null,
         rank: 1,
+        rerankScore: null,
+        summary: null,
         title: "Buni Web Tools",
         url: "https://example.com/post",
         snippet: "A first version of web tools for Buni.",
