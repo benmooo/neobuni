@@ -1,4 +1,4 @@
-import type { StudyGoalConfig } from "@neobuni/contracts";
+import type { StudyGoalConfig, StudyNudgeSettings } from "@neobuni/contracts";
 import { Alert, AlertDescription } from "@neobuni/ui/components/alert";
 import { Badge } from "@neobuni/ui/components/badge";
 import { Button } from "@neobuni/ui/components/button";
@@ -16,14 +16,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@neobuni/ui/components/select";
+import { Spinner } from "@neobuni/ui/components/spinner";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 
+import { useTelegramChannelTargets } from "@/hooks/use-goals";
 import {
   useActivateStudyPlan,
   useGenerateStudyPlan,
+  useSendStudyReminderTest,
   useStudyGoals,
   useUpdateStudyConfig,
 } from "@/hooks/use-study";
+import { api } from "@/lib/api";
 
 const PLATFORM_LABELS = {
   discord: "Discord",
@@ -41,6 +46,14 @@ const DAYS = [
   { label: "四", value: 4 },
   { label: "五", value: 5 },
   { label: "六", value: 6 },
+];
+
+const NUDGE_TOGGLES: { key: keyof StudyNudgeSettings; label: string }[] = [
+  { key: "dailyPlan", label: "每日计划" },
+  { key: "sessionDue", label: "开课前" },
+  { key: "streakRecovery", label: "断签挽回" },
+  { key: "reviewDue", label: "复习到期" },
+  { key: "wrapUp", label: "收尾复盘" },
 ];
 
 const messageOf = (error: unknown) =>
@@ -70,6 +83,27 @@ function StudySettingsForm({
   const [platform, setPlatform] =
     useState<(typeof PLATFORMS)[number]>("telegram");
   const [alias, setAlias] = useState("");
+  const [selectedTarget, setSelectedTarget] = useState("");
+  const [nudges, setNudges] = useState<StudyNudgeSettings>({
+    dailyPlan: true,
+    reviewDue: true,
+    sessionDue: true,
+    streakRecovery: true,
+    wrapUp: true,
+    ...config.nudges,
+  });
+  const [testResult, setTestResult] = useState<string | null>(null);
+  const telegramTargets = useTelegramChannelTargets();
+  const testReminder = useSendStudyReminderTest(goalId);
+  const telegramConfig = useQuery({
+    queryKey: ["config", "messaging", "telegram"],
+    queryFn: () => api.config.messaging.telegram.get(),
+    staleTime: 60_000,
+  });
+  const botUsername =
+    typeof telegramConfig.data?.metadata?.botUsername === "string"
+      ? telegramConfig.data.metadata.botUsername
+      : "";
   const [saved, setSaved] = useState(false);
   const [replanned, setReplanned] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -82,8 +116,28 @@ function StudySettingsForm({
     );
   };
 
+  const toggleNudge = (key: keyof StudyNudgeSettings) => {
+    setNudges((current) => ({ ...current, [key]: !current[key] }));
+  };
+
+  const sendTest = async () => {
+    setError(null);
+    setTestResult(null);
+    try {
+      const result = await testReminder.mutateAsync();
+      setTestResult(
+        result.delivered > 0
+          ? `已发送到 ${result.delivered} 个渠道。`
+          : `没有发送成功${result.errors.length > 0 ? `：${result.errors.join("；")}` : "：还没有配置渠道。"}`
+      );
+    } catch (cause) {
+      setError(messageOf(cause));
+    }
+  };
+
   const addChannel = () => {
-    const targetAlias = alias.trim();
+    const targetAlias =
+      platform === "telegram" ? selectedTarget.trim() : alias.trim();
     if (!targetAlias) {
       return;
     }
@@ -100,6 +154,7 @@ function StudySettingsForm({
       { platform, targetAlias, targetId: null },
     ]);
     setAlias("");
+    setSelectedTarget("");
   };
 
   const replan = async () => {
@@ -134,6 +189,7 @@ function StudySettingsForm({
       ...config,
       channels,
       dailyMinutes,
+      nudges,
       quietHours: quietEnabled ? { end: quietEnd, start: quietStart } : null,
       restDays,
       studyWindow: { end: windowEnd, start: windowStart },
@@ -305,19 +361,97 @@ function StudySettingsForm({
                 ))}
               </SelectContent>
             </Select>
-            <Input
-              aria-label="目标别名"
-              onChange={(event) => setAlias(event.target.value)}
-              placeholder="已配置的目标别名"
-              value={alias}
-            />
+            {platform === "telegram" && telegramTargets.data?.length ? (
+              <Select
+                onValueChange={(value) => setSelectedTarget(value ?? "")}
+                value={selectedTarget}
+              >
+                <SelectTrigger aria-label="Telegram 目标">
+                  <SelectValue placeholder="选择已配置的 Telegram 目标" />
+                </SelectTrigger>
+                <SelectContent>
+                  {telegramTargets.data.map((target) => (
+                    <SelectItem key={target.alias} value={target.alias}>
+                      {target.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input
+                aria-label="目标别名"
+                onChange={(event) => setAlias(event.target.value)}
+                placeholder="已配置的目标别名"
+                value={alias}
+              />
+            )}
             <Button onClick={addChannel} type="button" variant="secondary">
               添加渠道
             </Button>
           </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              disabled={testReminder.isPending}
+              onClick={() => void sendTest()}
+              type="button"
+              variant="outline"
+            >
+              {testReminder.isPending ? (
+                <>
+                  <Spinner className="size-3.5" />
+                  发送中…
+                </>
+              ) : (
+                "发送测试提醒"
+              )}
+            </Button>
+            {botUsername ? (
+              <Button
+                onClick={() =>
+                  window.open(
+                    `https://t.me/${botUsername}?start=bunistudy_${goalId}`,
+                    "_blank",
+                    "noopener,noreferrer"
+                  )
+                }
+                type="button"
+                variant="ghost"
+              >
+                在 Telegram 里一键绑定
+              </Button>
+            ) : null}
+          </div>
+          {testResult ? (
+            <p className="text-muted-foreground text-xs">{testResult}</p>
+          ) : null}
           <p className="text-muted-foreground text-xs">
-            提醒只会在学习时间前发送，默认每天最多 2
-            条；静默时段和当前时段不发送。
+            提醒只会在学习时段前后发送：时段前 30 分钟、开课前 1 小时、收尾前 15
+            分钟，每天最多 3 条；静默时段不发送。
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">提醒内容</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="flex flex-wrap gap-1">
+            {NUDGE_TOGGLES.map((item) => (
+              <Button
+                key={item.key}
+                onClick={() => toggleNudge(item.key)}
+                size="sm"
+                type="button"
+                variant={nudges[item.key] ? "default" : "outline"}
+              >
+                {item.label}
+              </Button>
+            ))}
+          </div>
+          <p className="text-muted-foreground text-xs">
+            每条提醒最多 3 行，带「开始学习 / 30 分钟后 / 改到明晚 /
+            今晚跳过」按钮。
           </p>
         </CardContent>
       </Card>

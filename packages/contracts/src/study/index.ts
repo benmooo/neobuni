@@ -45,6 +45,22 @@ const studyStudyWindowSchema = z
     message: "Study window start must be before end",
   });
 
+const studyNudgeKindSchema = z.enum([
+  "daily_plan",
+  "review_due",
+  "session_due",
+  "streak_recovery",
+  "wrap_up",
+]);
+
+const studyNudgeSettingsSchema = z.object({
+  dailyPlan: z.boolean().default(true),
+  reviewDue: z.boolean().default(true),
+  sessionDue: z.boolean().default(true),
+  streakRecovery: z.boolean().default(true),
+  wrapUp: z.boolean().default(true),
+});
+
 const studyGoalConfigSchema = z.object({
   targetAt: isoDateTimeSchema,
   dailyMinutes: z.number().int().min(15).max(480),
@@ -52,6 +68,7 @@ const studyGoalConfigSchema = z.object({
   restDays: z.array(z.number().int().min(0).max(6)).max(7).default([0]),
   timezone: z.string().trim().min(1).max(80).default("Asia/Shanghai"),
   quietHours: studyStudyWindowSchema.nullable().default(null),
+  nudges: studyNudgeSettingsSchema.optional(),
   channels: z.array(channelTargetSchema).max(4).default([]),
   syllabusTemplateId: z.string().trim().min(1).max(120),
   planStyle: studyPlanStyleSchema.default({
@@ -299,6 +316,13 @@ const studyPlanGenerateSchema = z.object({
   notes: z.string().trim().max(4000).optional(),
 });
 
+const studyReminderTestResultSchema = z.object({
+  channels: z.number().int().nonnegative(),
+  delivered: z.number().int().nonnegative(),
+  errors: z.array(z.string()),
+  preview: z.string(),
+});
+
 const studySessionIdSchema = z.object({ sessionId: idSchema });
 
 const studySessionCompleteSchema = z.object({
@@ -390,6 +414,8 @@ export {
   studyMaterialExcerptSchema,
   studyMaterialSectionSchema,
   studyNodeKindSchema,
+  studyNudgeKindSchema,
+  studyNudgeSettingsSchema,
   studyPaperReadinessSchema,
   studyPaperSchema,
   studyPlanActivateSchema,
@@ -402,6 +428,7 @@ export {
   studyPlanViewSchema,
   studyProgressInputSchema,
   studyProgressSchema,
+  studyReminderTestResultSchema,
   studySessionCompleteSchema,
   studySessionIdSchema,
   studySessionRescheduleSchema,
@@ -437,6 +464,8 @@ export type StudyMaterialExcerpt = z.infer<typeof studyMaterialExcerptSchema>;
 export type StudyMaterialSection = z.infer<typeof studyMaterialSectionSchema>;
 export type StudyMastery = z.infer<typeof studyMasterySchema>;
 export type StudyNodeKind = z.infer<typeof studyNodeKindSchema>;
+export type StudyNudgeKind = z.infer<typeof studyNudgeKindSchema>;
+export type StudyNudgeSettings = z.infer<typeof studyNudgeSettingsSchema>;
 export type StudyPaper = z.infer<typeof studyPaperSchema>;
 export type StudyPaperReadiness = z.infer<typeof studyPaperReadinessSchema>;
 export type StudyPlan = z.infer<typeof studyPlanSchema>;
@@ -446,6 +475,9 @@ export type StudyPlanNode = z.infer<typeof studyPlanNodeSchema>;
 export type StudyPlanStyle = z.infer<typeof studyPlanStyleSchema>;
 export type StudyPlanView = z.infer<typeof studyPlanViewSchema>;
 export type StudyProgress = z.infer<typeof studyProgressSchema>;
+export type StudyReminderTestResult = z.infer<
+  typeof studyReminderTestResultSchema
+>;
 export type StudySession = z.infer<typeof studySessionSchema>;
 export type StudySessionStatus = z.infer<typeof studySessionStatusSchema>;
 export type StudySessionComplete = z.infer<typeof studySessionCompleteSchema>;

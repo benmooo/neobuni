@@ -1,13 +1,8 @@
-import type {
-  StudyGoalConfig,
-  StudyPlanNode,
-  StudySession,
-} from "@neobuni/contracts";
+import type { StudyGoalConfig } from "@neobuni/contracts";
 import {
   localClockInTimeZone,
   localDateInTimeZone,
   localDateTimeInTimeZone,
-  localDateTimeToEpoch,
 } from "@neobuni/core";
 import {
   appendEvent,
@@ -25,6 +20,13 @@ import { sendDiscordMessage } from "../integrations/discord";
 import { sendFeishuMessage } from "../integrations/feishu";
 import { sendQqMessage } from "../integrations/qq";
 import { sendTelegramMessage } from "../integrations/telegram";
+import {
+  buildStudyNudges,
+  countNudgesOnDate,
+  readNudgeSettings,
+  type StudyNudge,
+  type StudyNudgeEvent,
+} from "./nudge-service";
 
 interface StudyReminderConfig {
   enabled: boolean;
@@ -56,7 +58,7 @@ interface StudyReminderDeps {
 const DEFAULT_CONFIG: StudyReminderConfig = {
   enabled: true,
   leadMinutes: 60,
-  maxPerDay: 2,
+  maxPerDay: 3,
   tickMs: 60_000,
 };
 
@@ -128,36 +130,11 @@ const isWithinQuietHours = (
     : clock >= start || clock < end;
 };
 
-const isWithinReminderWindow = (input: {
-  leadMinutes: number;
-  nowLocalDateTime: string;
-  scheduledFor: string;
-}): boolean => {
-  const deltaMs =
-    localDateTimeToEpoch(input.scheduledFor) -
-    localDateTimeToEpoch(input.nowLocalDateTime);
-  return deltaMs <= input.leadMinutes * 60_000 && deltaMs >= -24 * 60 * 60_000;
-};
-
-const renderReminder = (node: StudyPlanNode, session: StudySession): string => {
-  const whatText = node.enrichment?.whatText ?? node.whatText;
-  const howText = node.enrichment?.howText ?? node.howText;
-  return [
-    `📚 今天这一步：${node.title}`,
-    whatText ? `学什么：${whatText}` : null,
-    howText ? `怎么学：${howText}` : null,
-    `预计 ${session.durationMinutes} 分钟`,
-    "打开 Now 开始，或回复「开始今天的学习」。",
-  ]
-    .filter((line): line is string => line !== null)
-    .join("\n");
-};
-
 const deliver = async (
   deps: StudyReminderDeps,
   profileId: string,
   channels: StudyGoalConfig["channels"],
-  text: string
+  nudge: StudyNudge
 ): Promise<DeliveryResult> => {
   let delivered = 0;
   const errors: string[] = [];
@@ -166,13 +143,23 @@ const deliver = async (
     try {
       if (channel.platform === "telegram") {
         await deps.sendTelegramMessage(profileId, {
-          message: { text, type: "text" },
+          message: { text: nudge.text, type: "text" },
+          replyMarkup: nudge.sessionId
+            ? {
+                inline_keyboard: [
+                  nudge.buttons.map((button) => ({
+                    callback_data: `st:${button.action}:${nudge.sessionId}`,
+                    text: button.label,
+                  })),
+                ],
+              }
+            : undefined,
           targetAlias: channel.targetAlias ?? undefined,
           targetId: channel.targetId ?? undefined,
         });
       } else if (channel.platform === "discord") {
         await deps.sendDiscordMessage(profileId, {
-          message: { text, type: "text" },
+          message: { text: nudge.text, type: "text" },
           targetAlias: channel.targetAlias ?? undefined,
           targetId: channel.targetId ?? undefined,
         });
@@ -181,7 +168,7 @@ const deliver = async (
           throw new Error("Feishu reminders require a target alias");
         }
         await deps.sendFeishuMessage(profileId, {
-          message: { text, type: "text" },
+          message: { text: nudge.text, type: "text" },
           targetAlias: channel.targetAlias,
         });
       } else {
@@ -189,7 +176,7 @@ const deliver = async (
           throw new Error("QQ reminders require a target alias");
         }
         await deps.sendQqMessage(profileId, {
-          message: { text, type: "text" },
+          message: { text: nudge.text, type: "text" },
           targetAlias: channel.targetAlias,
         });
       }
@@ -240,20 +227,21 @@ const runStudyReminderSweep = async (
         continue;
       }
       goalCount += 1;
-      if (isWithinQuietHours(studyConfig, now)) {
+      if (
+        studyConfig.channels.length === 0 ||
+        isWithinQuietHours(studyConfig, now)
+      ) {
         continue;
       }
       const localDate = localDateInTimeZone(now, studyConfig.timezone);
       const events = await runRepo(deps.listEvents(profile.id));
-      const sentToday = events.filter(
-        (event) =>
-          event.type === "study.reminder_sent" &&
-          localDateInTimeZone(
-            new Date(event.createdAt),
-            studyConfig.timezone
-          ) === localDate
-      ).length;
-      if (sentToday >= config.maxPerDay) {
+      const sentToday = countNudgesOnDate(
+        events as unknown as StudyNudgeEvent[],
+        localDate,
+        studyConfig.timezone
+      );
+      const budget = config.maxPerDay - sentToday;
+      if (budget <= 0) {
         continue;
       }
       const plan = await runRepo(
@@ -262,48 +250,24 @@ const runStudyReminderSweep = async (
       if (!plan) {
         continue;
       }
-      const nodeById = new Map(
-        plan.nodes.map((node) => [node.id, node] as const)
-      );
       const sessions = await runRepo(deps.listStudySessions(goal.id));
-      const nowLocalDateTime = localDateTimeInTimeZone(
-        now,
-        studyConfig.timezone
-      );
-      const candidates = sessions
-        .filter((session) => session.status === "planned")
-        .filter((session) =>
-          isWithinReminderWindow({
-            leadMinutes: config.leadMinutes,
-            nowLocalDateTime,
-            scheduledFor: session.scheduledFor,
-          })
-        )
-        .filter(
-          (session) =>
-            !events.some(
-              (event) =>
-                event.type === "study.reminder_sent" &&
-                event.payload.sessionId === session.id &&
-                event.payload.scheduledFor === session.scheduledFor
-            )
-        )
-        .sort((left, right) =>
-          left.scheduledFor.localeCompare(right.scheduledFor)
-        )
-        .slice(0, config.maxPerDay - sentToday);
+      const nudges = buildStudyNudges({
+        config: studyConfig,
+        events: events as unknown as StudyNudgeEvent[],
+        leadMinutes: config.leadMinutes,
+        localDate,
+        nodes: plan.nodes,
+        nowLocalDateTime: localDateTimeInTimeZone(now, studyConfig.timezone),
+        sessions,
+        settings: readNudgeSettings(studyConfig),
+      }).slice(0, budget);
 
-      for (const session of candidates) {
-        const node = nodeById.get(session.planNodeId);
-        if (!node || studyConfig.channels.length === 0) {
-          continue;
-        }
-        const text = renderReminder(node, session);
+      for (const nudge of nudges) {
         const result = await deliver(
           deps,
           profile.id,
           studyConfig.channels,
-          text
+          nudge
         );
         reminderCount += 1;
         delivered += result.delivered;
@@ -312,16 +276,21 @@ const runStudyReminderSweep = async (
           deps.appendEvent(
             profile.id,
             result.delivered > 0
-              ? "study.reminder_sent"
+              ? nudge.kind === "session_due"
+                ? "study.reminder_sent"
+                : "study.nudge_sent"
               : "study.reminder_failed",
             {
-              goalId: goal.id,
-              sessionId: session.id,
-              planNodeId: node.id,
-              scheduledFor: session.scheduledFor,
               channels: studyConfig.channels.length,
+              dedupeKey: nudge.dedupeKey,
               delivered: result.delivered,
               errors: result.errors,
+              goalId: goal.id,
+              kind: nudge.kind,
+              planNodeId: nudge.planNodeId,
+              scheduledFor: nudge.scheduledFor,
+              sessionId: nudge.sessionId,
+              sessionIds: nudge.sessionIds,
             }
           )
         );
@@ -331,6 +300,13 @@ const runStudyReminderSweep = async (
 
   return { delivered, failed, goalCount, reminderCount };
 };
+
+const sendStudyNudgeNow = async (input: {
+  channels: StudyGoalConfig["channels"];
+  nudge: StudyNudge;
+  profileId: string;
+}): Promise<DeliveryResult> =>
+  deliver(defaultDeps, input.profileId, input.channels, input.nudge);
 
 const startStudyReminderWorker = Effect.fnUntraced(function* () {
   const config = readStudyReminderConfig();
@@ -370,5 +346,6 @@ export type {
 export {
   readStudyReminderConfig,
   runStudyReminderSweep,
+  sendStudyNudgeNow,
   startStudyReminderWorker,
 };

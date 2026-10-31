@@ -80,6 +80,7 @@ const expectedRoutes = [
   ["GET", "/study/goals/{goalId}/activity", "Study"],
   ["GET", "/study/goals/{goalId}/plan", "Study"],
   ["GET", "/study/goals/{goalId}/progress", "Study"],
+  ["POST", "/study/goals/{goalId}/reminders/test", "Study"],
   ["GET", "/study/goals/{goalId}/today", "Study"],
   ["GET", "/task-runs/{taskRunId}", "Task Runs"],
   ["GET", "/task-runs/{taskRunId}/trace", "Task Runs"],

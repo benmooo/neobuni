@@ -22,6 +22,7 @@ const expectedRoutes = [
   ["get", "/study/goals/{goalId}/today"],
   ["get", "/study/goals/{goalId}/activity"],
   ["get", "/study/goals/{goalId}/progress"],
+  ["post", "/study/goals/{goalId}/reminders/test"],
   ["post", "/study/sessions/{sessionId}/checks"],
   ["post", "/study/sessions/{sessionId}/complete"],
   ["post", "/study/sessions/{sessionId}/skip"],

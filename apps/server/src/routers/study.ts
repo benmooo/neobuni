@@ -6,6 +6,7 @@ import {
   type StudyGoalConfig,
   type StudyGoalCreate,
   type StudyPlanView,
+  type StudyReminderTestResult,
   type StudySession,
   type StudySessionWithNode,
   type StudyToday,
@@ -58,9 +59,10 @@ import {
   upsertStudyMastery,
 } from "@neobuni/db";
 import { ORPCError } from "@orpc/server";
-
 import { submitStudyCheck } from "../study/check-service";
 import { enrichStudyLesson } from "../study/enrichment-service";
+import { previewStudyNudge } from "../study/nudge-service";
+import { sendStudyNudgeNow } from "../study/reminder-worker";
 
 const ACTIVITY_FUTURE_DAYS = 14;
 
@@ -783,6 +785,59 @@ export const studyRouter = {
       }
       return computeProgress({ config, goalId: input.goalId, plan });
     }),
+
+  reminders: {
+    test: protectedProcedure
+      .route({
+        method: "POST",
+        path: "/study/goals/{goalId}/reminders/test",
+        summary: "Send a test study reminder",
+        description:
+          "Deliver one preview nudge to the goal's configured channels so the reminder setup can be verified without waiting for the study window.",
+        tags: ["Study"],
+      })
+      .input(studyGoalParamSchema)
+      .handler(async ({ input, context }): Promise<StudyReminderTestResult> => {
+        await requireStudyGoal(context.profileId, input.goalId);
+        const config = await requireStudyConfig(input.goalId);
+        const plan = await requireActivePlan(input.goalId);
+        const nodeIds = new Set(plan.nodes.map((node) => node.id));
+        const sessions = (await run(listStudySessions(input.goalId))).filter(
+          (session) => nodeIds.has(session.planNodeId)
+        );
+        const nudge = previewStudyNudge({
+          config,
+          nodes: plan.nodes,
+          sessions,
+        });
+        const result = await sendStudyNudgeNow({
+          channels: config.channels,
+          nudge,
+          profileId: context.profileId,
+        });
+        await run(
+          appendEvent(
+            context.profileId,
+            result.delivered > 0 ? "study.nudge_sent" : "study.reminder_failed",
+            {
+              channels: config.channels.length,
+              dedupeKey: "test",
+              delivered: result.delivered,
+              errors: result.errors,
+              goalId: input.goalId,
+              kind: "daily_plan",
+              test: true,
+            }
+          )
+        );
+        return {
+          channels: config.channels.length,
+          delivered: result.delivered,
+          errors: result.errors,
+          preview: nudge.text,
+        };
+      }),
+  },
 
   checks: {
     submit: protectedProcedure

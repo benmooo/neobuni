@@ -85,6 +85,14 @@ const useUpdateStudyConfig = (goalId: string) => {
   });
 };
 
+const useSendStudyReminderTest = (goalId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.study.reminders.test({ goalId }),
+    onSuccess: () => invalidateStudy(queryClient),
+  });
+};
+
 const useGenerateStudyPlan = (goalId: string) => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -162,6 +170,7 @@ export {
   useEnrichStudyLesson,
   useGenerateStudyPlan,
   useRescheduleStudySession,
+  useSendStudyReminderTest,
   useSkipStudySession,
   useStartStudyGoal,
   useStartStudySession,

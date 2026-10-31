@@ -33,9 +33,19 @@ interface TelegramResolvedTarget {
   targetId: string;
 }
 
+interface TelegramInlineKeyboardButton {
+  callback_data: string;
+  text: string;
+}
+
+interface TelegramInlineKeyboardMarkup {
+  inline_keyboard: TelegramInlineKeyboardButton[][];
+}
+
 interface SendTelegramMessageInput {
   message: ChannelMessagePayload;
   messageThreadId?: number | null;
+  replyMarkup?: TelegramInlineKeyboardMarkup;
   replyToMessageId?: number;
   targetAlias?: string;
   targetId?: string;
@@ -378,6 +388,11 @@ const sendTelegramMessage = async (
           : {
               message_thread_id: target.messageThreadId,
             }),
+        ...(input.replyMarkup === undefined
+          ? {}
+          : {
+              reply_markup: input.replyMarkup,
+            }),
         ...(input.replyToMessageId === undefined
           ? {}
           : {
@@ -408,7 +423,67 @@ const sendTelegramMessage = async (
   };
 };
 
+const callTelegramApi = async (
+  profileId: string,
+  method: string,
+  payload: Record<string, unknown>
+): Promise<Response> => {
+  const config = await getEffectiveTelegramConfig(profileId);
+  assertTelegramConfigured(config);
+  const response = await fetch(
+    `${DEFAULT_TELEGRAM_API_BASE_URL}/bot${config.botToken}/${method}`,
+    {
+      body: JSON.stringify(payload),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+    }
+  );
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(
+      `Telegram ${method} failed (${response.status}): ${errorText}`
+    );
+  }
+  return response;
+};
+
+/** Acknowledge an inline-keyboard tap so Telegram stops the loading spinner. */
+const answerTelegramCallbackQuery = async (
+  profileId: string,
+  input: { callbackQueryId: string; text?: string }
+): Promise<void> => {
+  await callTelegramApi(profileId, "answerCallbackQuery", {
+    callback_query_id: input.callbackQueryId,
+    ...(input.text === undefined ? {} : { text: input.text }),
+  });
+};
+
+/** Rewrite an already-delivered nudge so its buttons reflect the outcome. */
+const editTelegramMessageText = async (
+  profileId: string,
+  input: {
+    messageId: string;
+    replyMarkup?: TelegramInlineKeyboardMarkup;
+    targetId: string;
+    text: string;
+  }
+): Promise<void> => {
+  await callTelegramApi(profileId, "editMessageText", {
+    chat_id: input.targetId,
+    message_id: input.messageId,
+    ...(input.replyMarkup === undefined
+      ? {}
+      : { reply_markup: input.replyMarkup }),
+    text: input.text,
+  });
+};
+
+export type { TelegramInlineKeyboardMarkup };
 export {
+  answerTelegramCallbackQuery,
+  editTelegramMessageText,
   getEffectiveTelegramConfig,
   listTelegramTargets,
   saveTelegramConfig,

@@ -28,12 +28,25 @@ const touchExternalConversationBinding = (
 
 import { Hono } from "hono";
 
-import { sendTelegramMessage } from "../integrations/telegram";
+import {
+  answerTelegramCallbackQuery,
+  editTelegramMessageText,
+  sendTelegramMessage,
+} from "../integrations/telegram";
 import { runExternalMessageTurn } from "../runtime/run-external-message-turn";
+import {
+  applyStudyNudgeAction,
+  bindStudyGoalChannel,
+  parseNudgeCallback,
+} from "../study/nudge-actions";
 
 interface TelegramIntegrationRouteDeps {
+  answerTelegramCallbackQuery?: typeof answerTelegramCallbackQuery;
+  applyStudyNudgeAction?: typeof applyStudyNudgeAction;
+  bindStudyGoalChannel?: typeof bindStudyGoalChannel;
   createConversation: typeof createConversation;
   createExternalConversationBinding: typeof createExternalConversationBinding;
+  editTelegramMessageText?: typeof editTelegramMessageText;
   getExternalConversationBinding: typeof getExternalConversationBinding;
   getMessagingIntegrationByWebhookSecret: typeof getMessagingIntegrationByWebhookSecret;
   recordExternalEventReceipt: typeof recordExternalEventReceipt;
@@ -65,7 +78,14 @@ interface TelegramMessage {
   text?: string;
 }
 
+interface TelegramCallbackQuery {
+  data?: string;
+  id?: string;
+  message?: TelegramMessage;
+}
+
 interface TelegramUpdate {
+  callback_query?: TelegramCallbackQuery;
   message?: TelegramMessage;
   update_id?: number;
 }
@@ -73,14 +93,30 @@ interface TelegramUpdate {
 const TELEGRAM_SECRET_HEADER = "x-telegram-bot-api-secret-token";
 
 const defaultDeps: TelegramIntegrationRouteDeps = {
+  answerTelegramCallbackQuery,
+  applyStudyNudgeAction,
+  bindStudyGoalChannel,
   createConversation,
   createExternalConversationBinding,
+  editTelegramMessageText,
   getExternalConversationBinding,
   getMessagingIntegrationByWebhookSecret,
   recordExternalEventReceipt,
   runExternalMessageTurn,
   sendTelegramMessage,
   touchExternalConversationBinding,
+};
+
+const STUDY_START_PREFIX = "bunistudy_";
+
+const readStudyStartPayload = (text: string | undefined) => {
+  const match = (text ?? "")
+    .trim()
+    .match(/^\/start(?:@[A-Za-z0-9_]+)?\s+(\S+)$/);
+  const payload = match?.[1] ?? "";
+  return payload.startsWith(STUDY_START_PREFIX)
+    ? payload.slice(STUDY_START_PREFIX.length)
+    : null;
 };
 
 const readTelegramUpdate = (rawBody: string) => {
@@ -164,8 +200,10 @@ const readTelegramPrompt = (
 
 const createTelegramIntegrationRoutes = (
   deps: TelegramIntegrationRouteDeps = defaultDeps
-) =>
-  new Hono().post("/events", async (c) => {
+) => {
+  const resolved: TelegramIntegrationRouteDeps = { ...defaultDeps, ...deps };
+
+  return new Hono().post("/events", async (c) => {
     const rawBody = await c.req.raw.clone().text();
     const update = readTelegramUpdate(rawBody);
 
@@ -176,7 +214,7 @@ const createTelegramIntegrationRoutes = (
     const secretToken = c.req.header(TELEGRAM_SECRET_HEADER)?.trim() ?? "";
     const integration =
       secretToken.length > 0
-        ? await deps.getMessagingIntegrationByWebhookSecret(
+        ? await resolved.getMessagingIntegrationByWebhookSecret(
             "telegram",
             secretToken
           )
@@ -190,7 +228,7 @@ const createTelegramIntegrationRoutes = (
       return c.json({ error: "Telegram update is missing update_id" }, 400);
     }
 
-    const receipt = await deps.recordExternalEventReceipt({
+    const receipt = await resolved.recordExternalEventReceipt({
       profileId: integration.profileId,
       platform: "telegram",
       eventId: String(update.update_id),
@@ -201,6 +239,39 @@ const createTelegramIntegrationRoutes = (
     }
 
     const message = update.message;
+    const callback = update.callback_query;
+    if (callback) {
+      const parsed =
+        typeof callback.data === "string"
+          ? parseNudgeCallback(callback.data)
+          : null;
+      if (!(parsed && typeof callback.id === "string")) {
+        return c.json({ ignored: true, ok: true }, 200);
+      }
+      const result = await resolved.applyStudyNudgeAction?.({
+        action: parsed.action,
+        profileId: integration.profileId,
+        sessionId: parsed.sessionId,
+      });
+      await resolved.answerTelegramCallbackQuery?.(integration.profileId, {
+        callbackQueryId: callback.id,
+        text: result?.ack ?? "这条提醒已经失效",
+      });
+      const callbackChatId = callback.message?.chat?.id;
+      const callbackMessageId = callback.message?.message_id;
+      if (
+        result &&
+        typeof callbackChatId === "number" &&
+        typeof callbackMessageId === "number"
+      ) {
+        await resolved.editTelegramMessageText?.(integration.profileId, {
+          messageId: String(callbackMessageId),
+          targetId: String(callbackChatId),
+          text: result.text,
+        });
+      }
+      return c.json({ acted: result !== null, ok: true }, 200);
+    }
     if (!message) {
       return c.json({ ok: true, ignored: true }, 200);
     }
@@ -210,17 +281,35 @@ const createTelegramIntegrationRoutes = (
       return c.json({ ok: true, ignored: true }, 200);
     }
 
+    const studyGoalId = readStudyStartPayload(message.text);
+    if (studyGoalId) {
+      const bound = await resolved.bindStudyGoalChannel?.({
+        chatId: scopeKey,
+        goalId: studyGoalId,
+        profileId: integration.profileId,
+      });
+      await resolved.sendTelegramMessage(integration.profileId, {
+        message: {
+          text: bound?.bound
+            ? "已绑定。学习时段前会在这里提醒你，按钮可以直接开始或改期。"
+            : "没有找到这个学习目标，请先在 Buni 里生成计划。",
+          type: "text",
+        },
+        targetId: scopeKey,
+      });
+      return c.json({ ok: true, bound: bound?.bound ?? false }, 200);
+    }
+
     const latestUserText = readTelegramPrompt(
       message,
       readConfiguredBotUsername(integration.metadata)
     );
-
     if (latestUserText === null) {
       return c.json({ ok: true, ignored: true }, 200);
     }
 
     if (latestUserText.length === 0) {
-      await deps.sendTelegramMessage(integration.profileId, {
+      await resolved.sendTelegramMessage(integration.profileId, {
         targetId: scopeKey,
         message: {
           type: "text",
@@ -241,7 +330,7 @@ const createTelegramIntegrationRoutes = (
       return c.json({ ok: true }, 200);
     }
 
-    const existingBinding = await deps.getExternalConversationBinding({
+    const existingBinding = await resolved.getExternalConversationBinding({
       profileId: integration.profileId,
       platform: "telegram",
       scopeType: "telegram_chat",
@@ -250,7 +339,7 @@ const createTelegramIntegrationRoutes = (
     const conversationId =
       existingBinding?.conversationId ??
       (
-        await deps.createConversation(integration.profileId, {
+        await resolved.createConversation(integration.profileId, {
           title: `[telegram] ${scopeKey}`,
           modelKey: "default",
           hidden: true,
@@ -258,7 +347,7 @@ const createTelegramIntegrationRoutes = (
       ).id;
 
     if (!existingBinding) {
-      await deps.createExternalConversationBinding({
+      await resolved.createExternalConversationBinding({
         profileId: integration.profileId,
         platform: "telegram",
         scopeType: "telegram_chat",
@@ -267,7 +356,7 @@ const createTelegramIntegrationRoutes = (
       });
     }
 
-    await deps.touchExternalConversationBinding({
+    await resolved.touchExternalConversationBinding({
       profileId: integration.profileId,
       platform: "telegram",
       scopeType: "telegram_chat",
@@ -275,7 +364,7 @@ const createTelegramIntegrationRoutes = (
       lastInboundAt: new Date().toISOString(),
     });
 
-    const runtimeResult = await deps.runExternalMessageTurn({
+    const runtimeResult = await resolved.runExternalMessageTurn({
       profileId: integration.profileId,
       conversationId,
       latestUserText,
@@ -284,7 +373,7 @@ const createTelegramIntegrationRoutes = (
       clientTimezone: null,
     });
 
-    await deps.sendTelegramMessage(integration.profileId, {
+    await resolved.sendTelegramMessage(integration.profileId, {
       targetId: scopeKey,
       message: {
         type: "text",
@@ -307,6 +396,7 @@ const createTelegramIntegrationRoutes = (
 
     return c.json({ ok: true }, 200);
   });
+};
 
 const telegramIntegrationRoutes = createTelegramIntegrationRoutes();
 
