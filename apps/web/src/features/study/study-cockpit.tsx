@@ -271,7 +271,7 @@ function ProgressPanel({
             <span className={META}>{Math.round(rhythmDone / 60)} 小时</span>
           </div>
           <div className="mt-2">
-            <Suspense fallback={<div className="h-20" />}>
+            <Suspense fallback={<div className="h-28" />}>
               <RhythmChart compact days={rhythm} />
             </Suspense>
           </div>

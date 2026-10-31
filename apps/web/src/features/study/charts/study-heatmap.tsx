@@ -71,26 +71,26 @@ export function StudyHeatmap({ days }: { days: StudyActivityDay[] }) {
         <div className="flex shrink-0 flex-col gap-[3px] pt-px">
           {WEEKDAY_LABELS.map((label, index) => (
             <span
-              className="flex h-2.5 items-center text-[0.5625rem] text-muted-foreground leading-none"
+              className="flex h-3.5 items-center text-[0.5625rem] text-muted-foreground leading-none"
               key={`${label}-${index}`}
             >
               {label}
             </span>
           ))}
         </div>
-        <div className="flex flex-1 gap-[3px] overflow-x-auto pb-0.5">
+        <div className="flex flex-1 gap-1 overflow-x-auto pb-0.5">
           {weeks.map((week, weekIndex) => (
-            <div className="flex shrink-0 flex-col gap-[3px]" key={weekIndex}>
+            <div className="flex shrink-0 flex-col gap-1" key={weekIndex}>
               {week.map((day, dayIndex) =>
                 day ? (
                   <span
-                    className={`size-2.5 ${LEVEL_CLASS[levelOf(day.completedMinutes)]}`}
+                    className={`size-3.5 ${LEVEL_CLASS[levelOf(day.completedMinutes)]}`}
                     key={day.date}
                     title={`${day.date} · ${day.completedMinutes} 分钟 · ${day.completedSessions} 节`}
                   />
                 ) : (
                   <span
-                    className="size-2.5"
+                    className="size-3.5"
                     key={`empty-${weekIndex}-${dayIndex}`}
                   />
                 )
@@ -103,7 +103,7 @@ export function StudyHeatmap({ days }: { days: StudyActivityDay[] }) {
         <div className="flex items-center gap-1">
           <span className="text-[0.625rem] text-muted-foreground">少</span>
           {LEVEL_CLASS.map((level) => (
-            <span className={`size-2 ${level}`} key={level} />
+            <span className={`size-3 ${level}`} key={level} />
           ))}
           <span className="text-[0.625rem] text-muted-foreground">多</span>
         </div>

@@ -35,7 +35,7 @@ const tooltipFormatter = (value: unknown, name: unknown) => (
 export function RhythmChart({ compact = false, days }: RhythmChartProps) {
   return (
     <ChartContainer
-      className={compact ? "h-20 w-full" : "h-36 w-full"}
+      className={compact ? "h-28 w-full" : "h-36 w-full"}
       config={rhythmConfig}
     >
       <BarChart
@@ -49,7 +49,7 @@ export function RhythmChart({ compact = false, days }: RhythmChartProps) {
         <XAxis
           {...AXIS_PROPS}
           dataKey="date"
-          interval={compact ? 4 : 1}
+          interval={compact ? 2 : 1}
           tickFormatter={asDayLabel}
         />
         <YAxis hide />
