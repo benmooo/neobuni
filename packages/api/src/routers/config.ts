@@ -6,12 +6,11 @@ import {
 } from "@neobuni/contracts";
 import {
   getAgentConfig,
-  getDatabaseRuntimeStatus,
+  getDatabaseHealth,
   getMemoryEmbeddingProviderConfig,
   getMemoryReasoningProviderConfig,
   getProviderConfig,
   getSoulConfig,
-  redactDatabaseUrl,
   upsertAgentConfig,
   upsertProviderConfig,
   upsertSoulConfig,
@@ -68,11 +67,11 @@ export const configRouter = {
           run(getMemoryReasoningProviderConfig(context.profileId)),
         ]);
 
-      const database = getDatabaseRuntimeStatus();
+      const database = await getDatabaseHealth();
 
       return {
         profileId: context.profileId,
-        database: { ...database, url: redactDatabaseUrl(database.url) },
+        database,
         providers: {
           chat: summarizeProviderConfig(chatConfig),
           memoryEmbedding: summarizeProviderConfig(memoryEmbeddingConfig),

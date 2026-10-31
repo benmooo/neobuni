@@ -8,7 +8,7 @@ import {
   configureDatabase,
   ensureSchema,
   getClient,
-  getDatabaseRuntimeStatus,
+  getDatabaseHealth,
   MEMORY_EMBEDDING_DIMENSIONS,
   redactDatabaseUrl,
 } from "./index";
@@ -42,12 +42,12 @@ describe("db client libsql configuration", () => {
     const probe = await getClient().execute("SELECT 1 AS value");
 
     expect(probe.rows[0]?.value).toBe(1);
-    expect(getDatabaseRuntimeStatus()).toEqual({
-      ready: true,
-      engine: "libsql",
-      url: databaseUrl,
-      vectorDimensions: MEMORY_EMBEDDING_DIMENSIONS,
-    });
+
+    const health = await getDatabaseHealth();
+
+    expect(health.main.reachable).toBe(true);
+    expect(health.main.fileExists).toBe(true);
+    expect(health.vector.expectedDimensions).toBe(MEMORY_EMBEDDING_DIMENSIONS);
 
     await getClient().execute(
       "CREATE TABLE client_durability (id TEXT PRIMARY KEY, value TEXT NOT NULL)"
@@ -117,6 +117,36 @@ describe("db client libsql configuration", () => {
     });
 
     expect(stored.rows[0]?.memory_id).toBe("memory-1");
+  });
+});
+
+describe("database health", () => {
+  const healthPath = join(
+    tmpdir(),
+    `neobuni-health-${process.pid}-${Date.now()}.db`
+  );
+  const healthUrl = `file:${healthPath}`;
+
+  afterAll(() => {
+    removeDatabaseFiles(healthPath);
+  });
+
+  test("reports the vector store once the runtime schema exists", async () => {
+    configureDatabase({ url: healthUrl });
+    await ensureSchema();
+
+    const health = await getDatabaseHealth();
+
+    expect(health.overallReady).toBe(true);
+    expect(health.main).toEqual({
+      fileExists: true,
+      filePath: healthPath.split("/").at(-1),
+      reachable: true,
+    });
+    expect(health.vector.tableExists).toBe(true);
+    expect(health.vector.tableQueryable).toBe(true);
+    expect(health.vector.schemaReady).toBe(true);
+    expect(health.vector.actualDimensions).toBe(MEMORY_EMBEDDING_DIMENSIONS);
   });
 });
 

@@ -1,4 +1,4 @@
-import { mkdirSync } from "node:fs";
+import { existsSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 
 import { type Client, createClient } from "@libsql/client";
@@ -167,11 +167,124 @@ export const redactDatabaseUrl = (url: string): string => {
   }
 };
 
-export const getDatabaseRuntimeStatus = () => ({
-  ready: true,
-  engine: "libsql",
-  url: state?.config.url ?? resolveDefaultUrl(),
-  vectorDimensions: MEMORY_EMBEDDING_DIMENSIONS,
-});
+const resolveDatabaseUrl = () => state?.config.url ?? resolveDefaultUrl();
+
+const filePathOf = (url: string): string => {
+  if (!url.startsWith("file:")) {
+    return redactDatabaseUrl(url);
+  }
+
+  const path = url.slice("file:".length);
+  return path.split("/").filter(Boolean).at(-1) ?? "database";
+};
+
+const localPathOf = (url: string): string | null =>
+  url.startsWith("file:") ? url.slice("file:".length) : null;
+
+const vectorTableStatus = async () => {
+  const client = ensureState().client;
+  const status = {
+    actualDimensions: null as number | null,
+    extensionLoaded: false,
+    schemaReady: false,
+    tableExists: false,
+    tableQueryable: false,
+  };
+
+  try {
+    await client.execute("SELECT vector_extract(vector('[1.0]')) AS probe");
+    status.extensionLoaded = true;
+  } catch {
+    status.extensionLoaded = false;
+  }
+
+  try {
+    const tables = await client.execute(
+      "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'vec_memories'"
+    );
+    status.tableExists = tables.rows.length > 0;
+  } catch {
+    return status;
+  }
+
+  if (!(status.tableExists && status.extensionLoaded)) {
+    return status;
+  }
+
+  try {
+    const columns = await client.execute("PRAGMA table_info(vec_memories)");
+    const embedding = columns.rows.find(
+      (row) => String(row.name ?? "") === "embedding"
+    );
+    const declared = String(embedding?.type ?? "");
+    const match = /F32_BLOB\((\d+)\)/.exec(declared);
+    status.actualDimensions = match?.[1] ? Number(match[1]) : null;
+    const hasMemoryId = columns.rows.some(
+      (row) => String(row.name ?? "") === "memory_id"
+    );
+    status.schemaReady =
+      hasMemoryId && status.actualDimensions === MEMORY_EMBEDDING_DIMENSIONS;
+  } catch {
+    status.schemaReady = false;
+  }
+
+  try {
+    await client.execute("SELECT memory_id FROM vec_memories LIMIT 1");
+    status.tableQueryable = true;
+  } catch {
+    status.tableQueryable = false;
+  }
+
+  return status;
+};
+
+/**
+ * Live readiness probe behind the ops dashboard. Reports only the database
+ * file name (or the redacted remote origin) so the runtime summary can never
+ * echo a sensitive env value.
+ */
+export const getDatabaseHealth = async () => {
+  const url = resolveDatabaseUrl();
+  const localPath = localPathOf(url);
+  const filePath = filePathOf(url);
+  const fileExists =
+    localPath === null
+      ? true
+      : localPath.startsWith(":memory:") || existsSync(localPath);
+
+  let reachable = false;
+  try {
+    await ensureState().client.execute("SELECT 1");
+    reachable = true;
+  } catch {
+    reachable = false;
+  }
+
+  const vector = reachable
+    ? await vectorTableStatus()
+    : {
+        actualDimensions: null,
+        extensionLoaded: false,
+        schemaReady: false,
+        tableExists: false,
+        tableQueryable: false,
+      };
+
+  return {
+    overallReady:
+      reachable &&
+      vector.extensionLoaded &&
+      vector.schemaReady &&
+      vector.tableQueryable,
+    main: { fileExists, filePath, reachable },
+    vector: {
+      ...vector,
+      expectedDimensions: MEMORY_EMBEDDING_DIMENSIONS,
+      fileExists,
+      filePath,
+      reachable: vector.tableQueryable,
+    },
+  };
+};
 
 export { schema };
