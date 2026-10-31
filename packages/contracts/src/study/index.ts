@@ -61,6 +61,13 @@ const studyNudgeSettingsSchema = z.object({
   wrapUp: z.boolean().default(true),
 });
 
+const studyScoutSettingsSchema = z.object({
+  enabled: z.boolean().default(true),
+  perDay: z.number().int().min(1).max(3).default(2),
+  siteAllowlist: z.array(z.string().trim().min(1).max(120)).max(8).default([]),
+  minRerankScore: z.number().min(0).max(3).default(1.5),
+});
+
 const studyGoalConfigSchema = z.object({
   targetAt: isoDateTimeSchema,
   dailyMinutes: z.number().int().min(15).max(480),
@@ -69,6 +76,7 @@ const studyGoalConfigSchema = z.object({
   timezone: z.string().trim().min(1).max(80).default("Asia/Shanghai"),
   quietHours: studyStudyWindowSchema.nullable().default(null),
   nudges: studyNudgeSettingsSchema.optional(),
+  scout: studyScoutSettingsSchema.optional(),
   channels: z.array(channelTargetSchema).max(4).default([]),
   syllabusTemplateId: z.string().trim().min(1).max(120),
   planStyle: studyPlanStyleSchema.default({
@@ -150,7 +158,7 @@ const studyLessonEnrichmentSchema = z.object({
   objective: z.string().trim().min(1).max(2000),
   whatText: z.string().trim().min(1).max(8000),
   howText: z.string().trim().min(1).max(4000),
-  checkSpecs: z.array(studyCheckSpecSchema).min(3).max(3),
+  checkSpecs: z.array(studyCheckSpecSchema).min(3).max(6),
   resources: z.array(z.string().trim().min(1).max(500)).max(8).default([]),
   material: studyLessonMaterialSchema.nullable().optional(),
   enrichedAt: isoDateTimeSchema,
@@ -323,6 +331,46 @@ const studyReminderTestResultSchema = z.object({
   preview: z.string(),
 });
 
+const studyScoutCandidateSchema = z.object({
+  confidence: z.number().min(0).max(1),
+  host: z.string().trim().min(1).max(120),
+  kind: z.enum(["article", "past-exam"]),
+  publishedAt: z.string().trim().min(1).nullable(),
+  summary: z.string().nullable(),
+  title: z.string().trim().min(1).max(300),
+  topicKey: z.string().trim().min(1).max(120),
+  topicLabel: z.string().trim().min(1).max(200),
+  url: z.string().trim().min(1).max(2000),
+  why: z.string().trim().max(200),
+});
+
+const studyScoutRunResultSchema = z.object({
+  candidateCount: z.number().int().nonnegative(),
+  errors: z.array(z.string()),
+  localDate: localDateSchema,
+  picks: z.array(studyScoutCandidateSchema),
+  queryCount: z.number().int().nonnegative(),
+});
+
+const studyScoutDigestItemSchema = z.object({
+  host: z.string().trim().min(1).max(120),
+  kind: z.enum(["article", "past-exam"]),
+  title: z.string().trim().max(300).nullable(),
+  topicKey: z.string().trim().min(1).max(120),
+  url: z.string().trim().min(1).max(2000),
+});
+
+const studyScoutLatestSchema = z.object({
+  digest: z
+    .object({
+      digestId: z.string().trim().min(1).max(64),
+      items: z.array(studyScoutDigestItemSchema),
+      localDate: localDateSchema,
+      sentAt: isoDateTimeSchema,
+    })
+    .nullable(),
+});
+
 const studySessionIdSchema = z.object({ sessionId: idSchema });
 
 const studySessionCompleteSchema = z.object({
@@ -429,6 +477,11 @@ export {
   studyProgressInputSchema,
   studyProgressSchema,
   studyReminderTestResultSchema,
+  studyScoutCandidateSchema,
+  studyScoutDigestItemSchema,
+  studyScoutLatestSchema,
+  studyScoutRunResultSchema,
+  studyScoutSettingsSchema,
   studySessionCompleteSchema,
   studySessionIdSchema,
   studySessionRescheduleSchema,
@@ -478,6 +531,11 @@ export type StudyProgress = z.infer<typeof studyProgressSchema>;
 export type StudyReminderTestResult = z.infer<
   typeof studyReminderTestResultSchema
 >;
+export type StudyScoutCandidate = z.infer<typeof studyScoutCandidateSchema>;
+export type StudyScoutDigestItem = z.infer<typeof studyScoutDigestItemSchema>;
+export type StudyScoutLatest = z.infer<typeof studyScoutLatestSchema>;
+export type StudyScoutRunResult = z.infer<typeof studyScoutRunResultSchema>;
+export type StudyScoutSettings = z.infer<typeof studyScoutSettingsSchema>;
 export type StudySession = z.infer<typeof studySessionSchema>;
 export type StudySessionStatus = z.infer<typeof studySessionStatusSchema>;
 export type StudySessionComplete = z.infer<typeof studySessionCompleteSchema>;
