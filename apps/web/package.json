@@ -38,6 +38,7 @@
     "next-themes": "catalog:",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
+    "recharts": "3.8.0",
     "sonner": "catalog:",
     "streamdown": "^2.5.0",
     "tailwind-merge": "^3.6.0",
