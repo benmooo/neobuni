@@ -291,6 +291,11 @@ const studySessionRescheduleSchema = z.object({
   scheduledFor: localDateTimeSchema,
 });
 
+const studySessionStartSchema = z.object({
+  goalId: idSchema,
+  planNodeId: idSchema,
+});
+
 const studyCheckAnswerSchema = z.object({
   promptId: idSchema,
   answer: z.string().trim().min(1).max(40_000),
@@ -377,6 +382,7 @@ export {
   studySessionIdSchema,
   studySessionRescheduleSchema,
   studySessionSchema,
+  studySessionStartSchema,
   studySessionStatusSchema,
   studySessionWithNodeSchema,
   studyStudyWindowSchema,
@@ -419,6 +425,7 @@ export type StudySessionComplete = z.infer<typeof studySessionCompleteSchema>;
 export type StudySessionReschedule = z.infer<
   typeof studySessionRescheduleSchema
 >;
+export type StudySessionStart = z.infer<typeof studySessionStartSchema>;
 export type StudySessionWithNode = z.infer<typeof studySessionWithNodeSchema>;
 export type StudyToday = z.infer<typeof studyTodaySchema>;
 export type StudySyllabusTemplate = z.infer<typeof studySyllabusTemplateSchema>;

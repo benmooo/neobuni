@@ -114,6 +114,7 @@ const expectedRoutes = [
   ["POST", "/study/goals/{goalId}/lessons/{planNodeId}/enrich", "Study"],
   ["POST", "/study/goals/{goalId}/plan/activate", "Study"],
   ["POST", "/study/goals/{goalId}/plan/generate", "Study"],
+  ["POST", "/study/goals/{goalId}/sessions/start", "Study"],
   ["POST", "/study/sessions/{sessionId}/checks", "Study"],
   ["POST", "/study/sessions/{sessionId}/complete", "Study"],
   ["POST", "/study/sessions/{sessionId}/skip", "Study"],

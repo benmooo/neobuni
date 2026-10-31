@@ -18,6 +18,7 @@ import {
   studySessionCompleteSchema,
   studySessionIdSchema,
   studySessionRescheduleSchema,
+  studySessionStartSchema,
 } from "@neobuni/contracts";
 import {
   addLocalDays,
@@ -738,6 +739,103 @@ export const studyRouter = {
   },
 
   sessions: {
+    start: protectedProcedure
+      .route({
+        method: "POST",
+        path: "/study/goals/{goalId}/sessions/start",
+        summary: "Start a lesson session",
+        description:
+          "Open a lesson for study ahead of its slot. Reuses the pending session, reopens a skipped one, or creates a session for today, then returns it with its plan node.",
+        tags: ["Study"],
+      })
+      .input(studySessionStartSchema)
+      .handler(async ({ input, context }): Promise<StudySessionWithNode> => {
+        await requireStudyGoal(context.profileId, input.goalId);
+        const config = await requireStudyConfig(input.goalId);
+        const plan = await requireActivePlan(input.goalId);
+        const node = plan.nodes.find((item) => item.id === input.planNodeId);
+        if (!node) {
+          throw new ORPCError("NOT_FOUND", { message: "Lesson not found" });
+        }
+        if (node.kind !== "lesson") {
+          throw new ORPCError("BAD_REQUEST", {
+            message: "Only lessons can be started",
+          });
+        }
+        const sessions = (await run(listStudySessions(input.goalId)))
+          .filter((session) => session.planNodeId === node.id)
+          .sort((left, right) =>
+            left.scheduledFor.localeCompare(right.scheduledFor)
+          );
+        const existing =
+          sessions.find((session) => session.status === "in_progress") ??
+          sessions.find((session) => session.status === "planned") ??
+          sessions.find(
+            (session) =>
+              session.status === "skipped" || session.status === "missed"
+          ) ??
+          sessions.at(-1) ??
+          null;
+
+        const now = new Date().toISOString();
+        if (!existing) {
+          const { localDate } = nowInTimezone(config);
+          const [created] = await run(
+            createStudySessions([
+              {
+                actualMinutes: null,
+                completedAt: null,
+                durationMinutes: node.estimatedMinutes,
+                goalId: input.goalId,
+                notes: null,
+                planNodeId: node.id,
+                profileId: context.profileId,
+                rescheduledFrom: null,
+                scheduledFor: `${localDate}T${config.studyWindow.start}`,
+                startedAt: now,
+                status: "in_progress",
+                timezone: config.timezone,
+              },
+            ])
+          );
+          if (!created) {
+            throw new ORPCError("INTERNAL_SERVER_ERROR", {
+              message: "Could not start this lesson",
+            });
+          }
+          await run(
+            appendEvent(context.profileId, "study.session_started", {
+              goalId: input.goalId,
+              planNodeId: node.id,
+              sessionId: created.id,
+            })
+          );
+          return { node, session: created };
+        }
+
+        if (
+          existing.status === "planned" ||
+          existing.status === "skipped" ||
+          existing.status === "missed"
+        ) {
+          const updated = await run(
+            updateStudySession({
+              sessionId: existing.id,
+              patch: {
+                startedAt: existing.startedAt ?? now,
+                status: "in_progress",
+              },
+            })
+          );
+          if (!updated) {
+            throw new ORPCError("NOT_FOUND", { message: "Session not found" });
+          }
+          return { node, session: updated };
+        }
+
+        return { node, session: existing };
+      }),
+
     complete: protectedProcedure
       .route({
         method: "POST",

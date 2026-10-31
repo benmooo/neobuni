@@ -9,6 +9,7 @@ import type {
   StudySession,
   StudySessionComplete,
   StudySessionReschedule,
+  StudySessionStart,
 } from "@neobuni/contracts";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -118,6 +119,14 @@ const useRescheduleStudySession = () => {
   });
 };
 
+const useStartStudySession = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: StudySessionStart) => api.study.sessions.start(input),
+    onSuccess: () => invalidateStudy(queryClient),
+  });
+};
+
 const useEnrichStudyLesson = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -146,6 +155,7 @@ export {
   useRescheduleStudySession,
   useSkipStudySession,
   useStartStudyGoal,
+  useStartStudySession,
   useStudyGoalDetail,
   useStudyGoals,
   useStudyProgress,
