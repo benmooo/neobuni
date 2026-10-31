@@ -383,12 +383,21 @@ describe("telegram nudge interactions", () => {
     channels: [],
   }));
   const editTelegramMessageTextMock = vi.fn(async () => undefined);
+  const applyStudyScoutActionMock = vi.fn(
+    async (_input?: {
+      action: string;
+      digestId: string;
+      index: number;
+      profileId: string;
+    }) => ({ ack: "已收藏到知识库。", text: "已收藏：Quality attributes" })
+  );
 
   const nudgeApp = new Hono().route(
     "/v1/integrations/telegram",
     createTelegramIntegrationRoutes({
       answerTelegramCallbackQuery: answerTelegramCallbackQueryMock,
       applyStudyNudgeAction: applyStudyNudgeActionMock,
+      applyStudyScoutAction: applyStudyScoutActionMock,
       bindStudyGoalChannel: bindStudyGoalChannelMock,
       createConversation: createConversationMock,
       createExternalConversationBinding: createExternalConversationBindingMock,
@@ -471,6 +480,81 @@ describe("telegram nudge interactions", () => {
       text: "已改到明晚 20:30",
     });
     expect(runExternalMessageTurnMock).not.toHaveBeenCalled();
+  });
+
+  test("routes a scout save button to the scout actions", async () => {
+    const response = await post({
+      callback_query: {
+        data: "sc:save:1:ab12cd34",
+        from: { id: 42 },
+        id: "callback-2",
+        message: {
+          chat: { id: 42, type: "private" },
+          message_id: 778,
+          text: "📚 今日精选材料 · 2 条",
+        },
+      },
+      update_id: 3001,
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ acted: true, ok: true });
+    expect(applyStudyScoutActionMock).toHaveBeenCalledWith({
+      action: "save",
+      digestId: "ab12cd34",
+      index: 1,
+      profileId: "profile-1",
+    });
+    expect(applyStudyNudgeActionMock).not.toHaveBeenCalled();
+    expect(answerTelegramCallbackQueryMock).toHaveBeenCalledWith("profile-1", {
+      callbackQueryId: "callback-2",
+      text: "已收藏到知识库。",
+    });
+    expect(editTelegramMessageTextMock).toHaveBeenCalledWith("profile-1", {
+      messageId: "778",
+      targetId: "42",
+      text: "已收藏：Quality attributes",
+    });
+  });
+
+  test.each([
+    ["sc:quiz:0:ab12cd34", "quiz"],
+    ["sc:skip:2:ab12cd34", "skip"],
+    ["sc:later:0:ab12cd34", "later"],
+  ])("routes %s to the scout actions", async (data, action) => {
+    const response = await post({
+      callback_query: {
+        data,
+        from: { id: 42 },
+        id: "callback-3",
+        message: {
+          chat: { id: 42, type: "private" },
+          message_id: 779,
+        },
+      },
+      update_id: 3002,
+    });
+
+    expect(response.status).toBe(200);
+    expect(applyStudyScoutActionMock).toHaveBeenCalledWith(
+      expect.objectContaining({ action, digestId: "ab12cd34" })
+    );
+  });
+
+  test("ignores malformed scout buttons", async () => {
+    const response = await post({
+      callback_query: {
+        data: "sc:save:0:",
+        from: { id: 42 },
+        id: "callback-4",
+        message: { chat: { id: 42, type: "private" }, message_id: 780 },
+      },
+      update_id: 3003,
+    });
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ ignored: true, ok: true });
+    expect(applyStudyScoutActionMock).not.toHaveBeenCalled();
   });
 
   test("binds the chat when the start payload carries a study goal", async () => {

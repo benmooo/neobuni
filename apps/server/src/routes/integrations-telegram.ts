@@ -39,10 +39,15 @@ import {
   bindStudyGoalChannel,
   parseNudgeCallback,
 } from "../study/nudge-actions";
+import {
+  applyStudyScoutAction,
+  parseScoutCallback,
+} from "../study/scout-actions";
 
 interface TelegramIntegrationRouteDeps {
   answerTelegramCallbackQuery?: typeof answerTelegramCallbackQuery;
   applyStudyNudgeAction?: typeof applyStudyNudgeAction;
+  applyStudyScoutAction?: typeof applyStudyScoutAction;
   bindStudyGoalChannel?: typeof bindStudyGoalChannel;
   createConversation: typeof createConversation;
   createExternalConversationBinding: typeof createExternalConversationBinding;
@@ -95,6 +100,7 @@ const TELEGRAM_SECRET_HEADER = "x-telegram-bot-api-secret-token";
 const defaultDeps: TelegramIntegrationRouteDeps = {
   answerTelegramCallbackQuery,
   applyStudyNudgeAction,
+  applyStudyScoutAction,
   bindStudyGoalChannel,
   createConversation,
   createExternalConversationBinding,
@@ -241,18 +247,27 @@ const createTelegramIntegrationRoutes = (
     const message = update.message;
     const callback = update.callback_query;
     if (callback) {
-      const parsed =
-        typeof callback.data === "string"
-          ? parseNudgeCallback(callback.data)
-          : null;
-      if (!(parsed && typeof callback.id === "string")) {
+      if (typeof callback.id !== "string") {
         return c.json({ ignored: true, ok: true }, 200);
       }
-      const result = await resolved.applyStudyNudgeAction?.({
-        action: parsed.action,
-        profileId: integration.profileId,
-        sessionId: parsed.sessionId,
-      });
+      const data = typeof callback.data === "string" ? callback.data : "";
+      const parsed = parseNudgeCallback(data);
+      const parsedScout = parsed ? null : parseScoutCallback(data);
+      if (!(parsed || parsedScout)) {
+        return c.json({ ignored: true, ok: true }, 200);
+      }
+      const result = parsed
+        ? await resolved.applyStudyNudgeAction?.({
+            action: parsed.action,
+            profileId: integration.profileId,
+            sessionId: parsed.sessionId,
+          })
+        : await resolved.applyStudyScoutAction?.({
+            action: parsedScout?.action ?? "skip",
+            digestId: parsedScout?.digestId ?? "",
+            index: parsedScout?.index ?? 0,
+            profileId: integration.profileId,
+          });
       await resolved.answerTelegramCallbackQuery?.(integration.profileId, {
         callbackQueryId: callback.id,
         text: result?.ack ?? "这条提醒已经失效",
