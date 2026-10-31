@@ -211,9 +211,40 @@ describe("applyStudyScoutAction", () => {
     expect(appendEvent).toHaveBeenCalledWith(
       "profile-1",
       "study.scout_saved",
-      expect.objectContaining({ digestId: DIGEST_ID, documentId: "doc-1" })
+      expect.objectContaining({
+        digestId: DIGEST_ID,
+        documentId: "doc-1",
+        goalId: "goal-1",
+        lessonTitle: "质量属性场景",
+        planNodeId: "node-1",
+        url: "https://zhihu.com/p/1",
+      })
+    );
+    expect(result?.ack).toBe("已收藏到「质量属性场景」的资料里。");
+    expect(deps.updateStudyNodeEnrichment).toHaveBeenCalledWith({
+      enrichment: expect.objectContaining({
+        checkSpecs: expect.any(Array),
+        resources: ["https://zhihu.com/p/1"],
+      }),
+      planNodeId: "node-1",
+    });
+  });
+
+  test("still saves when the lesson has left the plan", async () => {
+    const { appendEvent, deps } = makeDeps({ nodes: [] });
+
+    const result = await applyStudyScoutAction(
+      { action: "save", digestId: DIGEST_ID, index: 0, profileId: "profile-1" },
+      deps
+    );
+
+    expect(appendEvent).toHaveBeenCalledWith(
+      "profile-1",
+      "study.scout_saved",
+      expect.objectContaining({ goalId: "goal-1", planNodeId: null })
     );
     expect(result?.ack).toBe("已收藏到知识库。");
+    expect(deps.updateStudyNodeEnrichment).not.toHaveBeenCalled();
   });
 
   test("refuses to save without a search provider", async () => {

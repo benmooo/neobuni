@@ -1,4 +1,8 @@
-import type { StudyCheckSpec, StudyLessonEnrichment } from "@neobuni/contracts";
+import type {
+  StudyCheckSpec,
+  StudyLessonEnrichment,
+  StudyPlanNode,
+} from "@neobuni/contracts";
 import {
   appendEvent,
   getLatestStudyPlan,
@@ -22,6 +26,7 @@ const QUIZ_CHECK_COUNT = 3;
 const QUIZ_MAX_CHECKS = 6;
 const QUIZ_SOURCE_CHAR_LIMIT = 6000;
 const QUIZ_MAX_TOKENS = 700;
+const RESOURCE_LIMIT = 8;
 
 type ScoutAction = (typeof ACTIONS)[number];
 
@@ -171,6 +176,22 @@ const alreadyHandled = (input: {
   );
 };
 
+const lessonOf = async (
+  deps: ScoutActionDeps,
+  goalId: string,
+  item: ScoutDigestItem
+): Promise<StudyPlanNode | null> => {
+  if (!goalId) {
+    return null;
+  }
+
+  const plan = await runRepo(
+    deps.getLatestStudyPlan({ goalId, status: "active" })
+  );
+
+  return plan?.nodes.find((entry) => entry.id === item.topicKey) ?? null;
+};
+
 const quizResponseSchema = z.object({
   checks: z
     .array(
@@ -261,6 +282,7 @@ const mergeChecks = (
 
 const applySave = async (input: {
   deps: ScoutActionDeps;
+  digest: { goalId: string };
   digestId: string;
   item: ScoutDigestItem;
   profileId: string;
@@ -279,6 +301,7 @@ const applySave = async (input: {
     baseUrl: provider.baseUrl,
     url: input.item.url,
   });
+  const node = await lessonOf(input.deps, input.digest.goalId, input.item);
   const saved = await input.deps.saveWebPageToKnowledge({
     document: page.document,
     profileId: input.profileId,
@@ -291,13 +314,32 @@ const applySave = async (input: {
     input.deps.appendEvent(input.profileId, "study.scout_saved", {
       digestId: input.digestId,
       documentId: (saved as { documentId?: string }).documentId ?? null,
+      goalId: input.digest.goalId || null,
+      lessonTitle: node?.title ?? null,
+      planNodeId: node?.id ?? null,
       url: input.item.url,
     })
   );
 
+  if (node?.enrichment) {
+    await runRepo(
+      input.deps.updateStudyNodeEnrichment({
+        enrichment: {
+          ...node.enrichment,
+          resources: [
+            ...new Set([...node.enrichment.resources, input.item.url]),
+          ].slice(0, RESOURCE_LIMIT),
+        },
+        planNodeId: node.id,
+      })
+    );
+  }
+
   return {
-    ack: "已收藏到知识库。",
-    text: `已收藏：${input.item.title ?? input.item.url}`,
+    ack: node ? `已收藏到「${node.title}」的资料里。` : "已收藏到知识库。",
+    text: node
+      ? `已收藏到「${node.title}」：${input.item.title ?? input.item.url}`
+      : `已收藏：${input.item.title ?? input.item.url}`,
   };
 };
 
@@ -317,13 +359,7 @@ const applyQuiz = async (input: {
     };
   }
 
-  const plan = await runRepo(
-    input.deps.getLatestStudyPlan({
-      goalId: input.digest.goalId,
-      status: "active",
-    })
-  );
-  const node = plan?.nodes.find((entry) => entry.id === input.item.topicKey);
+  const node = await lessonOf(input.deps, input.digest.goalId, input.item);
 
   if (!node) {
     return {
@@ -467,6 +503,7 @@ const applyStudyScoutAction = async (
   if (input.action === "save") {
     return await applySave({
       deps,
+      digest: { goalId: digest.goalId },
       digestId: input.digestId,
       item,
       profileId: input.profileId,

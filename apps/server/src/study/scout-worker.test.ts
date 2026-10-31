@@ -103,7 +103,10 @@ const pick: ScoutPick = {
 const buildDeps = (
   input: {
     events?: unknown[];
+    mastery?: unknown[];
+    nodes?: unknown[];
     rankResult?: ScoutPick[];
+    sessions?: unknown[];
     studyConfig?: StudyGoalConfig | null;
     provider?: { apiKey: string; baseUrl: string; kind: "deepseek" } | null;
   } = {}
@@ -132,7 +135,10 @@ const buildDeps = (
   const deps = {
     appendEvent,
     getLatestStudyPlan: () =>
-      Effect.succeed({ nodes: [node], plan: { id: "plan-1" } }),
+      Effect.succeed({
+        nodes: (input.nodes ?? [node]) as (typeof node)[],
+        plan: { id: "plan-1" },
+      }),
     getStudyGoalConfig: () =>
       Effect.succeed(
         input.studyConfig === undefined ? studyConfig : input.studyConfig
@@ -140,7 +146,9 @@ const buildDeps = (
     listActiveProfiles: () => Effect.succeed([{ id: "profile-1" }]),
     listEvents: () => Effect.succeed(input.events ?? []),
     listGoals: () => Effect.succeed([{ id: "goal-1" }]),
-    listStudySessions: () => Effect.succeed([session]),
+    listStudyMastery: vi.fn(() => Effect.succeed(input.mastery ?? [])),
+    listStudySessions: () =>
+      Effect.succeed((input.sessions ?? [session]) as (typeof session)[]),
     rank,
     resolveReasoningConfig: async () => ({
       apiKey: "sk_test",
@@ -161,6 +169,7 @@ const buildDeps = (
     sendTelegramMessage,
   } as unknown as StudyScoutDeps & {
     appendEvent: ReturnType<typeof vi.fn>;
+    listStudyMastery: ReturnType<typeof vi.fn>;
     rank: ReturnType<typeof vi.fn>;
     search: ReturnType<typeof vi.fn>;
     sendTelegramMessage: ReturnType<typeof vi.fn>;
@@ -229,6 +238,52 @@ describe("runStudyScoutSweep", () => {
       (call) => call[1] === "study.scout_sent"
     );
     expect(sentEvent?.[2]).toMatchObject({ localDate: "2026-10-26", picks: 1 });
+  });
+
+  test("stays quiet when the goal turns scouting off", async () => {
+    const deps = buildDeps({
+      studyConfig: {
+        ...studyConfig,
+        scout: {
+          enabled: false,
+          minRerankScore: 1.5,
+          perDay: 2,
+          siteAllowlist: [],
+        },
+      },
+    });
+    const result = await runStudyScoutSweep({ config, deps, now });
+
+    expect(result).toMatchObject({ delivered: 0, goalCount: 0 });
+    expect(deps.search).not.toHaveBeenCalled();
+    expect(deps.sendTelegramMessage).not.toHaveBeenCalled();
+  });
+
+  test("researches the weakest lesson before a strong one", async () => {
+    const weakNode = { ...node, id: "lesson-1", title: "质量属性战术" };
+    const strongNode = { ...node, id: "lesson-2", order: 1, title: "架构评估" };
+    const oldSession = {
+      ...session,
+      completedAt: "2026-09-01T12:00:00.000Z",
+      planNodeId: "lesson-2",
+      scheduledFor: "2026-09-01T20:30",
+      status: "completed" as const,
+    };
+    const deps = buildDeps({
+      mastery: [
+        { planNodeId: "lesson-1", score: 0.3 },
+        { planNodeId: "lesson-2", score: 0.95 },
+      ],
+      nodes: [strongNode, weakNode],
+      sessions: [oldSession],
+    });
+
+    await runStudyScoutSweep({ config, deps, now });
+
+    expect(deps.listStudyMastery).toHaveBeenCalledOnce();
+    const firstQuery = deps.search.mock.calls[0]?.[0] as { query: string };
+    expect(firstQuery.query).toContain("质量属性战术");
+    expect(firstQuery.query).not.toContain("架构评估");
   });
 
   test("stays quiet outside the pre-window slot", async () => {

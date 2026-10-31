@@ -16,6 +16,7 @@ import {
   listActiveProfiles,
   listEvents,
   listGoals,
+  listStudyMastery,
   listStudySessions,
   runRepo,
 } from "@neobuni/db";
@@ -54,6 +55,7 @@ interface StudyScoutDeps {
   listActiveProfiles: typeof listActiveProfiles;
   listEvents: typeof listEvents;
   listGoals: typeof listGoals;
+  listStudyMastery: typeof listStudyMastery;
   listStudySessions: typeof listStudySessions;
   rank?: typeof rankCandidates;
   resolveReasoningConfig: typeof resolveStudyReasoningConfig;
@@ -85,6 +87,7 @@ const defaultDeps: StudyScoutDeps = {
   listActiveProfiles,
   listEvents,
   listGoals,
+  listStudyMastery,
   listStudySessions,
   resolveReasoningConfig: resolveStudyReasoningConfig,
   resolveWebProvider,
@@ -366,9 +369,15 @@ const runStudyScoutForGoal = async (input: {
   }
 
   const reasoning = await input.deps.resolveReasoningConfig(input.profileId);
-  const sessions = await runRepo(input.deps.listStudySessions(input.goalId));
+  const [sessions, mastery] = await Promise.all([
+    runRepo(input.deps.listStudySessions(input.goalId)),
+    runRepo(input.deps.listStudyMastery(input.goalId)),
+  ]);
   const profile = buildScoutProfile({
     localDate: input.localDate,
+    masteryByNode: Object.fromEntries(
+      mastery.map((row) => [row.planNodeId, row.score])
+    ),
     nodes: plan.nodes,
     sessions,
   });
@@ -521,6 +530,10 @@ const runStudyScoutSweep = async (
       const studyConfig = await runRepo(deps.getStudyGoalConfig(goal.id));
 
       if (!studyConfig || studyConfig.channels.length === 0) {
+        continue;
+      }
+
+      if (studyConfig.scout?.enabled === false) {
         continue;
       }
 

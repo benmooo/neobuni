@@ -248,7 +248,7 @@ fetchDeepSeekPage(input: {
 
 | 动作 | 行为 | 持久化 |
 | --- | --- | --- |
-| `save` | `fetchDeepSeekPage`（1 次重试 on 429/5xx）→ 构建 `WebPageDocument`（`extractionMethod: "provider"`）→ `saveWebPageToKnowledge({ trustLevel: "imported" })` | `study.scout_saved{url, documentId, goalId, planNodeId}`；回复「✅ 已收藏到知识库 · 关联：<lesson>」 |
+| `save` | `fetchDeepSeekPage`（1 次重试 on 429/5xx）→ 构建 `WebPageDocument`（`extractionMethod: "provider"`）→ `saveWebPageToKnowledge({ trustLevel: "imported" })` → 把 URL 追加进 `node.enrichment.resources`（去重、上限 8 条） | `study.scout_saved{url, documentId, goalId, planNodeId, lessonTitle}`；回复「✅ 已收藏到「<lesson>」的资料里」 |
 | `quiz` | 用正文（截断 6k 字）生成 3 条 `studyCheckSpec`，prompt 前缀 `材料延伸：` | 写入 `node.enrichment.checkSpecs`（契约从「恰好 3 条」放宽为 `min 3, max 6`）；`study.scout_quiz{url, nodeId, specs}`；回复 deep link `NEOBUNI_APP_URL/study/{goalId}/lesson/{planNodeId}?tab=checks` |
 | `skip` | 记录负反馈 | `study.scout_feedback{action:"skip", host, topicKey, url}`；回复「以后少推这类」 |
 | `later` | 不落库，事件里带 `reofferOn = localDate + 1` | `study.scout_feedback{action:"later", …}`；次日 `filterCandidates` 允许重新入选（不受第 9 节第 6 步永久去重约束，改为 7 天后才可再推） |
@@ -299,6 +299,8 @@ studyScoutSettingsSchema = {
 `apps/web/src/features/study/study-settings-section.tsx` 新增「每日精选材料」卡片：
 
 - 开关（`scout.enabled`）、每日条数（1–3）、站点白名单（逗号分隔输入）、「立刻找一次」按钮 → `scout/run`，把预览结果列在卡片下方。
+- `scout.enabled === false` 时 worker 整条目标跳过（不发文、不计入 `goalCount`），手动「立刻找一次」仍然可用——那是用户显式发起的预览，不会推送。
+- 检索目标取自 lesson 的最近完成、即将到期与掌握度 < 60% 三类；`listStudyMastery` 在每次 sweep 与预览中都会读取，薄弱课节权重最高。
 - 没有可用搜索 provider 时：开关置灰并显示「当前 profile 未配置 DeepSeek key，无法联网检索」。
 - 与现有 `每日最多 3 条` 的说明合并成一句，避免两套配额文案。
 
