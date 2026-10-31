@@ -15,7 +15,14 @@ import {
 import { Input } from "@neobuni/ui/components/input";
 import { Progress } from "@neobuni/ui/components/progress";
 import { Spinner } from "@neobuni/ui/components/spinner";
-import { CheckCircle, Clock, Fire, Target } from "@phosphor-icons/react";
+import {
+  CaretRight,
+  ChartBar,
+  CheckCircle,
+  Clock,
+  Fire,
+  Target,
+} from "@phosphor-icons/react";
 import { Link } from "@tanstack/react-router";
 import { lazy, Suspense, useState } from "react";
 
@@ -191,16 +198,10 @@ function StartStudyGoalCard() {
 
 function ProgressPanel({
   progress,
-  rhythm,
 }: {
   progress: NonNullable<ReturnType<typeof useStudyToday>["data"]>["progress"];
-  rhythm?: StudyActivityDay[];
 }) {
   const score = Math.round(progress.overallReadiness * 75);
-  const rhythmDone = (rhythm ?? []).reduce(
-    (sum, day) => sum + day.completedMinutes,
-    0
-  );
   return (
     <Card className="gap-0 py-0">
       <div className="flex items-start justify-between gap-2 px-4 pt-4">
@@ -263,21 +264,61 @@ function ProgressPanel({
         {Math.round(progress.projectedCoverage * 100)}%；每天约需{" "}
         {Math.round(progress.minutesPerDayNeeded)} 分钟。
       </p>
-
-      {rhythm && rhythm.length > 0 ? (
-        <div className="border-t px-4 py-3">
-          <div className="flex items-center justify-between">
-            <span className={EYEBROW}>近 14 天节奏</span>
-            <span className={META}>{Math.round(rhythmDone / 60)} 小时</span>
-          </div>
-          <div className="mt-2">
-            <Suspense fallback={<div className="h-28" />}>
-              <RhythmChart compact days={rhythm} />
-            </Suspense>
-          </div>
-        </div>
-      ) : null}
     </Card>
+  );
+}
+
+function RhythmCard({ days }: { days: StudyActivityDay[] }) {
+  const completed = days.reduce((sum, day) => sum + day.completedMinutes, 0);
+  return (
+    <Card className="gap-0 py-0">
+      <div className="flex items-center justify-between border-b px-4 py-3">
+        <span className={EYEBROW}>近 14 天节奏</span>
+        <span className={META}>完成 {Math.round(completed / 60)} 小时</span>
+      </div>
+      <div className="px-4 py-3">
+        <Suspense fallback={<div className="h-28" />}>
+          <RhythmChart days={days} />
+        </Suspense>
+      </div>
+    </Card>
+  );
+}
+
+function PlanEntryCard({
+  goalId,
+  progress,
+}: {
+  goalId: string;
+  progress: NonNullable<ReturnType<typeof useStudyToday>["data"]>["progress"];
+}) {
+  return (
+    <Link
+      className="group flex flex-col justify-between gap-3 border border-border px-4 py-3 transition-colors hover:border-primary/50 hover:bg-card"
+      params={{ goalId }}
+      to="/study/$goalId"
+    >
+      <div className="space-y-1">
+        <span className={EYEBROW}>继续探索</span>
+        <p className="flex items-center gap-1.5 font-heading text-base">
+          完整计划
+          <ChartBar className="size-4 text-primary" />
+        </p>
+        <p className="text-muted-foreground text-xs leading-relaxed">
+          学习热力图、三科进度与全部课程节点
+        </p>
+      </div>
+      <div className="flex items-end justify-between gap-2">
+        <span className={META}>
+          已完成 {progress.sessionsCompleted}/{progress.sessionsPlanned} 节 ·
+          距考试 {progress.daysRemaining} 天
+        </span>
+        <span className="flex shrink-0 items-center gap-1 font-medium text-primary text-xs">
+          打开
+          <CaretRight className="size-3 transition-transform group-hover:translate-x-0.5" />
+        </span>
+      </div>
+    </Link>
   );
 }
 
@@ -313,7 +354,7 @@ function StudyDashboard({ goalId }: { goalId: string }) {
 
   return (
     <div className="space-y-3">
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-start">
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
         <div className="space-y-3">
           {primary ? (
             <TodayLessonCard
@@ -336,17 +377,12 @@ function StudyDashboard({ goalId }: { goalId: string }) {
               </CardHeader>
             </Card>
           )}
-          <Link
-            className="inline-flex items-center gap-1 px-1 font-medium text-muted-foreground text-xs hover:text-foreground"
-            params={{ goalId }}
-            to="/study/$goalId"
-          >
-            完整计划、热力图与检查点
-          </Link>
+          {rhythm.length > 0 ? <RhythmCard days={rhythm} /> : null}
+          {progress ? (
+            <PlanEntryCard goalId={goalId} progress={progress} />
+          ) : null}
         </div>
-        {progress ? (
-          <ProgressPanel progress={progress} rhythm={rhythm} />
-        ) : null}
+        {progress ? <ProgressPanel progress={progress} /> : null}
       </div>
 
       {upcoming.length > 0 ? (
@@ -366,7 +402,7 @@ function StudyDashboard({ goalId }: { goalId: string }) {
                 params={{ goalId, planNodeId: item.node.id }}
                 to="/study/$goalId/lesson/$planNodeId"
               >
-                <span className={`${META} w-12 shrink-0`}>
+                <span className={`${META} w-16 shrink-0 whitespace-nowrap`}>
                   {formatShortDate(item.session.scheduledFor)}
                 </span>
                 <span className="min-w-0 flex-1 truncate text-sm group-hover:text-foreground">

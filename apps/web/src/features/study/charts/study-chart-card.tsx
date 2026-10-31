@@ -9,6 +9,19 @@ import {
   CHART_CARD_HEADER,
 } from "./chart-tokens";
 
+export const CHART_EMPTY_BODY =
+  "flex items-center justify-center border border-border border-dashed text-muted-foreground text-xs";
+
+export function StudyChartEmpty({
+  height,
+  label,
+}: {
+  height: string;
+  label: string;
+}) {
+  return <div className={`${CHART_EMPTY_BODY} ${height}`}>{label}</div>;
+}
+
 interface StudyChartCardProps {
   children: ReactNode;
   footer?: ReactNode;

@@ -22,6 +22,7 @@ import {
   asMinutes,
   CHART_GRID_PROPS,
 } from "./chart-tokens";
+import { StudyChartEmpty } from "./study-chart-card";
 
 const workloadConfig = {
   planned: { label: "排课", color: "var(--chart-3)" },
@@ -41,6 +42,12 @@ const tooltipFormatter = (value: unknown) => (
 );
 
 export function WorkloadChart({ dailyMinutes, days }: WorkloadChartProps) {
+  const isIdle = days.every((day) => day.plannedMinutes === 0);
+
+  if (isIdle) {
+    return <StudyChartEmpty height="h-40" label="未来两周还没有排课" />;
+  }
+
   return (
     <ChartContainer className="h-40 w-full" config={workloadConfig}>
       <BarChart

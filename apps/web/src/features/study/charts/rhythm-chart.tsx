@@ -14,6 +14,7 @@ import {
   asMinutes,
   CHART_GRID_PROPS,
 } from "./chart-tokens";
+import { StudyChartEmpty } from "./study-chart-card";
 
 const rhythmConfig = {
   planned: { label: "计划", color: "var(--chart-2)" },
@@ -33,6 +34,19 @@ const tooltipFormatter = (value: unknown, name: unknown) => (
 );
 
 export function RhythmChart({ compact = false, days }: RhythmChartProps) {
+  const isIdle = days.every(
+    (day) => day.plannedMinutes === 0 && day.completedMinutes === 0
+  );
+
+  if (isIdle) {
+    return (
+      <StudyChartEmpty
+        height={compact ? "h-28" : "h-36"}
+        label="这段时间还没有学习记录"
+      />
+    );
+  }
+
   return (
     <ChartContainer
       className={compact ? "h-28 w-full" : "h-36 w-full"}
