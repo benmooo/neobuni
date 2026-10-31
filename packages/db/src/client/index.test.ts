@@ -10,6 +10,7 @@ import {
   getClient,
   getDatabaseRuntimeStatus,
   MEMORY_EMBEDDING_DIMENSIONS,
+  redactDatabaseUrl,
 } from "./index";
 
 const uniqueDatabasePath = (label: string) =>
@@ -116,5 +117,23 @@ describe("db client libsql configuration", () => {
     });
 
     expect(stored.rows[0]?.memory_id).toBe("memory-1");
+  });
+});
+
+describe("redactDatabaseUrl", () => {
+  test("keeps only the file name for local databases", () => {
+    expect(redactDatabaseUrl("file:/Users/me/apps/server/local.db")).toBe(
+      "file:local.db"
+    );
+  });
+
+  test("drops credentials from remote databases", () => {
+    expect(
+      redactDatabaseUrl("postgres://user:secret@db.internal:5432/app")
+    ).toBe("postgres://db.internal:5432");
+  });
+
+  test("falls back to a marker for unparsable values", () => {
+    expect(redactDatabaseUrl("not a url")).toBe("configured");
   });
 });

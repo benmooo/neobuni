@@ -11,6 +11,7 @@ import {
   getMemoryReasoningProviderConfig,
   getProviderConfig,
   getSoulConfig,
+  redactDatabaseUrl,
   upsertAgentConfig,
   upsertProviderConfig,
   upsertSoulConfig,
@@ -67,9 +68,11 @@ export const configRouter = {
           run(getMemoryReasoningProviderConfig(context.profileId)),
         ]);
 
+      const database = getDatabaseRuntimeStatus();
+
       return {
         profileId: context.profileId,
-        database: getDatabaseRuntimeStatus(),
+        database: { ...database, url: redactDatabaseUrl(database.url) },
         providers: {
           chat: summarizeProviderConfig(chatConfig),
           memoryEmbedding: summarizeProviderConfig(memoryEmbeddingConfig),

@@ -149,6 +149,24 @@ export const ensureSchema = async () => {
 
 export const ensureSchemaEffect = fromPromise("ensureSchema", ensureSchema);
 
+/**
+ * Database URLs can carry credentials, and the server's env guard rejects any
+ * payload that contains a sensitive env value, so runtime summaries only ever
+ * expose a redacted form.
+ */
+export const redactDatabaseUrl = (url: string): string => {
+  if (url.startsWith("file:")) {
+    const name = url.split("/").filter(Boolean).at(-1) ?? "database";
+    return `file:${name}`;
+  }
+  try {
+    const parsed = new URL(url);
+    return `${parsed.protocol}//${parsed.host}`;
+  } catch {
+    return "configured";
+  }
+};
+
 export const getDatabaseRuntimeStatus = () => ({
   ready: true,
   engine: "libsql",
