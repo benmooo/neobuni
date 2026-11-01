@@ -352,7 +352,7 @@ studyScoutSettingsSchema = {
 | 单测 `scout-actions.test.ts` | 四个动作的幂等、`quiz` 写 `enrichment.checkSpecs`（3+3=6）、`skip` 生成抑制键、`save` 失败路径 |
 | 集成 `scout-worker.test.ts` | 触发窗口 `[start-30m, start)` 半开区间、与 nudge 共用预算、免打扰、无 provider 静默、空候选不发消息 |
 | 路由 | `study.openapi.test.ts` / `api.openapi.test.ts` 路由白名单；`scout/run` 的返回结构 |
-| 手动 | 3100 实例 `POST /study/goals/{id}/scout/run`，确认候选、理由、去重生效；在 Telegram 里点四个按钮各一次 |
+| 手动 | 先跑 `DATABASE_URL="file:$PWD/.data/local.db" bun run apps/server/scripts/study-scout-smoke.ts`（无 auth、无 server，直接验证 provider 解析 + 过滤 + 排序），或 `POST /study/goals/{id}/scout/run`，确认候选、理由、去重生效；在 Telegram 里点四个按钮各一次 |
 
 验证命令：`bun run check-types`、`apps/server` + `packages/db` + `packages/core` 的 `vp test run`、
 `apps/web` 的 `tsc --noEmit` 与 `vp build`、`bunx ultracite check`。
