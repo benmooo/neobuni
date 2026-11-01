@@ -43,14 +43,18 @@ Port（buni → neobuni）已经完成并且健康：90 个测试文件 / 277 �
 - **Study Scout P1（2026-10-31）**：Telegram 摘要卡片 + 四个按钮（收藏到知识库 / 出 3 道延伸题 / 不感兴趣 / 明晚再看），`scout-actions.ts` 负责幂等与 7 天抑制。
 - **Study Scout P2 / 联调（2026-11-01）**：设置页 scout 开关与每日条数、`scout/latest`、预算双向共享（nudge 优先）、按 provider kind 分派搜索（Webclaw key 不再被发到 DeepSeek 端点）、scout 开关按「DeepSeek-capable」门控、收藏条目挂到 lesson 参考资料、`study.scout_saved/quiz` 带 item index 保证重复点击幂等。新增 `apps/server/scripts/study-scout-smoke.ts` 手动探针。全量 429 测试绿。
 - **本地闭环实跑（2026-10-31）**：本地库已有 1 个目标 / 1 个激活计划 / 229 个节点 / 157 个会话；10-31 提交过一次检查（0.16），掌握度写回并在 2026-11-01 安排了复习；lesson enrichment 在 10-28、10-29、10-31 各成功一次。也就是说「计划 → 今天 → 细化 → 检查 → 掌握度 → 复习」已经真实跑通，剩下的是 Scout 与提醒渠道。
+- **搜索配置独立（2026-11-01）**：新增 `provider_configs.slot = "web_search"`（provider 固定 `deepseek`）、
+  `GET/PUT /config/provider/web-search`、设置页「模型与记忆 › 联网搜索」卡片。
+  `resolveWebProvider` 优先读这个槽位，槽位存在但停用/缺 key 时显式返回 `null`；
+  未配置槽位的老 profile 才回退到「推理 provider 是 DeepSeek」或 Webclaw env。
+  原因：搜索与推理是两笔账单、两个用途，OpenCode Go 不代理 `/v1/tools/*`。
 
 ## Next Exact Step
 
-1. **给 Scout 配搜索密钥（唯一硬阻塞）**：profile 的推理 provider 是 openrouter / opencode，
-   都不是 DeepSeek host，`.env` 里也没有 `NEOBUNI_WEBCLAW_API_KEY`，所以
-   `POST /study/goals/{goalId}/scout/run` 现在干净地返回 `available:false` +
-   「缺少搜索服务密钥：请在「记忆理解与路由」里配置 DeepSeek 的 API Key」。
-   二选一：在「记忆理解与路由」加一个 DeepSeek provider，或设置 `NEOBUNI_WEBCLAW_API_KEY`。
+1. **给 Scout 配搜索密钥（唯一硬阻塞）**：搜索与推理已经拆成两个独立槽位。
+   到「模型与记忆 › 联网搜索」填一个 DeepSeek 平台 API Key 并启用即可
+   （`provider_configs.slot = "web_search"`，与「记忆理解与路由」互不影响；
+   OpenCode Go 不代理 `/v1/tools/*`）。也可以改用 `NEOBUNI_WEBCLAW_API_KEY`。
    配好后先跑手动探针（不需要登录，也不需要 server）：
 
    ```bash

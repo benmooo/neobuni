@@ -28,6 +28,11 @@ Design doc (source of truth): `apps/fumadocs/content/docs/buni/study/study-scout
   `rerank_score` / `authority` / `date` mapped onto `WebSearchResultItem`).
   `provider.ts` resolves the backend, `dispatch.ts` dispatches search/fetch on the
   resolved `kind` so a Webclaw key is never sent to the DeepSeek endpoint.
+  The key lives in its own `web_search` provider slot
+  (`GET/PUT /config/provider/web-search`, settings → 模型与记忆 → 联网搜索),
+  not in 记忆理解与路由: search and inference are different purposes and different
+  bills. A profile that never configured the slot still falls back to a DeepSeek
+  reasoning key, then to `NEOBUNI_WEBCLAW_API_KEY`.
 - **Planner** — `apps/server/src/study/scout-service.ts`:
   `buildScoutProfile` (recent 14 days · upcoming 3 days · weak mastery < 0.6,
   weak first), `buildScoutQueries` (six deterministic templates per topic with
@@ -75,27 +80,25 @@ Design doc (source of truth): `apps/fumadocs/content/docs/buni/study/study-scout
 
 ## Known gap — why it is not live yet
 
-`resolveWebProvider` only produces a backend when the profile's
-`memory_reasoning` provider **is DeepSeek** (`provider === "deepseek"` or a
-`*.deepseek.com` base url) or `NEOBUNI_WEBCLAW_API_KEY` is set.
-
-The local profile currently has `memory_reasoning = opencode`
-(`https://opencode.ai/inference/go/openai/v1`) and no Webclaw key, so:
+Search has its own configuration now, but the local profile has not filled it
+in: `provider_configs` has no `web_search` row and there is no
+`NEOBUNI_WEBCLAW_API_KEY`, so:
 
 - `scout/run` answers `{available: false, reason: …}`,
 - the worker stays silent,
 - the six `study.scout_error` rows in `.data/local.db` are 404s from the
   pre-dispatch run (2026-10-31 19:35Z) and were not retried afterwards.
 
-The OpenCode Go key cannot call `/v1/tools/*`: that endpoint is billed against the
-DeepSeek platform balance, not the OpenCode gateway.
+The OpenCode Go key cannot call `/v1/tools/*`: those endpoints are billed against
+the DeepSeek platform balance, and Go only proxies chat/responses/messages (a
+direct `POST /inference/go/openai/v1/embeddings` returns 404 as well).
 
 ## Next Exact Step
 
-1. Give the profile a real DeepSeek platform key (provider `deepseek`) or set
-   `NEOBUNI_WEBCLAW_API_KEY`, then restart the server.
-2. Run `POST /study/goals/{goalId}/scout/run` and confirm ranked candidates with
-   reasons and absolute https urls.
+1. Settings → 模型与记忆 → 联网搜索: paste a real DeepSeek platform key (base URL
+   `https://api.deepseek.com`) and enable it, then restart the server.
+2. Run `POST /study/goals/{goalId}/scout/run` (or the smoke script) and confirm
+   ranked candidates with reasons and absolute https urls.
 3. Configure a Telegram channel, wait for the pre-window slot (or trigger a run),
    and click 收藏 / 出题 / 不感兴趣 / 明晚再看 once each. Confirm
    `study.scout_*` events, the lesson 参考资料 entry and the 3 new checks.
