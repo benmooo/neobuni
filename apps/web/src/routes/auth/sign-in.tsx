@@ -13,10 +13,6 @@ import { z } from "zod";
 
 import { AuthField } from "@/components/auth/AuthField";
 import {
-  createBlurThenChangeValidators,
-  readValidationMessage,
-} from "@/components/auth/auth-form";
-import {
   AuthFooter,
   AuthNotice,
   authInlineLinkClassName,
@@ -24,6 +20,10 @@ import {
 } from "@/components/auth/auth-ui";
 import { authClient } from "@/lib/auth-client";
 import { resolveSignInFailureToast } from "@/lib/auth-flow";
+import {
+  blurThenChangeValidation,
+  readValidationMessage,
+} from "@/lib/form-errors";
 
 const signInSchema = z.object({
   email: z.email("请输入有效的邮箱地址。"),
@@ -56,7 +56,7 @@ function SignInPage() {
       email: "",
       password: "",
     },
-    validators: createBlurThenChangeValidators(signInSchema),
+    ...blurThenChangeValidation(signInSchema),
     onSubmit: async ({ value }) => {
       const result = await authClient.signIn.email(value);
 

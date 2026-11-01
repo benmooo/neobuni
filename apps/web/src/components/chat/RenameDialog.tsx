@@ -11,7 +11,10 @@ import { useForm } from "@tanstack/react-form";
 import { z } from "zod";
 
 import { FormFieldBlock } from "@/components/form/FormFieldBlock";
-import { readValidationMessage } from "@/lib/form-errors";
+import {
+  blurThenChangeValidation,
+  readValidationMessage,
+} from "@/lib/form-errors";
 
 import { useRenameConversation } from "../../hooks/use-conversation-list";
 
@@ -33,10 +36,7 @@ function RenameDialog({ open, onClose, conversationId, currentTitle }: Props) {
     defaultValues: {
       title: currentTitle,
     },
-    validators: {
-      onBlur: renameConversationSchema,
-      onSubmit: renameConversationSchema,
-    },
+    ...blurThenChangeValidation(renameConversationSchema),
     onSubmit: async ({ value }) => {
       const trimmed = value.title.trim();
 

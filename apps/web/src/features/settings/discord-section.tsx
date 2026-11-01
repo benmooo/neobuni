@@ -26,7 +26,10 @@ import {
   FormToggleField,
 } from "@/components/form/FormFieldBlock";
 import { api } from "@/lib/api";
-import { readValidationMessage } from "@/lib/form-errors";
+import {
+  blurThenChangeValidation,
+  readValidationMessage,
+} from "@/lib/form-errors";
 import {
   getMessagingPlatformDescription,
   getMessagingTargetEmptyState,
@@ -199,10 +202,7 @@ function DiscordConfigForm({
 
   const form = useForm({
     defaultValues: initialValue,
-    validators: {
-      onBlur: discordFormSchema,
-      onSubmit: discordFormSchema,
-    },
+    ...blurThenChangeValidation(discordFormSchema),
     onSubmit: async ({ value }) => {
       setSubmitError(null);
 

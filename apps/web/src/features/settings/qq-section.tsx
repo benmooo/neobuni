@@ -26,7 +26,10 @@ import {
   FormToggleField,
 } from "@/components/form/FormFieldBlock";
 import { api } from "@/lib/api";
-import { readValidationMessage } from "@/lib/form-errors";
+import {
+  blurThenChangeValidation,
+  readValidationMessage,
+} from "@/lib/form-errors";
 
 import {
   getMessagingPlatformDescription,
@@ -230,10 +233,7 @@ function QqConfigForm({
 
   const form = useForm({
     defaultValues: initialValue,
-    validators: {
-      onBlur: qqFormSchema,
-      onSubmit: qqFormSchema,
-    },
+    ...blurThenChangeValidation(qqFormSchema),
     onSubmit: async ({ value }) => {
       setSubmitError(null);
 

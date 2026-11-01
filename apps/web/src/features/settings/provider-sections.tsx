@@ -26,7 +26,10 @@ import {
   FormToggleField,
 } from "@/components/form/FormFieldBlock";
 import { api } from "@/lib/api";
-import { readValidationMessage } from "@/lib/form-errors";
+import {
+  blurThenChangeValidation,
+  readValidationMessage,
+} from "@/lib/form-errors";
 
 import { FieldHint, getMutationErrorMessage, Section } from "./shared";
 
@@ -500,10 +503,7 @@ function ChatProviderForm({
 
   const form = useForm({
     defaultValues: initialValue,
-    validators: {
-      onBlur: chatProviderFormSchema,
-      onSubmit: chatProviderFormSchema,
-    },
+    ...blurThenChangeValidation(chatProviderFormSchema),
     onSubmit: async ({ value }) => {
       setSubmitError(null);
 
@@ -781,10 +781,7 @@ function MemoryEmbeddingForm({
 
   const form = useForm({
     defaultValues: initialValue,
-    validators: {
-      onBlur: embeddingProviderFormSchema,
-      onSubmit: embeddingProviderFormSchema,
-    },
+    ...blurThenChangeValidation(embeddingProviderFormSchema),
     onSubmit: async ({ value }) => {
       setSubmitError(null);
 
@@ -1054,10 +1051,7 @@ function MemoryReasoningForm({
 
   const form = useForm({
     defaultValues: initialValue,
-    validators: {
-      onBlur: reasoningProviderFormSchema,
-      onSubmit: reasoningProviderFormSchema,
-    },
+    ...blurThenChangeValidation(reasoningProviderFormSchema),
     onSubmit: async ({ value }) => {
       setSubmitError(null);
 

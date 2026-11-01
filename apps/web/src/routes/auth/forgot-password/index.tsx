@@ -7,7 +7,6 @@ import { useState } from "react";
 import { z } from "zod";
 
 import { AuthField } from "@/components/auth/AuthField";
-import { readValidationMessage } from "@/components/auth/auth-form";
 import {
   AuthFooter,
   AuthNotice,
@@ -16,6 +15,10 @@ import {
 } from "@/components/auth/auth-ui";
 import { authClient } from "@/lib/auth-client";
 import { buildAuthCallbackUrl, getAuthErrorMessage } from "@/lib/auth-flow";
+import {
+  blurThenChangeValidation,
+  readValidationMessage,
+} from "@/lib/form-errors";
 
 const forgotPasswordSchema = z.object({
   email: z.email("请输入有效的邮箱地址。"),
@@ -33,10 +36,7 @@ function ForgotPasswordPage() {
     defaultValues: {
       email: "",
     },
-    validators: {
-      onBlur: forgotPasswordSchema,
-      onSubmit: forgotPasswordSchema,
-    },
+    ...blurThenChangeValidation(forgotPasswordSchema),
     onSubmit: async ({ value }) => {
       setSubmitError(null);
 

@@ -7,7 +7,6 @@ import { useState } from "react";
 import { z } from "zod";
 
 import { AuthField } from "@/components/auth/AuthField";
-import { readValidationMessage } from "@/components/auth/auth-form";
 import {
   AuthFooter,
   AuthNotice,
@@ -16,6 +15,10 @@ import {
 } from "@/components/auth/auth-ui";
 import { authClient } from "@/lib/auth-client";
 import { getAuthErrorMessage } from "@/lib/auth-flow";
+import {
+  blurThenChangeValidation,
+  readValidationMessage,
+} from "@/lib/form-errors";
 
 const resetPasswordSearchSchema = z.object({
   token: z.string().optional(),
@@ -55,10 +58,7 @@ function ResetPasswordPage() {
       password: "",
       confirmPassword: "",
     },
-    validators: {
-      onBlur: resetPasswordSchema,
-      onSubmit: resetPasswordSchema,
-    },
+    ...blurThenChangeValidation(resetPasswordSchema),
     onSubmit: async ({ value }) => {
       if (!search.token) {
         setSubmitError("缺少重置 token，请重新申请一次重置邮件。");

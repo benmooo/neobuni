@@ -1,4 +1,9 @@
-import type { ValidationError } from "@tanstack/react-form";
+import type {
+  AnyFormApi,
+  ValidationError,
+  ValidationLogicFn,
+  ValidationLogicValidatorsFn,
+} from "@tanstack/react-form";
 import type { z } from "zod";
 
 // Use a form-level error for composite inputs whose nested fields are not registered.
@@ -57,4 +62,52 @@ const readValidationMessage = (
   return null;
 };
 
-export { readValidationMessage, validateCompositeForm };
+// A field counts as "left behind" once it has been blurred, and the whole form
+// once it has been submitted. Until then edits stay silent so nothing flashes
+// while the first characters are typed.
+const hasLeftAField = (form: AnyFormApi): boolean =>
+  form.state.submissionAttempts > 0 ||
+  Object.values(form.state.fieldMeta).some((meta) => meta?.isBlurred === true);
+
+/**
+ * Validation strategy to pair with a single `onDynamic` validator.
+ *
+ * TanStack Form keeps one error entry per validation cause, so a field that was
+ * validated on blur keeps its blur error even after a later change passes.
+ * Routing every cause through `onDynamic` means each run overwrites the
+ * previous message, so an error disappears as soon as the value is fixed.
+ *
+ * Runs on blur and submit always, and on change once `hasLeftAField` is true.
+ */
+const blurThenChangeValidationLogic: ValidationLogicFn = (props) => {
+  const { event, form, validators } = props;
+
+  if (event.type === "mount" || event.type === "server") {
+    return props.runValidation({ form, validators: [] });
+  }
+
+  const shouldValidate =
+    event.type === "blur" || event.type === "submit" || hasLeftAField(form);
+
+  const dynamicValidator: ValidationLogicValidatorsFn | undefined =
+    shouldValidate
+      ? {
+          cause: "dynamic",
+          fn: event.async ? validators?.onDynamicAsync : validators?.onDynamic,
+        }
+      : undefined;
+
+  return props.runValidation({ form, validators: [dynamicValidator] });
+};
+
+const blurThenChangeValidation = <TValidator>(validator: TValidator) => ({
+  validators: { onDynamic: validator },
+  validationLogic: blurThenChangeValidationLogic,
+});
+
+export {
+  blurThenChangeValidation,
+  blurThenChangeValidationLogic,
+  readValidationMessage,
+  validateCompositeForm,
+};

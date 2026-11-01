@@ -61,7 +61,10 @@ import { TelegramSection } from "@/features/settings/telegram-section";
 import { StudySettingsSection } from "@/features/study/study-settings-section";
 import { api } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
-import { readValidationMessage } from "@/lib/form-errors";
+import {
+  blurThenChangeValidation,
+  readValidationMessage,
+} from "@/lib/form-errors";
 
 export const Route = createFileRoute("/_app/settings/")({
   component: SettingsPage,
@@ -563,10 +566,7 @@ function ProfileTimezoneForm({
     defaultValues: {
       timezone: profile.timezone ?? "",
     },
-    validators: {
-      onBlur: profileTimezoneFormSchema,
-      onSubmit: profileTimezoneFormSchema,
-    },
+    ...blurThenChangeValidation(profileTimezoneFormSchema),
     onSubmit: async ({ value }) => {
       setSubmitError(null);
 
@@ -710,10 +710,7 @@ function BuniIdentityForm({
       aiName: config.aiName ?? "Buni",
       avatarUri: config.avatarUri ?? "",
     },
-    validators: {
-      onBlur: buniIdentityFormSchema,
-      onSubmit: buniIdentityFormSchema,
-    },
+    ...blurThenChangeValidation(buniIdentityFormSchema),
     onSubmit: async ({ value }) => {
       setSubmitError(null);
 
@@ -999,10 +996,7 @@ function SoulSectionForm({
       addressingMode: config.expression.addressing.mode,
       preferredAddress: config.expression.addressing.preferredName,
     },
-    validators: {
-      onBlur: soulFormSchema,
-      onSubmit: soulFormSchema,
-    },
+    ...blurThenChangeValidation(soulFormSchema),
     onSubmit: async ({ value }) => {
       setSubmitError(null);
 
@@ -1425,10 +1419,7 @@ function UserProfileForm({
       userName: config.userName ?? "You",
       userPersona: config.userPersona ?? "",
     },
-    validators: {
-      onBlur: userProfileFormSchema,
-      onSubmit: userProfileFormSchema,
-    },
+    ...blurThenChangeValidation(userProfileFormSchema),
     onSubmit: async ({ value }) => {
       setSubmitError(null);
 

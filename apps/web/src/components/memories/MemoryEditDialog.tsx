@@ -27,7 +27,10 @@ import {
   FormFieldBlock,
   FormToggleField,
 } from "@/components/form/FormFieldBlock";
-import { readValidationMessage } from "@/lib/form-errors";
+import {
+  blurThenChangeValidation,
+  readValidationMessage,
+} from "@/lib/form-errors";
 
 import {
   type MemoryType,
@@ -96,10 +99,7 @@ function MemoryEditDialog({ open, onClose, initial }: Props) {
       importance: initial?.importance ?? 0.5,
       unresolved: initial?.unresolved ?? false,
     },
-    validators: {
-      onBlur: memoryFormSchema,
-      onSubmit: memoryFormSchema,
-    },
+    ...blurThenChangeValidation(memoryFormSchema),
     onSubmit: async ({ value }) => {
       setSubmitError(null);
 

@@ -27,6 +27,7 @@ import {
 } from "@/components/form/FormFieldBlock";
 import { api } from "@/lib/api";
 import {
+  blurThenChangeValidation,
   readValidationMessage,
   validateCompositeForm,
 } from "@/lib/form-errors";
@@ -282,11 +283,9 @@ function TelegramConfigForm({
 
   const form = useForm({
     defaultValues: initialValue,
-    validators: {
-      onChange: ({ value }) => validateCompositeForm(telegramFormSchema, value),
-      onBlur: ({ value }) => validateCompositeForm(telegramFormSchema, value),
-      onSubmit: ({ value }) => validateCompositeForm(telegramFormSchema, value),
-    },
+    ...blurThenChangeValidation(({ value }: { value: TelegramFormValue }) =>
+      validateCompositeForm(telegramFormSchema, value)
+    ),
     onSubmit: async ({ value }) => {
       setSubmitError(null);
 

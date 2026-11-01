@@ -26,7 +26,10 @@ import {
   FormToggleField,
 } from "@/components/form/FormFieldBlock";
 import { api } from "@/lib/api";
-import { readValidationMessage } from "@/lib/form-errors";
+import {
+  blurThenChangeValidation,
+  readValidationMessage,
+} from "@/lib/form-errors";
 
 import {
   getMessagingPlatformDescription,
@@ -225,10 +228,7 @@ function FeishuConfigForm({
 
   const form = useForm({
     defaultValues: initialValue,
-    validators: {
-      onBlur: feishuFormSchema,
-      onSubmit: feishuFormSchema,
-    },
+    ...blurThenChangeValidation(feishuFormSchema),
     onSubmit: async ({ value }) => {
       setSubmitError(null);
 

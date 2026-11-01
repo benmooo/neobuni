@@ -13,10 +13,6 @@ import { z } from "zod";
 
 import { AuthField } from "@/components/auth/AuthField";
 import {
-  createBlurThenChangeValidators,
-  readValidationMessage,
-} from "@/components/auth/auth-form";
-import {
   AuthFooter,
   AuthNotice,
   authInlineLinkClassName,
@@ -27,6 +23,10 @@ import {
   getAuthErrorMessage,
   resolvePostSignUpRedirect,
 } from "@/lib/auth-flow";
+import {
+  blurThenChangeValidation,
+  readValidationMessage,
+} from "@/lib/form-errors";
 
 const signUpSchema = z.object({
   name: z.string().trim().min(1, "请输入昵称。"),
@@ -55,7 +55,7 @@ function SignUpPage() {
       email: "",
       password: "",
     },
-    validators: createBlurThenChangeValidators(signUpSchema),
+    ...blurThenChangeValidation(signUpSchema),
     onSubmit: async ({ value }) => {
       setSubmitError(null);
 
