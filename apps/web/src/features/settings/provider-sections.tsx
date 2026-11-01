@@ -2,6 +2,7 @@ import {
   OPENCODE_DEFAULT_BASE_URL,
   type ProviderConfig,
   providerConfigInputSchema,
+  webSearchProviderConfigInputSchema,
 } from "@neobuni/contracts";
 import { Button } from "@neobuni/ui/components/button";
 import { Card, CardContent } from "@neobuni/ui/components/card";
@@ -17,7 +18,7 @@ import { Slider } from "@neobuni/ui/components/slider";
 import { Switch } from "@neobuni/ui/components/switch";
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { type FormEvent, useState } from "react";
 import { z } from "zod";
 
 import {
@@ -197,6 +198,19 @@ const memoryReasoningPresets: Record<ReasoningProviderValue, ProviderPreset> = {
   },
 };
 
+/**
+ * Search is deliberately separate from inference: DeepSeek Search/Fetch has
+ * its own bill and is not proxied by OpenCode Go, so the key lives in its own
+ * slot instead of borrowing the memory reasoning provider.
+ */
+const WEB_SEARCH_DEFAULT_BASE_URL = "https://api.deepseek.com";
+
+interface WebSearchFormValue {
+  apiKey: string;
+  baseUrl: string;
+  enabled: boolean;
+}
+
 const chatProviderFormSchema = z
   .object({
     provider: z.enum([
@@ -288,6 +302,14 @@ const reasoningProviderFormSchema = z
       });
     }
   });
+
+const buildWebSearchInitialValue = (
+  config: ProviderConfig | null | undefined
+): WebSearchFormValue => ({
+  apiKey: config?.apiKey ?? "",
+  baseUrl: config?.baseUrl || WEB_SEARCH_DEFAULT_BASE_URL,
+  enabled: config?.enabled ?? true,
+});
 
 const shouldReplacePresetValue = (value: string, previousDefault: string) =>
   value.trim().length === 0 || value === previousDefault;
@@ -1280,4 +1302,152 @@ function MemoryReasoningForm({
   );
 }
 
-export { ChatProviderSection, MemoryEmbeddingSection, MemoryReasoningSection };
+function WebSearchSection() {
+  const queryClient = useQueryClient();
+  const { data: config, isLoading } = useQuery({
+    queryKey: ["config", "provider", "web_search"],
+    queryFn: () => api.config.provider.webSearch.get(),
+  });
+
+  if (isLoading) {
+    return (
+      <Section
+        description="Study Scout 联网检索用的 DeepSeek Search / Fetch 密钥（与推理 provider 分开）"
+        title="联网搜索"
+      >
+        <Card size="sm">
+          <CardContent className="text-muted-foreground text-sm">
+            加载中…
+          </CardContent>
+        </Card>
+      </Section>
+    );
+  }
+
+  return (
+    <WebSearchForm
+      initialValue={buildWebSearchInitialValue(config)}
+      key={config?.id ?? "provider-config-web-search-default"}
+      onSaved={() => {
+        queryClient.invalidateQueries({
+          queryKey: ["config", "provider", "web_search"],
+        });
+      }}
+    />
+  );
+}
+
+function WebSearchForm({
+  initialValue,
+  onSaved,
+}: {
+  initialValue: WebSearchFormValue;
+  onSaved: () => void;
+}) {
+  const [value, setValue] = useState(initialValue);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const save = useMutation({
+    mutationFn: async (next: WebSearchFormValue) => {
+      await api.config.provider.webSearch.update({
+        provider: "deepseek",
+        ...next,
+      });
+    },
+    onSuccess: onSaved,
+  });
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setSubmitError(null);
+
+    const parsed = webSearchProviderConfigInputSchema.safeParse({
+      provider: "deepseek",
+      ...value,
+    });
+
+    if (!parsed.success) {
+      setSubmitError(parsed.error.issues[0]?.message ?? "配置不合法");
+      return;
+    }
+
+    try {
+      await save.mutateAsync(value);
+    } catch (error) {
+      setSubmitError(getMutationErrorMessage(error));
+    }
+  };
+
+  const canSubmit = value.apiKey.trim().length > 0 && !save.isPending;
+
+  return (
+    <Section
+      description="Study Scout 联网检索用的 DeepSeek Search / Fetch 密钥（与推理 provider 分开）"
+      title="联网搜索"
+    >
+      <form className="flex flex-col gap-3" onSubmit={handleSubmit}>
+        <FormFieldBlock
+          hint="按 $0.75 / 1000 次成功请求计费，从 DeepSeek 平台余额扣除；OpenCode Go 订阅不代理这个接口。"
+          label="API Key"
+        >
+          <Input
+            onChange={(event) =>
+              setValue((current) => ({
+                ...current,
+                apiKey: event.target.value,
+              }))
+            }
+            placeholder="sk-..."
+            type="password"
+            value={value.apiKey}
+          />
+        </FormFieldBlock>
+
+        <FormFieldBlock
+          hint="默认 https://api.deepseek.com；请求时会自动拼接 /v1/tools/search 与 /v1/tools/fetch。"
+          label="Base URL"
+        >
+          <Input
+            onChange={(event) =>
+              setValue((current) => ({
+                ...current,
+                baseUrl: event.target.value,
+              }))
+            }
+            placeholder={WEB_SEARCH_DEFAULT_BASE_URL}
+            value={value.baseUrl}
+          />
+        </FormFieldBlock>
+
+        <FormToggleField label="启用">
+          <Switch
+            checked={value.enabled}
+            onCheckedChange={(enabled) =>
+              setValue((current) => ({ ...current, enabled }))
+            }
+          />
+        </FormToggleField>
+
+        {submitError ? (
+          <FieldHint tone="destructive">{submitError}</FieldHint>
+        ) : null}
+
+        <Button
+          className="self-end"
+          disabled={!canSubmit}
+          size="sm"
+          type="submit"
+        >
+          {save.isPending ? "保存中…" : "保存"}
+        </Button>
+      </form>
+    </Section>
+  );
+}
+
+export {
+  ChatProviderSection,
+  MemoryEmbeddingSection,
+  MemoryReasoningSection,
+  WebSearchSection,
+};

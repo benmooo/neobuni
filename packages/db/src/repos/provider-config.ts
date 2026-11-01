@@ -9,7 +9,7 @@ import { Effect } from "effect";
 import { db, fromPromise } from "../client";
 import { providerConfigsTable } from "../schema";
 
-type Slot = "chat" | "memory_embedding" | "memory_reasoning";
+type Slot = "chat" | "memory_embedding" | "memory_reasoning" | "web_search";
 
 const deriveProtocol = (
   provider: ProviderVendor,
@@ -192,6 +192,12 @@ const getMemoryReasoningProviderConfig = Effect.fnUntraced(function* (
   return yield* getProviderConfigBySlot(profileId, "memory_reasoning");
 });
 
+const getWebSearchProviderConfig = Effect.fnUntraced(function* (
+  profileId: string
+) {
+  return yield* getProviderConfigBySlot(profileId, "web_search");
+});
+
 const upsertProviderConfig = Effect.fnUntraced(function* (
   profileId: string,
   slot: Slot,
@@ -267,5 +273,6 @@ export {
   getMemoryReasoningProviderConfig,
   getProviderConfig,
   getProviderConfigBySlot,
+  getWebSearchProviderConfig,
   upsertProviderConfig,
 };

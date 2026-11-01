@@ -3,6 +3,7 @@ import {
   type ProviderConfig,
   providerConfigInputSchema,
   soulConfigInputSchema,
+  webSearchProviderConfigInputSchema,
 } from "@neobuni/contracts";
 import {
   getAgentConfig,
@@ -11,6 +12,7 @@ import {
   getMemoryReasoningProviderConfig,
   getProviderConfig,
   getSoulConfig,
+  getWebSearchProviderConfig,
   upsertAgentConfig,
   upsertProviderConfig,
   upsertSoulConfig,
@@ -24,6 +26,12 @@ import { run } from "../run";
 // `GET/PUT /config/messaging/discord`, and `GET/PUT /config/messaging/telegram`
 // need the messaging integration modules from `apps/server/src/integrations`
 // (they fall back to environment-configured defaults before hitting the DB).
+
+/**
+ * Web search has no model choice; the config table still needs a non-empty
+ * model, so store a stable marker instead of pretending it is an LLM.
+ */
+const WEB_SEARCH_MODEL = "deepseek-search";
 
 const summarizeProviderConfig = (config: ProviderConfig | null) => {
   if (!config) {
@@ -56,16 +64,21 @@ export const configRouter = {
       path: "/config/runtime",
       summary: "Get the runtime configuration summary",
       description:
-        "Return the database runtime status plus a redacted summary of the chat, memory embedding, and memory reasoning providers.",
+        "Return the database runtime status plus a redacted summary of the chat, memory embedding, memory reasoning, and web search providers.",
       tags: ["Config"],
     })
     .handler(async ({ context }) => {
-      const [chatConfig, memoryEmbeddingConfig, memoryReasoningConfig] =
-        await Promise.all([
-          run(getProviderConfig(context.profileId)),
-          run(getMemoryEmbeddingProviderConfig(context.profileId)),
-          run(getMemoryReasoningProviderConfig(context.profileId)),
-        ]);
+      const [
+        chatConfig,
+        memoryEmbeddingConfig,
+        memoryReasoningConfig,
+        webSearchConfig,
+      ] = await Promise.all([
+        run(getProviderConfig(context.profileId)),
+        run(getMemoryEmbeddingProviderConfig(context.profileId)),
+        run(getMemoryReasoningProviderConfig(context.profileId)),
+        run(getWebSearchProviderConfig(context.profileId)),
+      ]);
 
       const database = await getDatabaseHealth();
 
@@ -76,6 +89,7 @@ export const configRouter = {
           chat: summarizeProviderConfig(chatConfig),
           memoryEmbedding: summarizeProviderConfig(memoryEmbeddingConfig),
           memoryReasoning: summarizeProviderConfig(memoryReasoningConfig),
+          webSearch: summarizeProviderConfig(webSearchConfig),
         },
       };
     }),
@@ -218,6 +232,41 @@ export const configRouter = {
         .handler(({ input, context }) =>
           run(
             upsertProviderConfig(context.profileId, "memory_reasoning", input)
+          )
+        ),
+    },
+
+    webSearch: {
+      get: protectedProcedure
+        .route({
+          method: "GET",
+          path: "/config/provider/web-search",
+          summary: "Get the web search provider",
+          description:
+            "Return the DeepSeek Search/Fetch configuration used by Study Scout, including the API key. This key is independent from the chat and memory providers.",
+          tags: ["Config"],
+        })
+        .handler(({ context }) =>
+          run(getWebSearchProviderConfig(context.profileId))
+        ),
+
+      update: protectedProcedure
+        .route({
+          method: "PUT",
+          path: "/config/provider/web-search",
+          summary: "Replace the web search provider",
+          description:
+            "Upsert the DeepSeek Search/Fetch key, base URL, and enabled flag. Search is billed against the DeepSeek platform balance and is not proxied by inference gateways.",
+          tags: ["Config"],
+        })
+        .input(webSearchProviderConfigInputSchema)
+        .handler(({ input, context }) =>
+          run(
+            upsertProviderConfig(context.profileId, "web_search", {
+              ...input,
+              model: WEB_SEARCH_MODEL,
+              protocol: "openai",
+            })
           )
         ),
     },

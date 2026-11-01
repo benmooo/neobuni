@@ -5,6 +5,7 @@ import {
   OPENCODE_DEFAULT_BASE_URL,
   providerConfigInputSchema,
   providerModelListInputSchema,
+  webSearchProviderConfigInputSchema,
 } from "./provider";
 
 const baseInput = {
@@ -65,6 +66,35 @@ describe("provider config contracts", () => {
     expect(OPENCODE_CONSOLE_BASE_URL).toBe(
       "https://opencode.ai/inference/openai/v1"
     );
+  });
+});
+
+describe("web search provider contracts", () => {
+  test("defaults to DeepSeek with an empty base URL", () => {
+    const parsed = webSearchProviderConfigInputSchema.parse({
+      apiKey: "sk-search",
+    });
+
+    expect(parsed.provider).toBe("deepseek");
+    expect(parsed.baseUrl).toBe("");
+    expect(parsed.enabled).toBe(true);
+  });
+
+  test("requires a search key of its own", () => {
+    const result = webSearchProviderConfigInputSchema.safeParse({
+      apiKey: "",
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  test("rejects a malformed base URL", () => {
+    const result = webSearchProviderConfigInputSchema.safeParse({
+      apiKey: "sk-search",
+      baseUrl: "not a url",
+    });
+
+    expect(result.success).toBe(false);
   });
 });
 

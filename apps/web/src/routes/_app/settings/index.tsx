@@ -47,6 +47,7 @@ import {
   ChatProviderSection,
   MemoryEmbeddingSection,
   MemoryReasoningSection,
+  WebSearchSection,
 } from "@/features/settings/provider-sections";
 import { QqSection } from "@/features/settings/qq-section";
 import {
@@ -1619,12 +1620,13 @@ function SettingsPage() {
 
           {activeCategory === "models" && (
             <SectionGroup
-              description="聊天主链与记忆的 provider 设置。"
+              description="聊天主链、记忆与联网检索的 provider 设置。"
               title="模型与记忆"
             >
               <ChatProviderSection />
               <MemoryEmbeddingSection />
               <MemoryReasoningSection />
+              <WebSearchSection />
             </SectionGroup>
           )}
 

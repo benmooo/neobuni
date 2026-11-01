@@ -52,6 +52,7 @@ const expectedRoutes = [
   ["GET", "/config/provider/memory-embedding", "Config"],
   ["GET", "/config/provider/memory-reasoning", "Config"],
   ["GET", "/config/provider/models", "Config"],
+  ["GET", "/config/provider/web-search", "Config"],
   ["GET", "/config/runtime", "Config"],
   ["GET", "/config/soul", "Config"],
   ["GET", "/conversations", "Conversations"],
@@ -131,6 +132,7 @@ const expectedRoutes = [
   ["PUT", "/config/provider", "Config"],
   ["PUT", "/config/provider/memory-embedding", "Config"],
   ["PUT", "/config/provider/memory-reasoning", "Config"],
+  ["PUT", "/config/provider/web-search", "Config"],
   ["PUT", "/config/soul", "Config"],
 ] as const;
 

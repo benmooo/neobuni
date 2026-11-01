@@ -131,6 +131,33 @@ const providerConfigInputSchema = z
     }
   });
 
+/**
+ * Web search is a separate purpose from inference: DeepSeek bills
+ * `/v1/tools/search` and `/v1/tools/fetch` against the platform balance, not
+ * against an inference provider, and a gateway such as OpenCode Go does not
+ * proxy them. Keep its key independent from the chat/reasoning providers.
+ */
+const webSearchProviderConfigInputSchema = z
+  .object({
+    provider: z.literal("deepseek").default("deepseek"),
+    apiKey: z.string().trim().min(1).max(400),
+    baseUrl: z.string().trim().max(500).default(""),
+    enabled: z.boolean().default(true),
+  })
+  .superRefine((value, ctx) => {
+    if (value.baseUrl.length === 0) {
+      return;
+    }
+
+    if (!z.url().safeParse(value.baseUrl).success) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["baseUrl"],
+        message: "Base URL must be a valid URL.",
+      });
+    }
+  });
+
 const providerModelListInputSchema = z.object({
   provider: providerVendorSchema,
   baseUrl: z.string().trim().max(500).default(""),
@@ -157,6 +184,7 @@ export {
   providerModelListSchema,
   providerProtocolSchema,
   providerVendorSchema,
+  webSearchProviderConfigInputSchema,
 };
 
 export type ProviderConfig = z.infer<typeof providerConfigSchema>;
@@ -167,3 +195,6 @@ export type ProviderModelListInput = z.infer<
 export type ProviderConfigInput = z.infer<typeof providerConfigInputSchema>;
 export type ProviderProtocol = z.infer<typeof providerProtocolSchema>;
 export type ProviderVendor = z.infer<typeof providerVendorSchema>;
+export type WebSearchProviderConfigInput = z.infer<
+  typeof webSearchProviderConfigInputSchema
+>;

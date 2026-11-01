@@ -56,7 +56,7 @@ Study Scout 让 Buni 每天主动"上网找学过的、即将学的、学得不�
 | 决策 | 选择 | 理由 |
 | --- | --- | --- |
 | 搜索后端 | **DeepSeek Search / Fetch API** | 官方独立端点、$0.75/1k 成功请求（业界最低档），响应自带 `rerank_score`（0–3）与 `authority`（0–4），等于免费送一层质量信号，可省掉 LLM 预筛 |
-| Key 来源 | 复用 profile 在 DB 里已配置的 provider `apiKey` | 不新增 env；与该 profile 的推理 provider 同一把 key、同一 host（`api.deepseek.com`） |
+| Key 来源 | 独立的 `web_search` provider 槽位（`provider=deepseek`） | 搜索与推理是两种用途、两笔账单；OpenCode Go 只代理推理，不代理 `/v1/tools/*`。把搜索 key 借放在「记忆理解与路由」里，会在切换推理 provider 时误伤 Scout |
 | 是否走 OpenCode Go 网关 | 否 | OpenCode 是纯推理网关（`https://opencode.ai/inference/go/openai/v1`，见 `packages/contracts/src/platform/config/provider.ts:22`），只转发 chat completion，不代理 `/v1/tools/*`；Search/Fetch 计费挂在 DeepSeek 平台余额上 |
 | 排序 | 确定性过滤 + **1 次 LLM 调用** | 每条候选都过 LLM 会把日成本放大 10 倍；1 次批量排序足够 |
 | 状态存储 | 事件流（`study.scout_*`） | 不建表；去重、抑制、观测都从事件推导，和 `reminder-worker` 的既有做法一致 |
@@ -173,8 +173,11 @@ fetchDeepSeekPage(input: {
   "blocked" | "not_found" | "rate_limited" | "timeout" | "upstream"`），调用方据此决定
   重试 / 降级 / 静默。
 - `apps/server/src/integrations/web/provider.ts`：
-  `resolveWebProvider(profileId)` → 读 `getMemoryReasoningProviderConfig(profileId)`；
-  `provider === "deepseek"` 或 `baseUrl` host 为 `api.deepseek.com` → deepseek 实现；
+  `resolveWebProvider(profileId)` → **先读独立的 `web_search` 槽位**
+  （`getWebSearchProviderConfig`）；槽位存在且启用且有 key → deepseek 实现
+  （`baseUrl` 缺省 `https://api.deepseek.com`）；槽位存在但被停用/缺 key → `null`
+  （显式关闭，不再回退）。只有**从未配置过该槽位**的 profile 才回退到旧行为：
+  推理 provider 是 `deepseek` 或 host 为 `api.deepseek.com` → deepseek 实现；
   否则若有 `NEOBUNI_WEBCLAW_API_KEY` → webclaw；都没有 → `null`（scout 静默关闭）。
 
 ## 9. 过滤 `filterCandidates`（全部免费）
@@ -299,9 +302,22 @@ studyScoutSettingsSchema = {
 两条路由都要加入 `apps/server/src/routes/study.openapi.test.ts` 与
 `apps/server/src/routes/api.openapi.test.ts` 的路由白名单（顺序敏感，2 空格缩进）。
 
+搜索密钥不走 study 路由，而是 provider 配置（`packages/api/src/routers/config.ts`，
+`tags: ["Config"]`，写入 `provider_configs.slot = "web_search"`）：
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| `GET` | `/config/provider/web-search` | 读取独立的 Search/Fetch provider（apiKey / baseUrl / enabled） |
+| `PUT` | `/config/provider/web-search` | 写入 `web_search` 槽位；provider 固定 `deepseek`，与推理 provider 互不影响 |
+
 ## 15. 设置与 UI
 
-`apps/web/src/features/study/study-settings-section.tsx` 新增「每日精选材料」卡片：
+`apps/web/src/features/settings/provider-sections.tsx` 新增「联网搜索」卡片：
+API Key、Base URL（默认 `https://api.deepseek.com`）、启用开关。它与
+「记忆理解与路由」是两套配置——搜索 key 只服务 Search/Fetch，按
+$0.75 / 1000 次请求计入 DeepSeek 平台余额。
+
+`apps/web/src/features/study/study-settings-section.tsx` 的「每日精选材料」卡片：
 
 - 开关（`scout.enabled`）、每日条数（1–3）、站点白名单（逗号分隔输入）、「立刻找一次」按钮 → `scout/run`，把预览结果列在卡片下方。
 - `scout.enabled === false` 时 worker 整条目标跳过（不发文、不计入 `goalCount`），手动「立刻找一次」仍然可用——那是用户显式发起的预览，不会推送。

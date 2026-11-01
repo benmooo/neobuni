@@ -128,16 +128,13 @@ function StudySettingsForm({
     null
   );
   const runScout = useRunStudyScout(goalId);
-  const reasoningProvider = useQuery({
-    queryKey: ["config", "provider", "memory_reasoning"],
-    queryFn: () => api.config.provider.memoryReasoning.get(),
+  const webSearchProvider = useQuery({
+    queryKey: ["config", "provider", "web_search"],
+    queryFn: () => api.config.provider.webSearch.get(),
     staleTime: 60_000,
   });
-  const reasoning = reasoningProvider.data;
-  const hasSearchKey =
-    Boolean(reasoning?.apiKey) &&
-    (reasoning?.provider === "deepseek" ||
-      (reasoning?.baseUrl ?? "").toLowerCase().includes("deepseek.com"));
+  const search = webSearchProvider.data;
+  const hasSearchKey = Boolean(search?.enabled) && Boolean(search?.apiKey);
   const telegramTargets = useTelegramChannelTargets();
   const testReminder = useSendStudyReminderTest(goalId);
   const telegramConfig = useQuery({
@@ -565,9 +562,9 @@ function StudySettingsForm({
 
           {hasSearchKey ? null : (
             <p className="text-muted-foreground text-xs">
-              当前 profile 未配置 DeepSeek
-              密钥，无法联网检索。到「记忆理解与路由」把 provider 切到 DeepSeek
-              并填上密钥即可使用。
+              当前 profile 未配置搜索密钥，无法联网检索。到「模型与记忆 ›
+              联网搜索」填一个 DeepSeek 平台 API Key 即可使用（与推理 provider
+              分开计费）。
             </p>
           )}
 
