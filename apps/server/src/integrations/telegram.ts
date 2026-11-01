@@ -60,6 +60,22 @@ interface SendTelegramMessageResult {
 
 const DEFAULT_TELEGRAM_API_BASE_URL = "https://api.telegram.org";
 
+/**
+ * Bun only honours HTTP(S) proxies for fetch; a machine that reaches Telegram
+ * through a SOCKS proxy (e.g. via `all_proxy`) silently bypasses it and the
+ * socket is reset. This lets Telegram opt into a proxy without routing the
+ * model providers through it as well.
+ */
+interface TelegramFetchInit extends RequestInit {
+  proxy?: string;
+}
+
+const withTelegramProxy = (init: RequestInit): TelegramFetchInit => {
+  const proxy = process.env.NEOBUNI_TELEGRAM_PROXY_URL?.trim() ?? "";
+
+  return proxy.length > 0 ? { ...init, proxy } : init;
+};
+
 const normalizeOptional = (value: string | undefined | null) =>
   value?.trim() ?? "";
 
@@ -375,7 +391,7 @@ const sendTelegramMessage = async (
   const target = resolveTelegramTarget(config, input);
   const response = await fetch(
     `${DEFAULT_TELEGRAM_API_BASE_URL}/bot${config.botToken}/sendMessage`,
-    {
+    withTelegramProxy({
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -401,7 +417,7 @@ const sendTelegramMessage = async (
               },
             }),
       }),
-    }
+    })
   );
 
   if (!response.ok) {
@@ -432,13 +448,13 @@ const callTelegramApi = async (
   assertTelegramConfigured(config);
   const response = await fetch(
     `${DEFAULT_TELEGRAM_API_BASE_URL}/bot${config.botToken}/${method}`,
-    {
+    withTelegramProxy({
       body: JSON.stringify(payload),
       headers: {
         "Content-Type": "application/json",
       },
       method: "POST",
-    }
+    })
   );
   if (!response.ok) {
     const errorText = await response.text();

@@ -48,10 +48,18 @@ Port（buni → neobuni）已经完成并且健康：90 个测试文件 / 277 �
   `resolveWebProvider` 优先读这个槽位，槽位存在但停用/缺 key 时显式返回 `null`；
   未配置槽位的老 profile 才回退到「推理 provider 是 DeepSeek」或 Webclaw env。
   原因：搜索与推理是两笔账单、两个用途，OpenCode Go 不代理 `/v1/tools/*`。
+- **Telegram 发送修复（2026-11-02）**：测试提醒报
+  `telegram: ECONNRESET` 是因为本机只配了 SOCKS 形态的 `all_proxy`
+  （`socks5h://127.0.0.1:10808`），而 Bun 的 fetch 只认 HTTP(S) proxy。
+  新增 `NEOBUNI_TELEGRAM_PROXY_URL`（只作用于 Telegram API，避免把模型请求
+  也塞进代理），本地 `.env` 已指向 `http://127.0.0.1:10808`。
 
 ## Next Exact Step
 
-1. **给 Scout 配搜索密钥（唯一硬阻塞）**：搜索与推理已经拆成两个独立槽位。
+1. **重启 dev server 后重试「发送测试提醒」**：`NEOBUNI_TELEGRAM_PROXY_URL`
+   只在进程启动时读取，重启后才会生效。本机的 `socks5h://127.0.0.1:10808`
+   同时接受 HTTP CONNECT，所以值用 `http://127.0.0.1:10808`。
+2. **给 Scout 配搜索密钥（唯一硬阻塞）**：搜索与推理已经拆成两个独立槽位。
    到「模型与记忆 › 联网搜索」填一个 DeepSeek 平台 API Key 并启用即可
    （`provider_configs.slot = "web_search"`，与「记忆理解与路由」互不影响；
    OpenCode Go 不代理 `/v1/tools/*`）。也可以改用 `NEOBUNI_WEBCLAW_API_KEY`。
@@ -62,16 +70,17 @@ Port（buni → neobuni）已经完成并且健康：90 个测试文件 / 277 �
    ```
 
    期望 `available:true`、`queryCount>0`、`picks` 2–3 条带 `why`。
-2. **Telegram 四个按钮各点一次**：收藏 / 出题 / 不感兴趣 / 明晚再看，
-   确认 `study.scout_saved` / `study.scout_quiz` / `study.scout_skipped` /
-   `study.scout_later` 事件写入、重复点击幂等、7 天内不再出现同一条。
-3. **今天有到期复习**：`study_mastery.next_review_at = 2026-11-01`（10-31 那次 0.16 的检查）。
+3. **Telegram 四个按钮各点一次**：收藏 / 出题 / 不感兴趣 / 明晚再看，
+   确认 `study.scout_saved` / `study.scout_quiz` /
+   `study.scout_feedback{action:"skip"|"later"}` 事件写入、重复点击幂等、
+   7 天内不再出现同一条。
+4. **今天有到期复习**：`study_mastery.next_review_at = 2026-11-01`（10-31 那次 0.16 的检查）。
    用聊天里的「考考我」走一遍 `study_quiz` → `study_quiz_submit`，确认 3 题判分、
    掌握度更新、session 完成、下一次复习被排期。
-4. **看一眼 REST 文档**：server 已在 `:3000` 运行，打开
-   `http://localhost:3000/api-reference`（spec 在 `/api-reference/spec.json`，当前 97 个 operation、20 个 Study）。
+5. **看一眼 REST 文档**：server 已在 `:3000` 运行，打开
+   `http://localhost:3000/api-reference`（spec 在 `/api-reference/spec.json`）。
    顺带决定 `/api-reference` 是否只做文档挂载点、把 operation 挪回 API 根路径。
-5. 跑 `bun run test`，保持 429 绿（93 个测试文件）。
+6. 跑 `bun run test`，保持 440 绿（101 个测试文件）。
 
 ## Reopen These Files
 

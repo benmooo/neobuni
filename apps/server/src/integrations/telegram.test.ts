@@ -4,6 +4,7 @@ import { listTelegramTargets, sendTelegramMessage } from "./telegram";
 
 const originalEnv = {
   botToken: process.env.NEOBUNI_TELEGRAM_BOT_TOKEN,
+  proxyUrl: process.env.NEOBUNI_TELEGRAM_PROXY_URL,
   webhookSecret: process.env.NEOBUNI_TELEGRAM_WEBHOOK_SECRET,
   targetsJson: process.env.NEOBUNI_TELEGRAM_TARGETS_JSON,
 };
@@ -14,6 +15,7 @@ describe("telegram integration", () => {
   beforeEach(() => {
     process.env.NEOBUNI_TELEGRAM_BOT_TOKEN = "telegram_bot_token_123";
     process.env.NEOBUNI_TELEGRAM_WEBHOOK_SECRET = "telegram-secret";
+    delete process.env.NEOBUNI_TELEGRAM_PROXY_URL;
     process.env.NEOBUNI_TELEGRAM_TARGETS_JSON = JSON.stringify({
       friends_topic: {
         label: "Friends Topic",
@@ -29,6 +31,11 @@ describe("telegram integration", () => {
   afterEach(() => {
     process.env.NEOBUNI_TELEGRAM_BOT_TOKEN = originalEnv.botToken;
     process.env.NEOBUNI_TELEGRAM_WEBHOOK_SECRET = originalEnv.webhookSecret;
+    if (originalEnv.proxyUrl === undefined) {
+      delete process.env.NEOBUNI_TELEGRAM_PROXY_URL;
+    } else {
+      process.env.NEOBUNI_TELEGRAM_PROXY_URL = originalEnv.proxyUrl;
+    }
     process.env.NEOBUNI_TELEGRAM_TARGETS_JSON = originalEnv.targetsJson;
     globalThis.fetch = originalFetch;
   });
@@ -52,6 +59,7 @@ describe("telegram integration", () => {
       method: string;
       body: string;
       headers: Record<string, string>;
+      proxy?: string;
     }> = [];
 
     globalThis.fetch = (async (input, init) => {
@@ -67,6 +75,7 @@ describe("telegram integration", () => {
         method: init?.method ?? "GET",
         body: typeof init?.body === "string" ? init.body : "",
         headers,
+        proxy: (init as { proxy?: string } | undefined)?.proxy,
       });
 
       return new Response(
@@ -104,6 +113,7 @@ describe("telegram integration", () => {
       "https://api.telegram.org/bottelegram_bot_token_123/sendMessage"
     );
     expect(calls[0]?.method).toBe("POST");
+    expect(calls[0]?.proxy).toBeUndefined();
     expect(JSON.parse(calls[0]?.body ?? "{}")).toEqual({
       chat_id: "-1001234567890",
       text: "top stories ready",
@@ -112,5 +122,30 @@ describe("telegram integration", () => {
         message_id: 77,
       },
     });
+  });
+
+  test("passes the configured proxy to fetch", async () => {
+    process.env.NEOBUNI_TELEGRAM_PROXY_URL = "http://127.0.0.1:10808";
+
+    const proxies: Array<string | undefined> = [];
+
+    globalThis.fetch = (async (_input, init) => {
+      proxies.push((init as { proxy?: string } | undefined)?.proxy);
+
+      return new Response(
+        JSON.stringify({ ok: true, result: { message_id: 1 } }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }) as typeof fetch;
+
+    await sendTelegramMessage("profile-telegram-test-1", {
+      targetAlias: "friends_topic",
+      message: { type: "text", text: "through the proxy" },
+    });
+
+    expect(proxies).toEqual(["http://127.0.0.1:10808"]);
   });
 });
