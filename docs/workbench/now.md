@@ -4,9 +4,9 @@ title: "Current Focus"
 
 # Current Focus
 
-Updated At: 2026-10-30 15:52 Asia/Shanghai
-Active Feature: initiative-study-journey (awaiting live smoke) / openapi-rest-rollout (done)
-Status: awaiting-live-smoke
+Updated At: 2026-11-01 04:30 Asia/Shanghai
+Active Feature: initiative-study-journey (live loop running) / study-scout (awaiting search key)
+Status: awaiting-scout-key
 
 ## Why
 
@@ -38,24 +38,45 @@ Port（buni → neobuni）已经完成并且健康：90 个测试文件 / 277 �
 - **聊天检查工具（2026-10-27）**：新增 `study_quiz`（返回今日课程的 3 道题，不暴露 rubric/答案）+ `study_quiz_submit`（判分并持久化）；提交逻辑抽到 `study/check-service.ts`，REST 与聊天共用同一套 check 写入、掌握度更新、session 完成与间隔复习。全量 307 个测试绿。
 - **Study OpenAPI（2026-10-27）**：15 个 study 过程补齐 `method` / `path` / `summary` / `description` / `tags`，从默认 `POST /study/x/y` 收敛为 `/study/goals`、`/study/goals/{goalId}/today`、`/study/sessions/{sessionId}/checks` 等 REST 路径；新增 `routes/study.openapi.test.ts` 锁定生成结果。RPC 客户端路径不受影响。全量 309 个测试绿。
 - **OpenAPI 全量铺开（2026-10-30）**：其余 77 个 procedure（`packages/api/src/routers/*` 的 67 个 + `apps/server/src/routers/extras.ts` 的 25 个覆盖/新增）全部补上 `.route(...)`，92 个 operation 不再有默认 `POST /namespace/name` 形态；标签收敛为 17 个（Goals / Memories / Config / Study / ...）。新增 `routes/api.openapi.test.ts`：锁定 `METHOD /path → tag` 全表、每个 operation 的 id/summary/description/唯一标签、路径参数必须是 `in: path` 且 required，并断言 92 条文档路由都能被 `OpenAPIHandler` 真实匹配。全量 93 个测试文件 / 338 个测试绿，typecheck 与 Ultracite 通过。
+- **Study Scout 设计（2026-10-30）**：设计文档落在 `apps/fumadocs/content/docs/buni/study/study-scout.md`（根目录 `docs/study-scout.md` 只做指向），要点是每天 1 条「今日精选」、DeepSeek Search/Fetch、事件流存储、与 nudge 共享每日预算。
+- **Study Scout P0（2026-10-31）**：DeepSeek Search/Fetch 客户端、兴趣画像、5–8 条确定性 query、免费过滤（分数/权威/时效/去重/host 配额/负反馈）、一次 LLM 排序、scout worker、`study.scout_*` 事件，以及 `POST /study/goals/{goalId}/scout/run` 预览端点。
+- **Study Scout P1（2026-10-31）**：Telegram 摘要卡片 + 四个按钮（收藏到知识库 / 出 3 道延伸题 / 不感兴趣 / 明晚再看），`scout-actions.ts` 负责幂等与 7 天抑制。
+- **Study Scout P2 / 联调（2026-11-01）**：设置页 scout 开关与每日条数、`scout/latest`、预算双向共享（nudge 优先）、按 provider kind 分派搜索（Webclaw key 不再被发到 DeepSeek 端点）、scout 开关按「DeepSeek-capable」门控、收藏条目挂到 lesson 参考资料、`study.scout_saved/quiz` 带 item index 保证重复点击幂等。新增 `apps/server/scripts/study-scout-smoke.ts` 手动探针。全量 429 测试绿。
+- **本地闭环实跑（2026-10-31）**：本地库已有 1 个目标 / 1 个激活计划 / 229 个节点 / 157 个会话；10-31 提交过一次检查（0.16），掌握度写回并在 2026-11-01 安排了复习；lesson enrichment 在 10-28、10-29、10-31 各成功一次。也就是说「计划 → 今天 → 细化 → 检查 → 掌握度 → 复习」已经真实跑通，剩下的是 Scout 与提醒渠道。
 
 ## Next Exact Step
 
-1. **重启 dev server 后重试「用 AI 细化这节课」／「生成教材内容」**：provider 已配好（OpenCode / `deepseek-v4.1-flash` / Go 端点），
-   本地库里的 `base_url` 已修正为 `https://opencode.ai/inference/go/openai/v1`。
-   细节与实测数据见 `docs/workbench/features/opencode-go-provider.md`。
-2. **真实环境试跑**：在 Now 创建学习目标，点"用 AI 细化这节课"，完成检查，配置一个提醒渠道，观察 `study.reminder_sent` 事件与推送。目前 `.data/neobuni.db` 里 `study_plans` / `study_sessions` / `study_checks` 全是 0 条，闭环从未在本地真正跑过。
-3. **看一眼生成的 REST 文档**：先起服务（`:3000` 现在被 `codeup/oneport-pulse` 占着，neobuni 的 server 没在跑；需要先腾出端口或改 `PORT`），
-   然后打开 `http://localhost:3000/api-reference`（spec 在 `/api-reference/spec.json`）。
-   同时决定 `/api-reference` 是否该只做文档挂载点、把 operation 挪回 API 根路径。
-4. **归档说明**：核对 `experiments/decision-os/README.md` 是否已覆盖旧 docs 的归档说明。
-5. 跑 `bun run test`，保持 338 全绿（93 个测试文件）。
+1. **给 Scout 配搜索密钥（唯一硬阻塞）**：profile 的推理 provider 是 openrouter / opencode，
+   都不是 DeepSeek host，`.env` 里也没有 `NEOBUNI_WEBCLAW_API_KEY`，所以
+   `POST /study/goals/{goalId}/scout/run` 现在干净地返回 `available:false` +
+   「缺少搜索服务密钥：请在「记忆理解与路由」里配置 DeepSeek 的 API Key」。
+   二选一：在「记忆理解与路由」加一个 DeepSeek provider，或设置 `NEOBUNI_WEBCLAW_API_KEY`。
+   配好后先跑手动探针（不需要登录，也不需要 server）：
+
+   ```bash
+   DATABASE_URL="file:$PWD/.data/local.db" bun run apps/server/scripts/study-scout-smoke.ts
+   ```
+
+   期望 `available:true`、`queryCount>0`、`picks` 2–3 条带 `why`。
+2. **Telegram 四个按钮各点一次**：收藏 / 出题 / 不感兴趣 / 明晚再看，
+   确认 `study.scout_saved` / `study.scout_quiz` / `study.scout_skipped` /
+   `study.scout_later` 事件写入、重复点击幂等、7 天内不再出现同一条。
+3. **今天有到期复习**：`study_mastery.next_review_at = 2026-11-01`（10-31 那次 0.16 的检查）。
+   用聊天里的「考考我」走一遍 `study_quiz` → `study_quiz_submit`，确认 3 题判分、
+   掌握度更新、session 完成、下一次复习被排期。
+4. **看一眼 REST 文档**：server 已在 `:3000` 运行，打开
+   `http://localhost:3000/api-reference`（spec 在 `/api-reference/spec.json`，当前 97 个 operation、20 个 Study）。
+   顺带决定 `/api-reference` 是否只做文档挂载点、把 operation 挪回 API 根路径。
+5. 跑 `bun run test`，保持 429 绿（93 个测试文件）。
 
 ## Reopen These Files
 
 - `docs/workbench/now.md`
 - `docs/workbench/features/initiative-study-journey.md`
 - `docs/workbench/features/openapi-rest-rollout.md`
+- `docs/workbench/features/study-scout.md`
+- `apps/fumadocs/content/docs/buni/study/study-scout.md`
+- `apps/server/scripts/study-scout-smoke.ts`
 - `experiments/decision-os/README.md`
 - `apps/server/src/routes/api.openapi.test.ts`
 - `packages/contracts/src/decision/index.ts`
