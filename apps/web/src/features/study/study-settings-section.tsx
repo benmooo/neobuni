@@ -36,6 +36,8 @@ import {
 } from "@/hooks/use-study";
 import { api } from "@/lib/api";
 
+import { resolveChannelAlias } from "./channel-draft";
+
 const PLATFORM_LABELS = {
   discord: "Discord",
   feishu: "飞书",
@@ -178,9 +180,15 @@ function StudySettingsForm({
   };
 
   const addChannel = () => {
-    const targetAlias =
-      platform === "telegram" ? selectedTarget.trim() : alias.trim();
+    const targetAlias = resolveChannelAlias({
+      alias,
+      hasTelegramTargets: (telegramTargets.data?.length ?? 0) > 0,
+      platform,
+      selectedTarget,
+    });
+
     if (!targetAlias) {
+      setError("请先选择或填写提醒目标。");
       return;
     }
     if (
@@ -189,8 +197,10 @@ function StudySettingsForm({
           channel.platform === platform && channel.targetAlias === targetAlias
       )
     ) {
+      setError("这个渠道已经添加过了。");
       return;
     }
+    setError(null);
     setChannels((current) => [
       ...current,
       { platform, targetAlias, targetId: null },
