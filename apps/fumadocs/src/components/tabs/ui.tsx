@@ -98,11 +98,9 @@ export function Tabs({
   const valueToIdMap = useMemo(() => new Map<string, string>(), []);
   const panels = useMemo(() => new Map<string, HTMLElement>(), []);
   const triggers = useMemo(() => new Set<string>(), []);
-  // biome-ignore lint/correctness/useHookAtTopLevel: controlled/uncontrolled pairing is intentional here
   const [value, setValue] =
     _value === undefined
-      ? // biome-ignore lint/correctness/useHookAtTopLevel: controlled/uncontrolled pairing is intentional here
-        // eslint-disable-next-line react-hooks/rules-of-hooks -- not supposed to change controlled/uncontrolled
+      ? // eslint-disable-next-line react-hooks/rules-of-hooks -- not supposed to change controlled/uncontrolled
         useState(defaultValue)
       : // eslint-disable-next-line react-hooks/rules-of-hooks -- not supposed to change controlled/uncontrolled
         [_value, (v: string) => _onValueChange?.(v)];
