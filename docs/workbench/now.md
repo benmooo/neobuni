@@ -4,9 +4,9 @@ title: "Current Focus"
 
 # Current Focus
 
-Updated At: 2026-11-01 04:30 Asia/Shanghai
-Active Feature: initiative-study-journey (live loop running) / study-scout (awaiting search key)
-Status: awaiting-scout-key
+Updated At: 2026-11-02 19:05 Asia/Shanghai
+Active Feature: initiative-study-journey (live loop running) / study-scout (search provider wired)
+Status: chat knowledge tools + DeepSeek-only web tools implemented, awaiting manual verification
 
 ## Why
 
@@ -15,6 +15,48 @@ Port（buni → neobuni）已经完成并且健康：90 个测试文件 / 277 �
 
 下一阶段的重点是 **Initiative**：让 Buni 围绕用户目标持续地计划、提醒、教学、检验并量化进展。
 第一个垂直场景改为 **Study Journey（软考 · 系统架构设计师）**，用一条完整学习闭环倒逼 Decision OS 精简。
+
+## Implemented, Pending Verification (2026-11-02)
+
+来源：对话 `52fb985e-5065-4d6a-8bf7-43074f28d6a4`（2026-11-02 09:31–09:33Z）。
+
+### P1 · 聊天侧已能读教材
+
+- 新增 `search_knowledge` / `list_knowledge` 聊天工具
+  （`apps/server/src/tools/search-knowledge.ts`、`list-knowledge.ts`，
+  契约在 `packages/contracts/src/execution-layer/knowledge-tools.ts`）。
+  `search_knowledge` 返回 `documentTitle / chapter / page / locator / text`，
+  描述里明确要求引用 `第N章 p.X`；`list_knowledge` 返回文档与 chunk 数。
+- `memory/knowledge-store.ts` 抽出共享的 `searchKnowledge`，`recallKnowledge`
+  与聊天工具共用；`parseChunkLocator` 移到 `memory/knowledge-locator.ts`。
+- `packages/core/src/cognition/retrieval-signals.ts` 的
+  `worldKnowledgePatterns` 增加「教材 / 课本 / 教科书 / 原文 / 页码 /
+  textbook / chapter / 第几章 / 哪一章 / 第几节 / 哪一节」。
+- 修掉 FTS bm25 打分 bug（`1 - max(0, rank)` 把所有命中都算成 1.0），
+  并让向量命中优先、关键词命中降权，避免中文 FTS 噪声压过语义结果。
+- 知识工具只在私有 surface 暴露；没有加进 `surface-policy.ts` 的
+  public-safe allowlist，避免群聊泄漏私有知识库。
+- 实测：`list_knowledge` → 682 chunks；`search_knowledge("计算机组成与体系结构
+  存储层次 缓存 总线")` 第一条是 `第2章 计算机系统基础知识 · p.35-36`。
+- 待验证：重启 server，在聊天里问「教材里这个对应哪几章」，确认模型调用
+  `search_knowledge` 并引用 `第2章 p.X`。
+
+### P2 · 联网工具已统一走 DeepSeek
+
+- Webclaw 已整体删除：`integrations/web/webclaw.ts`、测试、env schema、
+  contracts 的 `webclaw` literal 和 `renderMode` 全部移除。
+- `search_web` / `fetch_page` / `summarize_page` / `save_page_to_knowledge`
+  改为 `requireWebProvider(profileId)` + `searchWithProvider` /
+  `fetchPageWithProvider`；未配置时返回可操作错误：
+  `No web search provider configured. Set a DeepSeek API key in Settings → 模型与记忆 → 联网搜索.`
+  `open_url` 已改名为 `fetch_page`（事件 `tool.fetch_page`），语义与
+  `extract_page` / `summarize_page` 以及 DeepSeek `/v1/tools/fetch` 对齐。
+- `extract_page` = DeepSeek `/v1/tools/fetch` 抓正文 + reasoning provider
+  按 instruction/schema 输出 JSON（`apps/server/src/web/extract-web-page.ts`），
+  不再依赖 Webclaw 的结构化抽取端点。
+- 实测：`resolveWebProvider` → `deepseek`；`searchWithProvider` 返回 3 条结果，
+  不需要 `NEOBUNI_WEBCLAW_API_KEY`。
+- 待验证：聊天里各调用一次 `search_web` / `fetch_page` / `summarize_page`。
 
 ## Last Done
 
@@ -41,46 +83,56 @@ Port（buni → neobuni）已经完成并且健康：90 个测试文件 / 277 �
 - **Study Scout 设计（2026-10-30）**：设计文档落在 `apps/fumadocs/content/docs/buni/study/study-scout.md`（根目录 `docs/study-scout.md` 只做指向），要点是每天 1 条「今日精选」、DeepSeek Search/Fetch、事件流存储、与 nudge 共享每日预算。
 - **Study Scout P0（2026-10-31）**：DeepSeek Search/Fetch 客户端、兴趣画像、5–8 条确定性 query、免费过滤（分数/权威/时效/去重/host 配额/负反馈）、一次 LLM 排序、scout worker、`study.scout_*` 事件，以及 `POST /study/goals/{goalId}/scout/run` 预览端点。
 - **Study Scout P1（2026-10-31）**：Telegram 摘要卡片 + 四个按钮（收藏到知识库 / 出 3 道延伸题 / 不感兴趣 / 明晚再看），`scout-actions.ts` 负责幂等与 7 天抑制。
-- **Study Scout P2 / 联调（2026-11-01）**：设置页 scout 开关与每日条数、`scout/latest`、预算双向共享（nudge 优先）、按 provider kind 分派搜索（Webclaw key 不再被发到 DeepSeek 端点）、scout 开关按「DeepSeek-capable」门控、收藏条目挂到 lesson 参考资料、`study.scout_saved/quiz` 带 item index 保证重复点击幂等。新增 `apps/server/scripts/study-scout-smoke.ts` 手动探针。全量 429 测试绿。
+- **Study Scout P2 / 联调（2026-11-01）**：设置页 scout 开关与每日条数、`scout/latest`、预算双向共享（nudge 优先）、按 provider 分派搜索（搜索 key 不再发错端点）、scout 开关按「DeepSeek-capable」门控、收藏条目挂到 lesson 参考资料、`study.scout_saved/quiz` 带 item index 保证重复点击幂等。新增 `apps/server/scripts/study-scout-smoke.ts` 手动探针。全量 429 测试绿。
 - **本地闭环实跑（2026-10-31）**：本地库已有 1 个目标 / 1 个激活计划 / 229 个节点 / 157 个会话；10-31 提交过一次检查（0.16），掌握度写回并在 2026-11-01 安排了复习；lesson enrichment 在 10-28、10-29、10-31 各成功一次。也就是说「计划 → 今天 → 细化 → 检查 → 掌握度 → 复习」已经真实跑通，剩下的是 Scout 与提醒渠道。
 - **搜索配置独立（2026-11-01）**：新增 `provider_configs.slot = "web_search"`（provider 固定 `deepseek`）、
   `GET/PUT /config/provider/web-search`、设置页「模型与记忆 › 联网搜索」卡片。
   `resolveWebProvider` 优先读这个槽位，槽位存在但停用/缺 key 时显式返回 `null`；
-  未配置槽位的老 profile 才回退到「推理 provider 是 DeepSeek」或 Webclaw env。
+  未配置槽位的老 profile 才回退到「推理 provider 是 DeepSeek」。
   原因：搜索与推理是两笔账单、两个用途，OpenCode Go 不代理 `/v1/tools/*`。
 - **Telegram 发送修复（2026-11-02）**：测试提醒报
   `telegram: ECONNRESET` 是因为本机只配了 SOCKS 形态的 `all_proxy`
   （`socks5h://127.0.0.1:10808`），而 Bun 的 fetch 只认 HTTP(S) proxy。
   新增 `NEOBUNI_TELEGRAM_PROXY_URL`（只作用于 Telegram API，避免把模型请求
   也塞进代理），本地 `.env` 已指向 `http://127.0.0.1:10808`。
+- **教材库重建（2026-11-02）**：本地库的教材 chunks / embeddings 丢失，导致
+  `/enrich` 返回 `material: null`。重新入库 682 chunks，新增
+  `apps/server/scripts/embed-knowledge.ts` 回填 682 条 embedding；
+  `ingest-textbook.ts` 增加 busy timeout 与半写入文档清理；`/enrich` 响应新增
+  `materialStatus`，Web 端在 `no_sources` / `failed` 时给出 toast。
+- **Web 依赖修复（2026-11-03）**：`apps/web` 的 `recharts` 已写在
+  `package.json` 和 `bun.lock`，但 `node_modules` 里没有安装（之前一次
+  install 不完整）。执行 `bun install --frozen-lockfile` 后补齐，
+  `apps/web` build + `tsc --noEmit` 通过。
 
 ## Next Exact Step
 
-1. **重启 dev server 后重试「发送测试提醒」**：`NEOBUNI_TELEGRAM_PROXY_URL`
+1. **重启 dev server，验证聊天侧两条链路**：
+   - 问「教材里计算机组成对应哪几章」，确认调用 `search_knowledge` 并引用
+     `第2章 p.X`；问「你能读哪些资料」，确认调用 `list_knowledge`。
+   - 调用一次 `search_web` / `fetch_page` / `summarize_page`，确认 provider 为
+     `deepseek`，不再出现 Webclaw key 报错。
+2. **重试「发送测试提醒」**：`NEOBUNI_TELEGRAM_PROXY_URL`
    只在进程启动时读取，重启后才会生效。本机的 `socks5h://127.0.0.1:10808`
    同时接受 HTTP CONNECT，所以值用 `http://127.0.0.1:10808`。
-2. **给 Scout 配搜索密钥（唯一硬阻塞）**：搜索与推理已经拆成两个独立槽位。
-   到「模型与记忆 › 联网搜索」填一个 DeepSeek 平台 API Key 并启用即可
-   （`provider_configs.slot = "web_search"`，与「记忆理解与路由」互不影响；
-   OpenCode Go 不代理 `/v1/tools/*`）。也可以改用 `NEOBUNI_WEBCLAW_API_KEY`。
-   配好后先跑手动探针（不需要登录，也不需要 server）：
+3. **跑一次 Scout 手动探针**（`web_search` 槽位已配置 DeepSeek）：
 
    ```bash
    DATABASE_URL="file:$PWD/.data/local.db" bun run apps/server/scripts/study-scout-smoke.ts
    ```
 
    期望 `available:true`、`queryCount>0`、`picks` 2–3 条带 `why`。
-3. **Telegram 四个按钮各点一次**：收藏 / 出题 / 不感兴趣 / 明晚再看，
+4. **Telegram 四个按钮各点一次**：收藏 / 出题 / 不感兴趣 / 明晚再看，
    确认 `study.scout_saved` / `study.scout_quiz` /
    `study.scout_feedback{action:"skip"|"later"}` 事件写入、重复点击幂等、
    7 天内不再出现同一条。
-4. **今天有到期复习**：`study_mastery.next_review_at = 2026-11-01`（10-31 那次 0.16 的检查）。
+5. **今天有到期复习**：`study_mastery.next_review_at = 2026-11-01`（10-31 那次 0.16 的检查）。
    用聊天里的「考考我」走一遍 `study_quiz` → `study_quiz_submit`，确认 3 题判分、
    掌握度更新、session 完成、下一次复习被排期。
-5. **看一眼 REST 文档**：server 已在 `:3000` 运行，打开
+6. **看一眼 REST 文档**：server 已在 `:3000` 运行，打开
    `http://localhost:3000/api-reference`（spec 在 `/api-reference/spec.json`）。
    顺带决定 `/api-reference` 是否只做文档挂载点、把 operation 挪回 API 根路径。
-6. 跑 `bun run test`，保持 440 绿（101 个测试文件）。
+6. 跑 `bun run test`，保持全绿。
 
 ## Reopen These Files
 
@@ -92,11 +144,24 @@ Port（buni → neobuni）已经完成并且健康：90 个测试文件 / 277 �
 - `apps/server/scripts/study-scout-smoke.ts`
 - `experiments/decision-os/README.md`
 - `apps/server/src/routes/api.openapi.test.ts`
+- `apps/server/src/memory/knowledge-store.ts`
+- `apps/server/src/memory/knowledge-locator.ts`
+- `apps/server/src/tools/search-knowledge.ts`
+- `apps/server/src/tools/list-knowledge.ts`
+- `apps/server/src/integrations/web/provider.ts`
+- `apps/server/src/integrations/web/dispatch.ts`
+- `packages/contracts/src/execution-layer/knowledge-tools.ts`
+- `packages/core/src/cognition/retrieval-signals.ts`
 - `packages/contracts/src/decision/index.ts`
 - `packages/core/src/decision/next-action.ts`
 - `apps/server/src/decision/initiative-worker.ts`
 - `apps/server/src/decision/next-action-evaluation-service.ts`
 - `apps/web/src/routes/_app/now/index.tsx`
+- `packages/core/src/cognition/retrieval-signals.ts`
+- `apps/server/src/memory/knowledge-store.ts`
+- `apps/server/src/tools/tool-sets.ts`
+- `apps/server/src/tools/search-web.ts`
+- `apps/server/src/integrations/web/provider.ts`
 
 ## Open Questions
 
