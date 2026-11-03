@@ -43,7 +43,7 @@ describe("createExecutionTools", () => {
     const tools = createExecutionTools(createToolContext());
     const toolNames = tools.map((tool) => tool.name as string);
 
-    expect(toolNames.includes("open_url")).toBe(true);
+    expect(toolNames.includes("fetch_page")).toBe(true);
     expect(toolNames.includes("extract_page")).toBe(true);
     expect(toolNames.includes("save_page_to_knowledge")).toBe(true);
     expect(toolNames.includes("search_web")).toBe(true);

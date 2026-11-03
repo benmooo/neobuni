@@ -1,19 +1,18 @@
 import { describe, expect, test } from "vitest";
 
 describe("web execution-layer contracts", () => {
-  test("open-url contract accepts https URLs and defaults render mode", async () => {
-    const mod = await import("./open-url");
+  test("fetch-page contract accepts https URLs", async () => {
+    const mod = await import("./fetch-page");
 
-    if (!("openUrlInputSchema" in mod)) {
-      throw new Error("Expected openUrlInputSchema export.");
+    if (!("fetchPageInputSchema" in mod)) {
+      throw new Error("Expected fetchPageInputSchema export.");
     }
 
-    const parsed = mod.openUrlInputSchema.parse({
+    const parsed = mod.fetchPageInputSchema.parse({
       url: "https://example.com/post",
     });
 
     expect(parsed.url).toBe("https://example.com/post");
-    expect(parsed.renderMode).toBe("auto");
   });
 
   test("extract-page contract requires an instruction", async () => {
@@ -82,7 +81,7 @@ describe("web execution-layer contracts", () => {
   test("tools export all five web contracts", async () => {
     const mod = await import("./tools");
 
-    expect("openUrlDef" in mod).toBe(true);
+    expect("fetchPageDef" in mod).toBe(true);
     expect("extractPageDef" in mod).toBe(true);
     expect("savePageToKnowledgeDef" in mod).toBe(true);
     expect("searchWebDef" in mod).toBe(true);

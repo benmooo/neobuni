@@ -9,7 +9,7 @@ const publicSafeResearchAndDeliveryToolAllowlist = [
   "list_news_briefs",
   "list_news_sources",
   "now",
-  "open_url",
+  "fetch_page",
   "extract_page",
   "resolve_news_source",
   "search_news_sources",

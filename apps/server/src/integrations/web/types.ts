@@ -1,4 +1,4 @@
-type WebProviderName = "deepseek" | "webclaw";
+type WebProviderName = "deepseek";
 
 interface WebPageDocument {
   byline: string | null;
@@ -17,7 +17,7 @@ interface WebPageDocument {
   warnings: string[];
 }
 
-interface WebPageResult<TProvider extends WebProviderName = "webclaw"> {
+interface WebPageResult<TProvider extends WebProviderName = "deepseek"> {
   document: WebPageDocument;
   provider: TProvider;
 }
@@ -34,20 +34,13 @@ interface WebSearchResultItem {
   url: string;
 }
 
-interface WebSearchResult<TProvider extends WebProviderName = "webclaw"> {
+interface WebSearchResult<TProvider extends WebProviderName = "deepseek"> {
   items: WebSearchResultItem[];
   provider: TProvider;
   query: string;
 }
 
-interface WebExtractResult<TProvider extends WebProviderName = "webclaw"> {
-  data: unknown;
-  generatedSchema: Record<string, unknown> | null;
-  provider: TProvider;
-}
-
 export type {
-  WebExtractResult,
   WebPageDocument,
   WebPageResult,
   WebProviderName,

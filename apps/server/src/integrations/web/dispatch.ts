@@ -4,26 +4,14 @@ import {
   searchDeepSeek,
 } from "./deepseek-search";
 import type { ResolvedWebProvider } from "./provider";
-import type { WebPageResult, WebProviderName, WebSearchResult } from "./types";
-import {
-  DEFAULT_WEB_TIMEOUT_MS,
-  fetchWebclawPage,
-  fetchWebclawSearch,
-  type WebclawDeps,
-} from "./webclaw";
+import type { WebPageResult, WebSearchResult } from "./types";
 
-const webclawConfig = (provider: ResolvedWebProvider) => ({
-  apiKey: provider.apiKey,
-  baseUrl: provider.baseUrl,
-  timeoutMs: DEFAULT_WEB_TIMEOUT_MS,
-});
+type DispatchDeps = Partial<DeepSeekDeps>;
 
 /**
- * Runs a search against whichever backend `resolveWebProvider` picked, so a
- * Webclaw key is never sent to the DeepSeek endpoint (and vice versa).
+ * Runs a search through the profile's resolved provider. The wrapper keeps the
+ * tool and Scout call sites independent of the concrete search backend.
  */
-type DispatchDeps = Partial<DeepSeekDeps & WebclawDeps>;
-
 const searchWithProvider = async (input: {
   count: number;
   deps?: DispatchDeps;
@@ -31,18 +19,8 @@ const searchWithProvider = async (input: {
   provider: ResolvedWebProvider;
   query: string;
   signal?: AbortSignal;
-}): Promise<WebSearchResult<WebProviderName>> => {
-  if (input.provider.kind === "webclaw") {
-    return await fetchWebclawSearch({
-      config: webclawConfig(input.provider),
-      deps: input.deps,
-      limit: input.count,
-      query: input.query,
-      signal: input.signal,
-    });
-  }
-
-  return await searchDeepSeek({
+}): Promise<WebSearchResult> =>
+  await searchDeepSeek({
     apiKey: input.provider.apiKey,
     baseUrl: input.provider.baseUrl,
     count: input.count,
@@ -52,30 +30,19 @@ const searchWithProvider = async (input: {
     query: input.query,
     signal: input.signal,
   });
-};
 
 const fetchPageWithProvider = async (input: {
   deps?: DispatchDeps;
   provider: ResolvedWebProvider;
   signal?: AbortSignal;
   url: string;
-}): Promise<WebPageResult<WebProviderName>> => {
-  if (input.provider.kind === "webclaw") {
-    return await fetchWebclawPage({
-      config: webclawConfig(input.provider),
-      deps: input.deps,
-      signal: input.signal,
-      url: input.url,
-    });
-  }
-
-  return await fetchDeepSeekPage({
+}): Promise<WebPageResult> =>
+  await fetchDeepSeekPage({
     apiKey: input.provider.apiKey,
     baseUrl: input.provider.baseUrl,
     deps: input.deps,
     signal: input.signal,
     url: input.url,
   });
-};
 
 export { fetchPageWithProvider, searchWithProvider };

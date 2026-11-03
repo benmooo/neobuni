@@ -5,50 +5,58 @@ const appendEvent = (...args: Parameters<typeof appendEventFx>) =>
 
 import { extractPageDef, extractPageInputSchema } from "@neobuni/contracts";
 
+import { fetchPageWithProvider } from "../integrations/web/dispatch";
 import {
-  fetchWebclawExtract,
-  fetchWebclawPage,
-} from "../integrations/web/webclaw";
+  requireWebProvider,
+  resolveWebProvider,
+} from "../integrations/web/provider";
+import { extractWebPage } from "../web/extract-web-page";
 import type { ServerToolContext } from "./types";
 
 interface ExtractPageDeps {
   appendEvent: typeof appendEvent;
-  fetchWebclawExtract: typeof fetchWebclawExtract;
-  fetchWebclawPage: typeof fetchWebclawPage;
+  extractWebPage: typeof extractWebPage;
+  fetchPageWithProvider: typeof fetchPageWithProvider;
+  resolveWebProvider: typeof resolveWebProvider;
 }
 
 const createExtractPageTool = (
   context: ServerToolContext,
   deps: ExtractPageDeps = {
     appendEvent,
-    fetchWebclawExtract,
-    fetchWebclawPage,
+    extractWebPage,
+    fetchPageWithProvider,
+    resolveWebProvider,
   }
 ) =>
   extractPageDef.server(async (args) => {
     const input = extractPageInputSchema.parse(args);
-    const [page, extracted] = await Promise.all([
-      deps.fetchWebclawPage({
-        url: input.url,
-        signal: context.abortSignal,
-      }),
-      deps.fetchWebclawExtract({
-        url: input.url,
-        instruction: input.instruction,
-        schema: input.schema,
-        signal: context.abortSignal,
-      }),
-    ]);
+    const provider = await requireWebProvider(
+      context.profileId,
+      deps.resolveWebProvider
+    );
+    const page = await deps.fetchPageWithProvider({
+      provider,
+      signal: context.abortSignal,
+      url: input.url,
+    });
+    const extracted = await deps.extractWebPage({
+      profileId: context.profileId,
+      document: page.document,
+      instruction: input.instruction,
+      schema: input.schema,
+      signal: context.abortSignal,
+    });
 
     await deps.appendEvent(context.profileId, "tool.extract_page", {
       conversationId: context.conversationId,
       turnId: context.turnId,
-      provider: extracted.provider,
+      provider: page.provider,
       url: input.url,
     });
 
     return {
-      provider: extracted.provider,
+      provider: page.provider,
       document: page.document,
       data: extracted.data,
       generatedSchema: extracted.generatedSchema,

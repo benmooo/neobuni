@@ -5,12 +5,17 @@ const appendEvent = (...args: Parameters<typeof appendEventFx>) =>
 
 import { searchWebDef, searchWebInputSchema } from "@neobuni/contracts";
 
-import { fetchWebclawSearch } from "../integrations/web/webclaw";
+import { searchWithProvider } from "../integrations/web/dispatch";
+import {
+  requireWebProvider,
+  resolveWebProvider,
+} from "../integrations/web/provider";
 import type { ServerToolContext } from "./types";
 
 interface SearchWebDeps {
   appendEvent: typeof appendEvent;
-  fetchWebclawSearch: typeof fetchWebclawSearch;
+  resolveWebProvider: typeof resolveWebProvider;
+  searchWithProvider: typeof searchWithProvider;
 }
 
 const normalizeSearchQuery = (input: { query: string; domain?: string }) =>
@@ -20,14 +25,20 @@ const createSearchWebTool = (
   context: ServerToolContext,
   deps: SearchWebDeps = {
     appendEvent,
-    fetchWebclawSearch,
+    resolveWebProvider,
+    searchWithProvider,
   }
 ) =>
   searchWebDef.server(async (args) => {
     const input = searchWebInputSchema.parse(args);
-    const result = await deps.fetchWebclawSearch({
+    const provider = await requireWebProvider(
+      context.profileId,
+      deps.resolveWebProvider
+    );
+    const result = await deps.searchWithProvider({
+      count: input.limit,
+      provider,
       query: normalizeSearchQuery(input),
-      limit: input.limit,
       signal: context.abortSignal,
     });
 

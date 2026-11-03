@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
+import type {
+  fetchPageWithProvider,
+  searchWithProvider,
+} from "../integrations/web/dispatch";
+
 const appendEventMock = vi.fn(async () => ({
   id: "event-1",
   profileId: "profile-1",
@@ -8,53 +13,69 @@ const appendEventMock = vi.fn(async () => ({
   createdAt: "2026-06-13T00:00:00.000Z",
 }));
 
-const fetchWebclawPageMock = vi.fn(async () => ({
-  provider: "webclaw" as const,
-  document: {
-    url: "https://example.com/post",
-    finalUrl: "https://example.com/post",
-    title: "Example Post",
-    siteName: "Example",
-    byline: "Aka",
-    publishedAt: "2026-06-13T00:00:00.000Z",
-    language: "en",
-    excerpt: "Example excerpt",
-    markdown: "# Example Post",
-    plainText: "Example Post",
-    statusCode: 200,
-    extractionMethod: "provider" as const,
-    warnings: [],
-    fetchedAt: "2026-06-13T00:00:00.000Z",
-  },
-}));
+const provider = {
+  apiKey: "sk-deepseek",
+  baseUrl: "https://api.deepseek.com",
+  kind: "deepseek" as const,
+};
 
-const fetchWebclawExtractMock = vi.fn(async () => ({
-  provider: "webclaw" as const,
+const resolveWebProviderMock = vi.fn(async () => provider);
+
+const pageDocument = {
+  url: "https://example.com/post",
+  finalUrl: "https://example.com/post",
+  title: "Example Post",
+  siteName: "Example",
+  byline: "Aka",
+  publishedAt: "2026-06-13T00:00:00.000Z",
+  language: "en",
+  excerpt: "Example excerpt",
+  markdown: "# Example Post",
+  plainText: "Example Post",
+  statusCode: 200,
+  extractionMethod: "provider" as const,
+  warnings: [],
+  fetchedAt: "2026-06-13T00:00:00.000Z",
+};
+
+const fetchPageWithProviderMock = vi.fn(
+  async (
+    _input: Parameters<typeof fetchPageWithProvider>[0]
+  ): Promise<Awaited<ReturnType<typeof fetchPageWithProvider>>> => ({
+    provider: "deepseek",
+    document: pageDocument,
+  })
+);
+
+const extractWebPageMock = vi.fn(async () => ({
   data: {
     tiers: [{ name: "Pro", price: 49 }],
   },
-  generatedSchema: {
-    type: "object",
-  },
+  generatedSchema: null,
+  notes: [],
 }));
 
-const fetchWebclawSearchMock = vi.fn(async () => ({
-  provider: "webclaw" as const,
-  query: "buni ai agents site:github.com",
-  items: [
-    {
-      authority: null,
-      rank: 1,
-      rerankScore: null,
-      summary: null,
-      title: "Buni Web Tools",
-      url: "https://github.com/aka/buni",
-      snippet: "A first version of web tools for Buni.",
-      sourceName: "GitHub",
-      publishedAt: "2026-06-13T00:00:00.000Z",
-    },
-  ],
-}));
+const searchWithProviderMock = vi.fn(
+  async (
+    _input: Parameters<typeof searchWithProvider>[0]
+  ): Promise<Awaited<ReturnType<typeof searchWithProvider>>> => ({
+    provider: "deepseek",
+    query: "buni ai agents site:github.com",
+    items: [
+      {
+        authority: null,
+        rank: 1,
+        rerankScore: null,
+        summary: null,
+        title: "Buni Web Tools",
+        url: "https://github.com/aka/buni",
+        snippet: "A first version of web tools for Buni.",
+        sourceName: "GitHub",
+        publishedAt: "2026-06-13T00:00:00.000Z",
+      },
+    ],
+  })
+);
 
 const saveWebPageToKnowledgeMock = vi.fn(async () => ({
   documentId: "knowledge-doc-1",
@@ -80,36 +101,43 @@ const createToolContext = () => ({
   abortSignal: new AbortController().signal,
 });
 
-describe("p0 web tools", () => {
+describe("web tools", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    resolveWebProviderMock.mockResolvedValue(provider);
   });
 
-  test("open_url returns the normalized page result and appends an event", async () => {
-    const { createOpenUrlTool } = await import("./open-url");
-    const tool = createOpenUrlTool(createToolContext(), {
+  test("fetch_page fetches through the resolved provider and appends an event", async () => {
+    const { createFetchPageTool } = await import("./fetch-page");
+    const tool = createFetchPageTool(createToolContext(), {
       appendEvent: appendEventMock,
-      fetchWebclawPage: fetchWebclawPageMock,
+      fetchPageWithProvider: fetchPageWithProviderMock,
+      resolveWebProvider: resolveWebProviderMock,
     });
     if (!tool.execute) {
-      throw new Error("Expected open_url tool.execute.");
+      throw new Error("Expected fetch_page tool.execute.");
     }
     const result = await tool.execute({
       url: "https://example.com/post",
     });
 
-    expect(fetchWebclawPageMock).toHaveBeenCalledTimes(1);
+    expect(fetchPageWithProviderMock).toHaveBeenCalledTimes(1);
+    expect(fetchPageWithProviderMock.mock.calls[0]?.[0]).toMatchObject({
+      provider,
+      url: "https://example.com/post",
+    });
     expect(appendEventMock).toHaveBeenCalledTimes(1);
-    expect(result.provider).toBe("webclaw");
+    expect(result.provider).toBe("deepseek");
     expect(result.document.title).toBe("Example Post");
   });
 
-  test("extract_page returns extracted data with the source document", async () => {
+  test("extract_page fetches the page and extracts structured data", async () => {
     const { createExtractPageTool } = await import("./extract-page");
     const tool = createExtractPageTool(createToolContext(), {
       appendEvent: appendEventMock,
-      fetchWebclawExtract: fetchWebclawExtractMock,
-      fetchWebclawPage: fetchWebclawPageMock,
+      extractWebPage: extractWebPageMock,
+      fetchPageWithProvider: fetchPageWithProviderMock,
+      resolveWebProvider: resolveWebProviderMock,
     });
     if (!tool.execute) {
       throw new Error("Expected extract_page tool.execute.");
@@ -119,8 +147,8 @@ describe("p0 web tools", () => {
       instruction: "Extract pricing tiers",
     });
 
-    expect(fetchWebclawPageMock).toHaveBeenCalledTimes(1);
-    expect(fetchWebclawExtractMock).toHaveBeenCalledTimes(1);
+    expect(fetchPageWithProviderMock).toHaveBeenCalledTimes(1);
+    expect(extractWebPageMock).toHaveBeenCalledTimes(1);
     expect(appendEventMock).toHaveBeenCalledTimes(1);
     expect(result.document.title).toBe("Example Post");
     expect(result.data).toEqual({
@@ -134,7 +162,8 @@ describe("p0 web tools", () => {
     );
     const tool = createSavePageToKnowledgeTool(createToolContext(), {
       appendEvent: appendEventMock,
-      fetchWebclawPage: fetchWebclawPageMock,
+      fetchPageWithProvider: fetchPageWithProviderMock,
+      resolveWebProvider: resolveWebProviderMock,
       saveWebPageToKnowledge: saveWebPageToKnowledgeMock,
     });
     if (!tool.execute) {
@@ -145,7 +174,7 @@ describe("p0 web tools", () => {
       trustLevel: "curated",
     });
 
-    expect(fetchWebclawPageMock).toHaveBeenCalledTimes(1);
+    expect(fetchPageWithProviderMock).toHaveBeenCalledTimes(1);
     expect(saveWebPageToKnowledgeMock).toHaveBeenCalledTimes(1);
     expect(appendEventMock).toHaveBeenCalledTimes(1);
     expect(result.saved).toBe(true);
@@ -158,7 +187,8 @@ describe("p0 web tools", () => {
     const context = createToolContext();
     const tool = createSearchWebTool(context, {
       appendEvent: appendEventMock,
-      fetchWebclawSearch: fetchWebclawSearchMock,
+      resolveWebProvider: resolveWebProviderMock,
+      searchWithProvider: searchWithProviderMock,
     });
     if (!tool.execute) {
       throw new Error("Expected search_web tool.execute.");
@@ -169,17 +199,15 @@ describe("p0 web tools", () => {
       limit: 5,
     });
 
-    expect(fetchWebclawSearchMock).toHaveBeenCalledTimes(1);
-    const searchCall = fetchWebclawSearchMock.mock.calls[0] as unknown as
-      | [Record<string, unknown>]
-      | undefined;
-    expect(searchCall?.[0]).toEqual({
+    expect(searchWithProviderMock).toHaveBeenCalledTimes(1);
+    expect(searchWithProviderMock.mock.calls[0]?.[0]).toMatchObject({
+      count: 5,
+      provider,
       query: "buni ai agents site:github.com",
-      limit: 5,
       signal: context.abortSignal,
     });
     expect(appendEventMock).toHaveBeenCalledTimes(1);
-    expect(result.provider).toBe("webclaw");
+    expect(result.provider).toBe("deepseek");
     expect(result.count).toBe(1);
     expect(result.items[0]?.title).toBe("Buni Web Tools");
   });
@@ -188,7 +216,8 @@ describe("p0 web tools", () => {
     const { createSummarizePageTool } = await import("./summarize-page");
     const tool = createSummarizePageTool(createToolContext(), {
       appendEvent: appendEventMock,
-      fetchWebclawPage: fetchWebclawPageMock,
+      fetchPageWithProvider: fetchPageWithProviderMock,
+      resolveWebProvider: resolveWebProviderMock,
       summarizeWebPage: summarizeWebPageMock,
     });
     if (!tool.execute) {
@@ -200,7 +229,7 @@ describe("p0 web tools", () => {
       length: "short",
     });
 
-    expect(fetchWebclawPageMock).toHaveBeenCalledTimes(1);
+    expect(fetchPageWithProviderMock).toHaveBeenCalledTimes(1);
     expect(summarizeWebPageMock).toHaveBeenCalledTimes(1);
     expect(appendEventMock).toHaveBeenCalledTimes(1);
     expect(result.document.title).toBe("Example Post");
@@ -208,5 +237,22 @@ describe("p0 web tools", () => {
       "Buni now supports summarizing normalized web pages."
     );
     expect(result.notes).toEqual(["goal_applied"]);
+  });
+
+  test("fails with an actionable message when no provider is configured", async () => {
+    const { createSearchWebTool } = await import("./search-web");
+    const tool = createSearchWebTool(createToolContext(), {
+      appendEvent: appendEventMock,
+      resolveWebProvider: async () => null,
+      searchWithProvider: searchWithProviderMock,
+    });
+    if (!tool.execute) {
+      throw new Error("Expected search_web tool.execute.");
+    }
+
+    await expect(tool.execute({ query: "buni", limit: 3 })).rejects.toThrow(
+      "No web search provider configured"
+    );
+    expect(searchWithProviderMock).not.toHaveBeenCalled();
   });
 });

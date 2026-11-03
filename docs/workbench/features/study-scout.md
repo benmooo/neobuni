@@ -26,13 +26,13 @@ Design doc (source of truth): `apps/fumadocs/content/docs/buni/study/study-scout
   wraps `POST https://api.deepseek.com/v1/tools/search` and `/v1/tools/fetch`
   (1–50 results, 12s/25s timeouts, 401/402/403/404/408/429/5xx error mapping,
   `rerank_score` / `authority` / `date` mapped onto `WebSearchResultItem`).
-  `provider.ts` resolves the backend, `dispatch.ts` dispatches search/fetch on the
-  resolved `kind` so a Webclaw key is never sent to the DeepSeek endpoint.
+  `provider.ts` resolves the backend, `dispatch.ts` dispatches search/fetch to
+  the DeepSeek endpoints.
   The key lives in its own `web_search` provider slot
   (`GET/PUT /config/provider/web-search`, settings → 模型与记忆 → 联网搜索),
   not in 记忆理解与路由: search and inference are different purposes and different
   bills. A profile that never configured the slot still falls back to a DeepSeek
-  reasoning key, then to `NEOBUNI_WEBCLAW_API_KEY`.
+  reasoning key.
 - **Planner** — `apps/server/src/study/scout-service.ts`:
   `buildScoutProfile` (recent 14 days · upcoming 3 days · weak mastery < 0.6,
   weak first), `buildScoutQueries` (six deterministic templates per topic with
@@ -80,9 +80,8 @@ Design doc (source of truth): `apps/fumadocs/content/docs/buni/study/study-scout
 
 ## Known gap — why it is not live yet
 
-Search has its own configuration now, but the local profile has not filled it
-in: `provider_configs` has no `web_search` row and there is no
-`NEOBUNI_WEBCLAW_API_KEY`, so:
+Search has its own configuration now, but at the time this note was written the
+local profile had not filled it in: `provider_configs` had no `web_search` row, so:
 
 - `scout/run` answers `{available: false, reason: …}`,
 - the worker stays silent,

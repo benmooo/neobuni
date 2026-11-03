@@ -1,13 +1,10 @@
 import { toolDefinition } from "@tanstack/ai";
 import { z } from "zod";
 
-import { webRenderModeSchema } from "./web-shared";
-
 const savePageToKnowledgeInputSchema = z.object({
   url: z.url(),
   title: z.string().trim().min(1).max(200).optional(),
   trustLevel: z.enum(["imported", "curated"]).default("imported"),
-  renderMode: webRenderModeSchema.default("auto"),
 });
 
 const savePageToKnowledgeOutputSchema = z.object({

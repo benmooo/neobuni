@@ -5,13 +5,18 @@ const appendEvent = (...args: Parameters<typeof appendEventFx>) =>
 
 import { summarizePageDef, summarizePageInputSchema } from "@neobuni/contracts";
 
-import { fetchWebclawPage } from "../integrations/web/webclaw";
+import { fetchPageWithProvider } from "../integrations/web/dispatch";
+import {
+  requireWebProvider,
+  resolveWebProvider,
+} from "../integrations/web/provider";
 import { summarizeWebPage } from "../web/summarize-web-page";
 import type { ServerToolContext } from "./types";
 
 interface SummarizePageDeps {
   appendEvent: typeof appendEvent;
-  fetchWebclawPage: typeof fetchWebclawPage;
+  fetchPageWithProvider: typeof fetchPageWithProvider;
+  resolveWebProvider: typeof resolveWebProvider;
   summarizeWebPage: typeof summarizeWebPage;
 }
 
@@ -19,15 +24,21 @@ const createSummarizePageTool = (
   context: ServerToolContext,
   deps: SummarizePageDeps = {
     appendEvent,
-    fetchWebclawPage,
+    fetchPageWithProvider,
+    resolveWebProvider,
     summarizeWebPage,
   }
 ) =>
   summarizePageDef.server(async (args) => {
     const input = summarizePageInputSchema.parse(args);
-    const page = await deps.fetchWebclawPage({
-      url: input.url,
+    const provider = await requireWebProvider(
+      context.profileId,
+      deps.resolveWebProvider
+    );
+    const page = await deps.fetchPageWithProvider({
+      provider,
       signal: context.abortSignal,
+      url: input.url,
     });
     const summary = await deps.summarizeWebPage({
       profileId: context.profileId,

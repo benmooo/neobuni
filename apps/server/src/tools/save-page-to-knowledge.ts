@@ -8,13 +8,18 @@ import {
   savePageToKnowledgeInputSchema,
 } from "@neobuni/contracts";
 
-import { fetchWebclawPage } from "../integrations/web/webclaw";
+import { fetchPageWithProvider } from "../integrations/web/dispatch";
+import {
+  requireWebProvider,
+  resolveWebProvider,
+} from "../integrations/web/provider";
 import { saveWebPageToKnowledge } from "../web/save-web-page-to-knowledge";
 import type { ServerToolContext } from "./types";
 
 interface SavePageToKnowledgeDeps {
   appendEvent: typeof appendEvent;
-  fetchWebclawPage: typeof fetchWebclawPage;
+  fetchPageWithProvider: typeof fetchPageWithProvider;
+  resolveWebProvider: typeof resolveWebProvider;
   saveWebPageToKnowledge: typeof saveWebPageToKnowledge;
 }
 
@@ -22,15 +27,21 @@ const createSavePageToKnowledgeTool = (
   context: ServerToolContext,
   deps: SavePageToKnowledgeDeps = {
     appendEvent,
-    fetchWebclawPage,
+    fetchPageWithProvider,
+    resolveWebProvider,
     saveWebPageToKnowledge,
   }
 ) =>
   savePageToKnowledgeDef.server(async (args) => {
     const input = savePageToKnowledgeInputSchema.parse(args);
-    const page = await deps.fetchWebclawPage({
-      url: input.url,
+    const provider = await requireWebProvider(
+      context.profileId,
+      deps.resolveWebProvider
+    );
+    const page = await deps.fetchPageWithProvider({
+      provider,
       signal: context.abortSignal,
+      url: input.url,
     });
     const data = await deps.saveWebPageToKnowledge({
       profileId: context.profileId,

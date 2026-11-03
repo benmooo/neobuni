@@ -41,15 +41,14 @@ Study Scout 让 Buni 每天主动"上网找学过的、即将学的、学得不�
 
 | 能力 | 现状 |
 | --- | --- |
-| 网页搜索 | `apps/server/src/tools/search-web.ts` → `apps/server/src/integrations/web/webclaw.ts`（**需要 `NEOBUNI_WEBCLAW_API_KEY`，当前为空**） |
-| 页面抓取/摘要 | `apps/server/src/tools/open-url.ts`、`extract-page.ts`、`summarize-page.ts`、`apps/server/src/web/summarize-web-page.ts` |
+| 网页搜索 | `apps/server/src/tools/search-web.ts` → `apps/server/src/integrations/web/deepseek-search.ts`（`web_search` 槽位里的 DeepSeek key） |
+| 页面抓取/摘要 | `apps/server/src/tools/fetch-page.ts`、`extract-page.ts`、`summarize-page.ts`、`apps/server/src/web/summarize-web-page.ts` |
 | 存入知识库 | `apps/server/src/web/save-web-page-to-knowledge.ts` → `ingestKnowledgeDocument` |
 | 主动推送 + 按钮 | `apps/server/src/study/reminder-worker.ts`、`nudge-service.ts`、`nudge-actions.ts`、`apps/server/src/integrations/telegram.ts` |
 | 学习状态 | `useStudyGoalDetail` 的 `nodes` / `masteryByNode` / `sessions`，`StudyProgress` |
 | 定时任务范式 | `apps/server/src/study/reminder-worker.ts`（`Effect` + 可注入 deps + tick） |
 
-缺口：没有"兴趣 → 检索 → 打分 → 去重 → 推送 → 沉淀/反馈"的 pipeline；
-且现有搜索后端不可用（Webclaw key 为空）。
+缺口：没有"兴趣 → 检索 → 打分 → 去重 → 推送 → 沉淀/反馈"的 pipeline。
 
 ## 4. 关键决策
 
@@ -178,7 +177,7 @@ fetchDeepSeekPage(input: {
   （`baseUrl` 缺省 `https://api.deepseek.com`）；槽位存在但被停用/缺 key → `null`
   （显式关闭，不再回退）。只有**从未配置过该槽位**的 profile 才回退到旧行为：
   推理 provider 是 `deepseek` 或 host 为 `api.deepseek.com` → deepseek 实现；
-  否则若有 `NEOBUNI_WEBCLAW_API_KEY` → webclaw；都没有 → `null`（scout 静默关闭）。
+  都没有 → `null`（scout 静默关闭）。
 
 ## 9. 过滤 `filterCandidates`（全部免费）
 
@@ -271,7 +270,7 @@ fetchDeepSeekPage(input: {
 
 | 事件 | payload | 用途 |
 | --- | --- | --- |
-| `study.scout_run` | `{ goalId, localDate, queries: string[], candidates: number, kept: number, picked: number, fallback?: boolean, provider: "deepseek" \| "webclaw" }` | 观测/调参 |
+| `study.scout_run` | `{ goalId, localDate, queries: string[], candidates: number, kept: number, picked: number, fallback?: boolean, provider: "deepseek" }` | 观测/调参 |
 | `study.scout_sent` | `{ candidates, digestId, errors, goalId, items: [{host, kind, title, topicKey, url}], localDate, picks }` | 推送历史（URL 与 `localDate` 去重来源）、按钮索引、`digestId`、收藏/出题的标题 |
 | `study.scout_saved` | `{ digestId, documentId, goalId, planNodeId, url }` | 沉淀追踪 |
 | `study.scout_quiz` | `{ digestId, goalId, nodeId, url, specIds }` | 出题追踪 |

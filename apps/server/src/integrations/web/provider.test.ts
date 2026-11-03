@@ -1,7 +1,12 @@
 import { describe, expect, test } from "vitest";
 
 import type { WebProviderDeps } from "./provider";
-import { isDeepSeekHost, resolveWebProvider } from "./provider";
+import {
+  isDeepSeekHost,
+  requireWebProvider,
+  resolveWebProvider,
+  WebProviderNotConfiguredError,
+} from "./provider";
 
 const reasoningConfig = (overrides: Record<string, unknown> = {}) =>
   ({
@@ -26,11 +31,6 @@ const searchDeps = (
 ): Partial<WebProviderDeps> => ({
   getMemoryReasoningProviderConfig: async () => null,
   getWebSearchProviderConfig: async () => null,
-  readWebclawConfig: () => ({
-    apiKey: "",
-    baseUrl: "https://api.webclaw.io",
-    timeoutMs: 1000,
-  }),
   ...overrides,
 });
 
@@ -52,11 +52,6 @@ describe("resolveWebProvider", () => {
       searchDeps({
         getMemoryReasoningProviderConfig: async () => reasoningConfig(),
         getWebSearchProviderConfig: async () => webSearchConfig(),
-        readWebclawConfig: () => ({
-          apiKey: "wc_test",
-          baseUrl: "https://api.webclaw.io",
-          timeoutMs: 1000,
-        }),
       })
     );
 
@@ -74,11 +69,6 @@ describe("resolveWebProvider", () => {
         getMemoryReasoningProviderConfig: async () => reasoningConfig(),
         getWebSearchProviderConfig: async () =>
           webSearchConfig({ enabled: false }),
-        readWebclawConfig: () => ({
-          apiKey: "wc_test",
-          baseUrl: "https://api.webclaw.io",
-          timeoutMs: 1000,
-        }),
       })
     );
 
@@ -92,11 +82,6 @@ describe("resolveWebProvider", () => {
         getMemoryReasoningProviderConfig: async () => reasoningConfig(),
         getWebSearchProviderConfig: async () =>
           webSearchConfig({ apiKey: " " }),
-        readWebclawConfig: () => ({
-          apiKey: "wc_test",
-          baseUrl: "https://api.webclaw.io",
-          timeoutMs: 1000,
-        }),
       })
     );
 
@@ -108,11 +93,6 @@ describe("resolveWebProvider", () => {
       "profile-1",
       searchDeps({
         getMemoryReasoningProviderConfig: async () => reasoningConfig(),
-        readWebclawConfig: () => ({
-          apiKey: "wc_test",
-          baseUrl: "https://api.webclaw.io",
-          timeoutMs: 1000,
-        }),
       })
     );
 
@@ -139,7 +119,7 @@ describe("resolveWebProvider", () => {
     expect(provider?.baseUrl).toBe("https://api.deepseek.com/v1/");
   });
 
-  test("falls back to Webclaw when the reasoning key is not DeepSeek", async () => {
+  test("returns null when the reasoning key is not DeepSeek", async () => {
     const provider = await resolveWebProvider(
       "profile-1",
       searchDeps({
@@ -149,15 +129,10 @@ describe("resolveWebProvider", () => {
             baseUrl: "https://api.openai.com/v1",
             provider: "openai",
           }),
-        readWebclawConfig: () => ({
-          apiKey: "wc_test",
-          baseUrl: "https://api.webclaw.io",
-          timeoutMs: 1000,
-        }),
       })
     );
 
-    expect(provider?.kind).toBe("webclaw");
+    expect(provider).toBeNull();
   });
 
   test("returns null when nothing is configured", async () => {
@@ -166,22 +141,20 @@ describe("resolveWebProvider", () => {
     expect(provider).toBeNull();
   });
 
-  test("degrades to the fallback when the provider lookup throws", async () => {
+  test("degrades to null when the reasoning lookup throws", async () => {
     const provider = await resolveWebProvider(
       "profile-1",
       searchDeps({
         getMemoryReasoningProviderConfig: async () => {
           throw new Error("db down");
         },
-        readWebclawConfig: () => ({
-          apiKey: "wc_test",
-          baseUrl: "https://api.webclaw.io",
-          timeoutMs: 1000,
-        }),
+        getWebSearchProviderConfig: async () => {
+          throw new Error("db down");
+        },
       })
     );
 
-    expect(provider?.kind).toBe("webclaw");
+    expect(provider).toBeNull();
   });
 
   test("degrades when the dedicated lookup throws", async () => {
@@ -197,5 +170,25 @@ describe("resolveWebProvider", () => {
 
     expect(provider?.kind).toBe("deepseek");
     expect(provider?.apiKey).toBe("sk_test");
+  });
+});
+
+describe("requireWebProvider", () => {
+  test("throws an actionable error when no provider is configured", async () => {
+    await expect(
+      requireWebProvider("profile-1", async () => null)
+    ).rejects.toBeInstanceOf(WebProviderNotConfiguredError);
+  });
+
+  test("returns the resolved provider", async () => {
+    const provider = {
+      apiKey: "sk_search",
+      baseUrl: "https://api.deepseek.com",
+      kind: "deepseek" as const,
+    };
+
+    await expect(
+      requireWebProvider("profile-1", async () => provider)
+    ).resolves.toEqual(provider);
   });
 });

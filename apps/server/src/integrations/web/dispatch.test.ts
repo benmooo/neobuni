@@ -14,14 +14,8 @@ const deepseek = {
   kind: "deepseek" as const,
 };
 
-const webclaw = {
-  apiKey: "wc-key",
-  baseUrl: "https://api.webclaw.io",
-  kind: "webclaw" as const,
-};
-
 describe("searchWithProvider", () => {
-  test("sends a deepseek key only to the deepseek endpoint", async () => {
+  test("sends the resolved key to the DeepSeek search endpoint", async () => {
     const fetchMock = vi.fn(async () =>
       jsonResponse({ results: [{ url: "https://example.com", title: "T" }] })
     );
@@ -46,36 +40,10 @@ describe("searchWithProvider", () => {
       query: "质量属性 site:zhihu.com",
     });
   });
-
-  test("sends a webclaw key only to the webclaw endpoint", async () => {
-    const fetchMock = vi.fn(async () =>
-      jsonResponse({ results: [{ url: "https://example.com", title: "T" }] })
-    );
-
-    await searchWithProvider({
-      count: 3,
-      deps: { fetch: fetchMock as unknown as typeof fetch },
-      provider: webclaw,
-      query: "软件架构",
-    });
-
-    const [url, init] = fetchMock.mock.calls[0] as unknown as [
-      string,
-      RequestInit,
-    ];
-    expect(url).toBe("https://api.webclaw.io/v1/search");
-    expect((init.headers as Record<string, string>).Authorization).toBe(
-      "Bearer wc-key"
-    );
-    expect(JSON.parse(init.body as string)).toMatchObject({
-      num_results: 3,
-      query: "软件架构",
-    });
-  });
 });
 
 describe("fetchPageWithProvider", () => {
-  test("fetches a page through the provider that owns the key", async () => {
+  test("fetches a page through the DeepSeek fetch endpoint", async () => {
     const fetchMock = vi.fn(async () =>
       jsonResponse({
         content: "正文",

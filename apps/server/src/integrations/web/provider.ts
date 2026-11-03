@@ -5,7 +5,6 @@ import {
 } from "@neobuni/db";
 
 import { DEFAULT_DEEPSEEK_BASE_URL } from "./deepseek-search";
-import { readWebclawConfig } from "./webclaw";
 
 const getMemoryReasoningProviderConfig = (
   ...args: Parameters<typeof getMemoryReasoningProviderConfigFx>
@@ -20,24 +19,16 @@ interface ResolvedDeepSeekProvider {
   kind: "deepseek";
 }
 
-interface ResolvedWebclawProvider {
-  apiKey: string;
-  baseUrl: string;
-  kind: "webclaw";
-}
-
-type ResolvedWebProvider = ResolvedDeepSeekProvider | ResolvedWebclawProvider;
+type ResolvedWebProvider = ResolvedDeepSeekProvider;
 
 interface WebProviderDeps {
   getMemoryReasoningProviderConfig: typeof getMemoryReasoningProviderConfig;
   getWebSearchProviderConfig: typeof getWebSearchProviderConfig;
-  readWebclawConfig: typeof readWebclawConfig;
 }
 
 const defaultDeps: WebProviderDeps = {
   getMemoryReasoningProviderConfig,
   getWebSearchProviderConfig,
-  readWebclawConfig,
 };
 
 const isDeepSeekHost = (baseUrl: string): boolean => {
@@ -48,6 +39,15 @@ const isDeepSeekHost = (baseUrl: string): boolean => {
   }
 };
 
+class WebProviderNotConfiguredError extends Error {
+  constructor() {
+    super(
+      "No web search provider configured. Set a DeepSeek API key in Settings → 模型与记忆 → 联网搜索."
+    );
+    this.name = "WebProviderNotConfiguredError";
+  }
+}
+
 /**
  * Picks the search backend for a profile.
  *
@@ -55,7 +55,7 @@ const isDeepSeekHost = (baseUrl: string): boolean => {
  * separate purposes and separate bills, so an explicitly configured (or
  * explicitly disabled) search key is authoritative. Only profiles that never
  * configured the slot keep the legacy behaviour of reusing a DeepSeek reasoning
- * key, and then fall back to the Webclaw environment key.
+ * key.
  */
 const resolveWebProvider = async (
   profileId: string,
@@ -105,23 +105,26 @@ const resolveWebProvider = async (
     };
   }
 
-  const webclaw = deps.readWebclawConfig();
-
-  if (webclaw.apiKey.length > 0) {
-    return {
-      apiKey: webclaw.apiKey,
-      baseUrl: webclaw.baseUrl,
-      kind: "webclaw",
-    };
-  }
-
   return null;
 };
 
-export type {
-  ResolvedDeepSeekProvider,
-  ResolvedWebclawProvider,
-  ResolvedWebProvider,
-  WebProviderDeps,
+const requireWebProvider = async (
+  profileId: string,
+  resolve: typeof resolveWebProvider = resolveWebProvider
+): Promise<ResolvedWebProvider> => {
+  const provider = await resolve(profileId);
+
+  if (!provider) {
+    throw new WebProviderNotConfiguredError();
+  }
+
+  return provider;
 };
-export { isDeepSeekHost, resolveWebProvider };
+
+export type { ResolvedDeepSeekProvider, ResolvedWebProvider, WebProviderDeps };
+export {
+  isDeepSeekHost,
+  requireWebProvider,
+  resolveWebProvider,
+  WebProviderNotConfiguredError,
+};

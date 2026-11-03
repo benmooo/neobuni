@@ -182,7 +182,7 @@ Reflection's `reflection.*` tools are removed from every tool set, including hea
 
 - `packages/core`, `packages/contracts` created from buni, reflection stripped, renamed.
 - `packages/db` schema imported, reflection tables removed, `db:push` on a fresh DB.
-- varlock schemas extended with all `NEOBUNI_*` vars (worker ticks, integration creds, webclaw, newsnow, provider defaults).
+- varlock schemas extended with all `NEOBUNI_*` vars (worker ticks, integration creds, web search, newsnow, provider defaults).
 - Add deps: `effect`, `@effect/sql-libsql`, `@effect/vitest`, `@tanstack/ai*`, `assistant-ui`, `streamdown`, `phosphor`, `croner`, `chrono-node`, `discord.js`, `resend`.
 - Gate: `vp check`, `vp test` (empty suites ok), `bun run db:push` against a temp DB.
 

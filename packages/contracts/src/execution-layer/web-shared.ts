@@ -1,8 +1,6 @@
 import { z } from "zod";
 
-const webProviderSchema = z.literal("webclaw");
-
-const webRenderModeSchema = z.enum(["auto", "reader", "rendered"]);
+const webProviderSchema = z.literal("deepseek");
 
 const webSummaryLengthSchema = z.enum(["short", "medium", "long"]);
 
@@ -35,7 +33,6 @@ const webPageDocumentSchema = z.object({
 export {
   webPageDocumentSchema,
   webProviderSchema,
-  webRenderModeSchema,
   webSearchResultItemSchema,
   webSummaryLengthSchema,
 };

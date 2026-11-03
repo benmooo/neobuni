@@ -2,6 +2,7 @@ import { createReminderTool } from "./create-reminder";
 import { createScheduleTool } from "./create-schedule";
 import { createDeleteScheduleTool } from "./delete-schedule";
 import { createExtractPageTool } from "./extract-page";
+import { createFetchPageTool } from "./fetch-page";
 import { createGetNewsBriefTool } from "./get-news-brief";
 import { createGetNewsHeadlinesTool } from "./get-news-headlines";
 import { createGetScheduleTool } from "./get-schedule";
@@ -14,7 +15,6 @@ import { createListQqTargetsTool } from "./list-qq-targets";
 import { createListSchedulesTool } from "./list-schedules";
 import { createMarkTaskDoneTool } from "./mark-task-done";
 import { createNowTool } from "./now";
-import { createOpenUrlTool } from "./open-url";
 import { createRecallMemoryTool } from "./recall-memory";
 import { createResolveMemoryConflictTool } from "./resolve-memory-conflict";
 import { createResolveNewsSourceTool } from "./resolve-news-source";
@@ -47,6 +47,7 @@ const createExecutionTools = (context: ServerToolContext) => [
   createScheduleTool(context),
   createDeleteScheduleTool(context),
   createExtractPageTool(context),
+  createFetchPageTool(context),
   createGetScheduleTool(context),
   createGetNewsBriefTool(context),
   createGetNewsHeadlinesTool(context),
@@ -58,7 +59,6 @@ const createExecutionTools = (context: ServerToolContext) => [
   createListQqTargetsTool(context),
   createListSchedulesTool(context),
   createNowTool(context),
-  createOpenUrlTool(context),
   createResolveNewsSourceTool(context),
   createReminderTool(context),
   createSavePageToKnowledgeTool(context),
