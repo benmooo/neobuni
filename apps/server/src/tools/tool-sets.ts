@@ -9,6 +9,7 @@ import { createGetScheduleTool } from "./get-schedule";
 import { createListChannelTargetsTool } from "./list-channel-targets";
 import { createListFeishuDeliveryLogsTool } from "./list-feishu-delivery-logs";
 import { createListFeishuTargetsTool } from "./list-feishu-targets";
+import { createListKnowledgeTool } from "./list-knowledge";
 import { createListNewsBriefsTool } from "./list-news-briefs";
 import { createListNewsSourcesTool } from "./list-news-sources";
 import { createListQqTargetsTool } from "./list-qq-targets";
@@ -20,6 +21,7 @@ import { createResolveMemoryConflictTool } from "./resolve-memory-conflict";
 import { createResolveNewsSourceTool } from "./resolve-news-source";
 import { createSaveMemoryTool } from "./save-memory";
 import { createSavePageToKnowledgeTool } from "./save-page-to-knowledge";
+import { createSearchKnowledgeTool } from "./search-knowledge";
 import { createSearchNewsSourcesTool } from "./search-news-sources";
 import { createSearchWebTool } from "./search-web";
 import { createSendChannelMessageTool } from "./send-channel-message";
@@ -54,6 +56,7 @@ const createExecutionTools = (context: ServerToolContext) => [
   createListChannelTargetsTool(context),
   createListFeishuDeliveryLogsTool(context),
   createListFeishuTargetsTool(context),
+  createListKnowledgeTool(context),
   createListNewsBriefsTool(context),
   createListNewsSourcesTool(context),
   createListQqTargetsTool(context),
@@ -62,6 +65,7 @@ const createExecutionTools = (context: ServerToolContext) => [
   createResolveNewsSourceTool(context),
   createReminderTool(context),
   createSavePageToKnowledgeTool(context),
+  createSearchKnowledgeTool(context),
   createSearchWebTool(context),
   createSearchNewsSourcesTool(context),
   createSendChannelMessageTool(context),

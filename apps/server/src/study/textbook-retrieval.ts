@@ -9,8 +9,8 @@ import {
 } from "@neobuni/db";
 import { embedQueryForSearch } from "../digest/embedding-service";
 import { toOpenAICompatibleConfig } from "../digest/memory-provider-config";
+import { parseChunkLocator } from "../memory/knowledge-locator";
 
-const LOCATOR_PATTERN = /^【(.+?) · p\.(\d+)(?:-(\d+))?】$/;
 const MAX_EXCERPT_CHARS = 1200;
 const MAX_EXCERPTS = 6;
 const VECTOR_CANDIDATES = 80;
@@ -24,41 +24,6 @@ interface RetrievedExcerpt {
   pageEnd: number | null;
   text: string;
 }
-
-/**
- * Ingested textbook chunks start with a locator line
- * (`【第13章 层次式架构设计理论与实践 · p.459-461】`), which is how page and
- * chapter survive chunking without extra columns.
- */
-const parseChunkLocator = (
-  content: string
-): {
-  chapter: string;
-  locator: string;
-  page: number;
-  pageEnd: number | null;
-} | null => {
-  const [firstLine, ...rest] = content.split("\n");
-  const match = LOCATOR_PATTERN.exec((firstLine ?? "").trim());
-
-  if (!match || rest.length === 0) {
-    return null;
-  }
-
-  const page = Number(match[2]);
-  const pageEnd = match[3] ? Number(match[3]) : null;
-
-  if (!Number.isFinite(page) || page <= 0) {
-    return null;
-  }
-
-  return {
-    chapter: (match[1] ?? "").trim(),
-    locator: (firstLine ?? "").trim(),
-    page,
-    pageEnd: pageEnd !== null && pageEnd > page ? pageEnd : null,
-  };
-};
 
 const toExcerpt = (chunk: {
   id: string;
@@ -192,4 +157,4 @@ const toMaterialExcerpts = (
   }));
 
 export type { RetrievedExcerpt };
-export { parseChunkLocator, retrieveTextbookExcerpts, toMaterialExcerpts };
+export { retrieveTextbookExcerpts, toMaterialExcerpts };

@@ -361,9 +361,12 @@ const searchKnowledgeChunkTextAsync = async (
       args: [normalized, limit],
     });
 
-    return result.rows.map((row) => ({
+    // FTS5 bm25 returns negative values where more negative is better, and the
+    // rows are already ordered by rank. Deriving the score from position keeps
+    // the ordering without depending on the sign or magnitude of bm25.
+    return result.rows.map((row, index) => ({
       chunkId: String(row.chunk_id),
-      score: Math.max(0, 1 - Math.max(0, Number(row.rank))),
+      score: 1 - (index / Math.max(result.rows.length, 1)) * 0.5,
     }));
   } catch {
     return [];

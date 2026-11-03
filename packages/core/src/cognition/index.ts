@@ -9,5 +9,6 @@ export * from "./retrieval-activation";
 export * from "./retrieval-intent";
 export * from "./retrieval-plan";
 export * from "./retrieval-queries";
+export { extractMemoryKeywords } from "./retrieval-shared";
 export * from "./retrieval-signals";
 export * from "./working-memory";

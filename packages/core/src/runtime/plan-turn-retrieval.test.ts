@@ -102,4 +102,16 @@ describe("planTurnRetrieval", () => {
     expect(result.retrievalPlan.queries.knowledge).not.toBeNull();
     expect(result.retrievalPlan.queries.temporal).toBeNull();
   });
+
+  test("prefetches knowledge for textbook and chapter questions", () => {
+    const turnContext = buildBaseTurnContext({
+      latestUserText: "你能读到 textbooks 吗，相关的 chapter 又是哪几节？",
+      recentUserTexts: ["你能读到 textbooks 吗，相关的 chapter 又是哪几节？"],
+    });
+
+    const result = planTurnRetrieval(turnContext);
+
+    expect(result.retrievalPlan.activation.knowledge.mode).toBe("prefetch");
+    expect(result.retrievalPlan.queries.knowledge).not.toBeNull();
+  });
 });

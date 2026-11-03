@@ -7,6 +7,7 @@ export * from "./fetch-page";
 export * from "./get-news-brief";
 export * from "./get-news-headlines";
 export * from "./get-schedule";
+export * from "./knowledge-tools";
 export * from "./list-channel-targets";
 export * from "./list-feishu-delivery-logs";
 export * from "./list-feishu-targets";

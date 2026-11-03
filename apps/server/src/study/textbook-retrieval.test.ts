@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 
-import { parseChunkLocator } from "./textbook-retrieval";
+import { parseChunkLocator } from "../memory/knowledge-locator";
 
 describe("parseChunkLocator", () => {
   test("reads chapter, page and page range from a chunk header", () => {

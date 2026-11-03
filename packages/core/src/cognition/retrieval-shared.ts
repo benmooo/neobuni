@@ -63,6 +63,17 @@ const worldKnowledgePatterns = [
   "区别",
   "是什么",
   "什么是",
+  "教材",
+  "课本",
+  "教科书",
+  "原文",
+  "页码",
+  "textbook",
+  "chapter",
+  "第几章",
+  "哪一章",
+  "第几节",
+  "哪一节",
 ];
 
 const englishStopwords = new Set([

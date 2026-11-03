@@ -50,6 +50,14 @@ describe("createExecutionTools", () => {
     expect(toolNames.includes("summarize_page")).toBe(true);
   });
 
+  test("registers the knowledge search and listing tools", () => {
+    const tools = createExecutionTools(createToolContext());
+    const toolNames = tools.map((tool) => tool.name as string);
+
+    expect(toolNames.includes("search_knowledge")).toBe(true);
+    expect(toolNames.includes("list_knowledge")).toBe(true);
+  });
+
   test("registers the generic channel delivery tools", () => {
     const tools = createExecutionTools(createToolContext());
     const toolNames = tools.map((tool) => tool.name as string);
