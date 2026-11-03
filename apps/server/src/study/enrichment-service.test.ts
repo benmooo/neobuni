@@ -245,6 +245,7 @@ describe("enrichStudyLesson", () => {
     }
 
     expect(result.enrichment.checkSpecs).toHaveLength(3);
+    expect(result.materialStatus).toBe("ok");
 
     const material = result.enrichment.material;
     expect(material?.sections).toHaveLength(1);
@@ -262,6 +263,16 @@ describe("enrichStudyLesson", () => {
   });
 
   test("keeps the summary when the material call returns non-JSON", async () => {
+    mocks.retrieveTextbookExcerpts.mockResolvedValue([
+      {
+        chapter: "第7章 系统架构设计基础知识",
+        chunkId: "chunk-1",
+        locator: "【第7章 系统架构设计基础知识 · p.270-271】",
+        page: 270,
+        pageEnd: 271,
+        text: "管道-过滤器把处理步骤做成过滤器。",
+      },
+    ]);
     mocks.createChatCompletion.mockImplementation(
       async (_config: unknown, messages: { content: string }[]) =>
         String(messages[0]?.content ?? "").includes("教材编写者")
@@ -282,6 +293,25 @@ describe("enrichStudyLesson", () => {
 
     expect(result.enrichment.whatText).toBe(validResponse.whatText);
     expect(result.enrichment.material ?? null).toBeNull();
+    expect(result.materialStatus).toBe("failed");
+  });
+
+  test("reports no_sources when retrieval returns nothing", async () => {
+    mocks.createChatCompletion.mockResolvedValue(JSON.stringify(validResponse));
+
+    const result = await enrichStudyLesson({
+      desiredOutcome: "Pass the exam",
+      goalTitle: "系统架构设计师",
+      node,
+      profileId: "profile-1",
+    });
+
+    if (result.status !== "ok") {
+      throw new Error(`expected ok, received ${result.status}`);
+    }
+
+    expect(result.enrichment.material ?? null).toBeNull();
+    expect(result.materialStatus).toBe("no_sources");
   });
 
   test("passes the lesson and goal to the provider", async () => {

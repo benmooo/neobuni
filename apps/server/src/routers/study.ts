@@ -616,7 +616,11 @@ export const studyRouter = {
           });
         }
         if (node.enrichment && !input.force) {
-          return { enrichment: node.enrichment, node };
+          return {
+            enrichment: node.enrichment,
+            materialStatus: "not_requested",
+            node,
+          };
         }
         const outcome = await enrichStudyLesson({
           desiredOutcome: goal.desiredOutcome,
@@ -652,7 +656,11 @@ export const studyRouter = {
             planNodeId: node.id,
           })
         );
-        return { enrichment, node: updated };
+        return {
+          enrichment,
+          materialStatus: outcome.materialStatus,
+          node: updated,
+        };
       }),
   },
 

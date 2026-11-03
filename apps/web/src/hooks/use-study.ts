@@ -12,6 +12,7 @@ import type {
   StudySessionReschedule,
   StudySessionStart,
 } from "@neobuni/contracts";
+import { toast } from "@neobuni/ui/components/sonner";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";
@@ -164,7 +165,19 @@ const useEnrichStudyLesson = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: StudyLessonEnrich) => api.study.lessons.enrich(input),
-    onSuccess: () => invalidateStudy(queryClient),
+    onSuccess: (result) => {
+      invalidateStudy(queryClient);
+
+      // The summary and checks can succeed while the textbook pass returns
+      // nothing; without this the material tab looks like a dead button.
+      if (result.materialStatus === "no_sources") {
+        toast.error(
+          "没找到可用的教材原文，教材内容没有生成。请先导入教材再试。"
+        );
+      } else if (result.materialStatus === "failed") {
+        toast.error("教材内容生成失败，可以再点一次重试。");
+      }
+    },
   });
 };
 

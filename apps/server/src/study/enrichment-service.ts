@@ -93,9 +93,12 @@ const generateMaterial = async (input: {
   excerpts: RetrievedExcerpt[];
   lessonTitle: string;
   objective: string;
-}): Promise<StudyLessonMaterial | null> => {
+}): Promise<{
+  material: StudyLessonMaterial | null;
+  status: Exclude<MaterialStatus, "not_requested">;
+}> => {
   if (input.excerpts.length === 0) {
-    return null;
+    return { material: null, status: "no_sources" };
   }
 
   const messages = [
@@ -120,10 +123,13 @@ const generateMaterial = async (input: {
 
       if (parsed.success) {
         return {
-          excerpts: toMaterialExcerpts(input.excerpts),
-          generatedAt: new Date().toISOString(),
-          sections: parsed.data.sections,
-          source: textbookSourceTitle(),
+          material: {
+            excerpts: toMaterialExcerpts(input.excerpts),
+            generatedAt: new Date().toISOString(),
+            sections: parsed.data.sections,
+            source: textbookSourceTitle(),
+          },
+          status: "ok",
         };
       }
     } catch {
@@ -132,7 +138,7 @@ const generateMaterial = async (input: {
   }
 
   // Material is additive: a failure here must not lose the summary + checks.
-  return null;
+  return { material: null, status: "failed" };
 };
 
 /**
@@ -166,12 +172,23 @@ const parseJson = (text: string): unknown => {
 };
 
 /**
+ * Why the material pass produced nothing. The summary and checks still succeed,
+ * so the caller needs this to explain an empty 教材内容 tab instead of looking
+ * like a no-op.
+ */
+type MaterialStatus = "ok" | "no_sources" | "failed" | "not_requested";
+
+/**
  * Three outcomes instead of `null`: "no provider configured" and "provider call
  * failed" need different messages, otherwise a quota/auth/endpoint failure looks
  * like a missing configuration.
  */
 type EnrichStudyLessonResult =
-  | { status: "ok"; enrichment: StudyLessonEnrichment }
+  | {
+      status: "ok";
+      enrichment: StudyLessonEnrichment;
+      materialStatus: MaterialStatus;
+    }
   | { status: "missing_provider" }
   | { status: "provider_error"; message: string };
 
@@ -241,7 +258,7 @@ const enrichStudyLesson = async (
       rubric: check.rubric,
     }));
 
-    const material = await generateMaterial({
+    const { material, status: materialStatus } = await generateMaterial({
       config,
       excerpts,
       lessonTitle: input.node.title,
@@ -260,6 +277,7 @@ const enrichStudyLesson = async (
         source: "llm",
         whatText: parsed.whatText,
       },
+      materialStatus,
     };
   } catch (error) {
     return {

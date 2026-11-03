@@ -9,6 +9,9 @@
  *   DATABASE_URL=file:/abs/path/.data/local.db \
  *   PROFILE_ID=... \
  *   bun run apps/server/scripts/ingest-textbook.ts ~/Downloads/book.pdf
+ *
+ * Retrieval prefers vector search, so run `embed-knowledge.ts` afterwards; this
+ * script only writes chunks and the keyword index.
  */
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
@@ -20,6 +23,7 @@ import {
   createKnowledgeChunk,
   createKnowledgeDocument,
   findKnowledgeDocumentByChecksum,
+  getClient,
   runRepo,
   upsertKnowledgeChunkFts,
 } from "@neobuni/db";
@@ -140,6 +144,41 @@ const buildChunks = (
   return chunks;
 };
 
+// FTS and vector tables have no foreign keys, so deleting the row alone would
+// leave entries that keep citing a document that no longer exists.
+const removeDocument = async (documentId: string) => {
+  const client = getClient();
+  const chunks = await client.execute({
+    args: [documentId],
+    sql: "SELECT id FROM knowledge_chunks WHERE document_id = ?",
+  });
+
+  for (const row of chunks.rows) {
+    const chunkId = String(row.id ?? "");
+    await client.execute({
+      args: [chunkId],
+      sql: "DELETE FROM fts_knowledge_chunks WHERE chunk_id = ?",
+    });
+    await client.execute({
+      args: [chunkId],
+      sql: "DELETE FROM vec_knowledge_chunks WHERE chunk_id = ?",
+    });
+  }
+
+  await client.execute({
+    args: [documentId],
+    sql: "DELETE FROM knowledge_chunks WHERE document_id = ?",
+  });
+  await client.execute({
+    args: [documentId],
+    sql: "DELETE FROM knowledge_facts WHERE document_id = ?",
+  });
+  await client.execute({
+    args: [documentId],
+    sql: "DELETE FROM knowledge_documents WHERE id = ?",
+  });
+};
+
 const main = async () => {
   const filePath = resolve(process.argv[2] ?? "");
   const profileId = process.env.PROFILE_ID ?? "";
@@ -150,6 +189,11 @@ const main = async () => {
       "usage: PROFILE_ID=... bun run ingest-textbook.ts <file.pdf>"
     );
   }
+
+  // The dev server keeps its own connection open; without a busy timeout the
+  // first concurrent write fails with SQLITE_BUSY and leaves a half-ingested
+  // document behind.
+  await getClient().execute("PRAGMA busy_timeout = 15000");
 
   const data = new Uint8Array(await readFile(filePath));
   const doc = await pdfjs.getDocument({
@@ -191,8 +235,16 @@ const main = async () => {
     findKnowledgeDocumentByChecksum({ checksum, profileId })
   );
   if (existing) {
-    console.log(`already ingested: ${existing.id}`);
-    return;
+    const stored = await getClient().execute({
+      args: [existing.id],
+      sql: "SELECT COUNT(*) AS count FROM knowledge_chunks WHERE document_id = ?",
+    });
+    if (Number(stored.rows[0]?.count ?? 0) === chunks.length) {
+      console.log(`already ingested: ${existing.id}`);
+      return;
+    }
+    console.log(`removing partially ingested document ${existing.id}`);
+    await removeDocument(existing.id);
   }
 
   const document = await runRepo(
@@ -208,31 +260,38 @@ const main = async () => {
   );
 
   let index = 0;
-  for (const chunk of chunks) {
-    const keywords = [...new Set(extractMemoryKeywords(chunk.content))].slice(
-      0,
-      8
-    );
-    const created = await runRepo(
-      createKnowledgeChunk({
-        chunkIndex: index,
-        content: chunk.content,
-        documentId: document.id,
-        keywords,
-        tokenCount: Math.ceil(chunk.content.length / 2),
-      })
-    );
-    await runRepo(
-      upsertKnowledgeChunkFts({
-        chunkId: created.id,
-        content: created.content,
-        keywords: created.keywords,
-      })
-    );
-    index += 1;
-    if (index % 100 === 0) {
-      console.log(`  stored ${index}/${chunks.length}`);
+  try {
+    for (const chunk of chunks) {
+      const keywords = [...new Set(extractMemoryKeywords(chunk.content))].slice(
+        0,
+        8
+      );
+      const created = await runRepo(
+        createKnowledgeChunk({
+          chunkIndex: index,
+          content: chunk.content,
+          documentId: document.id,
+          keywords,
+          tokenCount: Math.ceil(chunk.content.length / 2),
+        })
+      );
+      await runRepo(
+        upsertKnowledgeChunkFts({
+          chunkId: created.id,
+          content: created.content,
+          keywords: created.keywords,
+        })
+      );
+      index += 1;
+      if (index % 100 === 0) {
+        console.log(`  stored ${index}/${chunks.length}`);
+      }
     }
+  } catch (error) {
+    // A half-written document makes every later run a no-op, so clean up
+    // before surfacing the failure.
+    await removeDocument(document.id);
+    throw error;
   }
 
   console.log(`done: document ${document.id}, ${chunks.length} chunks`);

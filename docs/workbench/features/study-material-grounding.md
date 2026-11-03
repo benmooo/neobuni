@@ -30,6 +30,11 @@ invented.
 - Embeddings: added a `memory_embedding` provider config (openrouter,
   `openai/text-embedding-3-small`, 1024 dims) reusing the existing chat key, then
   embedded all 682 chunks. ~24 min sequential; costs about $0.01.
+- `apps/server/scripts/embed-knowledge.ts` (new): backfills embeddings for
+  chunks that have none. `ingest-textbook.ts` alone leaves the vector index
+  empty and the Chinese keyword fallback returns nothing, which makes
+  `生成教材内容` silently produce `material: null`. The ingest script now also
+  removes a partially written document instead of making later runs no-ops.
 
 ## Retrieval quality (measured)
 
@@ -87,7 +92,10 @@ the query with the topic's `keywords`.
   retries once (temperature 0) before giving up.
 - UI: `教材内容` block with sections, `第N章 p.XXX` citations and a collapsible
   `原文摘录（N 段）` list holding the full paragraphs. Lessons that already have
-  an enrichment but no material show `生成教材内容` (force re-run).
+  an enrichment but no material show `生成教材内容` (force re-run). The enrich
+  response now carries `materialStatus` (`ok` / `no_sources` / `failed` /
+  `not_requested`) so the web client can toast why nothing was written instead
+  of leaving the tab unchanged.
 
 Measured on a real plan node (`架构风格与模式 · 概念与框架`): 4 sections,
 5 excerpts, all from 第7章 p.263-275, ~25-40s total (summary + material).
