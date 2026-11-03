@@ -10,7 +10,14 @@ import {
 import { Input } from "@neobuni/ui/components/input";
 import { Spinner } from "@neobuni/ui/components/spinner";
 import { Textarea } from "@neobuni/ui/components/textarea";
-import { ArrowsClockwise, CheckCircle, Target } from "@phosphor-icons/react";
+import {
+  ArrowsClockwise,
+  CheckCircle,
+  Pause,
+  Plus,
+  Target,
+} from "@phosphor-icons/react";
+
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
@@ -326,7 +333,7 @@ function NowPage() {
                           {goal.desiredOutcome}
                         </p>
                         <Badge variant="secondary">{goal.autonomyMode}</Badge>
-                        <div>
+                        <div className="flex flex-wrap items-center gap-2 pt-1">
                           <Button
                             disabled={updateGoalStatus.isPending}
                             onClick={() =>
@@ -338,6 +345,7 @@ function NowPage() {
                             size="sm"
                             variant="secondary"
                           >
+                            <Pause className="size-3" />
                             {updateGoalStatus.isPending
                               ? "更新中…"
                               : "暂停主动跟进"}
@@ -351,8 +359,9 @@ function NowPage() {
                               })
                             }
                             size="sm"
-                            variant="ghost"
+                            variant="outline"
                           >
+                            <CheckCircle className="size-3" />
                             完成目标
                           </Button>
                           <Button
@@ -362,8 +371,9 @@ function NowPage() {
                               setCommitmentFormError(null);
                             }}
                             size="sm"
-                            variant="ghost"
+                            variant="outline"
                           >
+                            <Plus className="size-3" />
                             添加承诺
                           </Button>
                         </div>
